@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+sqlalchemy
+psycopg[binary]
+reportlab
+qrcode[pil]
+tzdata
+
+[dev]
+pytest
+httpx
+pypdf
