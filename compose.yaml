@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://watchme:${POSTGRES_PASSWORD}@db:5432/watchme
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+    ports:
+      # 127.0.0.1에만 바인딩: Docker는 ufw를 우회하므로 외부 노출은 Funnel/Caddy로만
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: watchme
+      POSTGRES_DB: watchme
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
