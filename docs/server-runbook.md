@@ -52,3 +52,8 @@
 - `scripts/server-setup.sh`를 `scp`로 올리고 `ssh -t evrd "sudo bash ~/server-setup.sh"` 실행(sudo 비밀번호 1회).
   - SSH 비밀번호 로그인 차단(`/etc/ssh/sshd_config.d/10-hardening.conf`), ufw 활성(SSH만 허용), 덮개 무시, 배터리 conservation_mode=1(tmpfiles로 부팅 시 유지), Wi-Fi 절전 off(systemd 서비스), 테더링 netplan 정리, 시간대 KST, 업데이트, Docker 29.9, Tailscale 1.104.
 - 검증: 비밀번호 로그인 시도 → `Permission denied (publickey)`, ping 4ms, `power_save off`, docker 그룹 포함.
+
+## 5. 재부팅 검증 (2026-11-16)
+- 재부팅 후 IP가 DHCP로 `<LAN IP>` → `<LAN IP>`로 바뀜 → `~/.ssh/config`의 HostName 수정. 근본 해결은 Tailscale(이름으로 접속).
+- 유지 확인: conservation_mode=1, power_save off, ufw/tailscaled/docker active, 부팅 19.7초, reboot-required 없음.
+- 참고: Ubuntu 26.04는 `ssh.socket`이 22번을 듣고 `ssh.service`는 접속 시에만 뜸(inactive가 정상).
