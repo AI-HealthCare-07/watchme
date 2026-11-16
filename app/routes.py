@@ -17,9 +17,10 @@ from app.progress import can_level_up, plateau, streak, summary_week, week_summa
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
-    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, profile_of, save_day, save_setup,
-    start_trial,
+    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, profile_of, save_day,
+    save_setup, start_trial,
 )
+from app.models import NextTrial
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
@@ -251,7 +252,25 @@ def report_page(request: Request, token: str, db: Session = Depends(get_db), sta
         return _to_setup(token)
     today = today_kst()
     report = build_report(trial, get_logs(db, token), today, stats=stats)
-    return _page(request, "report.html", token=token, report=report, left=days_left(trial, today))
+    nxt = db.get(NextTrial, token)
+    linked = kakao.enabled() and accounts.owner_of(db, token) is not None
+    return _page(request, "report.html", token=token, report=report, left=days_left(trial, today),
+                 next_token=nxt.next_token if nxt else None, linked=linked)
+
+
+@router.post("/c/{token}/next")
+def next_challenge(request: Request, token: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    if not START_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
+    if days_left(trial, today_kst()):
+        return _error(request, 400, "30일을 마친 뒤에 시작할 수 있어요.")
+    new = next_trial(db, trial, today_kst(), stats=stats)
+    return RedirectResponse(f"/c/{new.token}/ready", status_code=303)
 
 
 @router.get("/c/{token}/plan.pdf")

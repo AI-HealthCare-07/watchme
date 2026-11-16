@@ -133,3 +133,42 @@ def test_decide_level_twice_rejected(db):
         with pytest.raises(ValueError):
             decide_level(db, t, week, True)
     assert get_decisions(db, t) == {1: 1}
+
+
+# --- 다음 30일 도전 ---
+
+def _finished_trial(db, weights):
+    t = _start(db, today=TODAY - timedelta(days=30))
+    save_setup(db, t.token, **GOOD_SETUP)
+    for d, w in weights.items():
+        save_day(db, t.token, d, True, w)
+    return t
+
+
+def test_next_trial_copies_and_uses_last_weight(db):
+    from app.service import next_trial
+    old = _finished_trial(db, {5: 80.0, 20: 78.5})
+    new = next_trial(db, old, TODAY, stats=STATS)
+    assert new.token != old.token and new.weight_kg == 78.5 and new.start_date == TODAY
+    pick = lambda t: (t.sex, t.age, t.height_cm, t.diet_style, t.lunch_place, t.breakfast, t.exercise_min, t.free_days)  # noqa: E731
+    assert pick(new) == pick(old)
+    assert next_trial(db, old, TODAY, stats=STATS).token == new.token
+
+
+def test_next_trial_without_weights_uses_start_weight(db):
+    from app.service import next_trial
+    old = _finished_trial(db, {})
+    assert next_trial(db, old, TODAY, stats=STATS).weight_kg == 80
+
+
+def test_next_trial_inherits_kakao_link(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.service import next_trial
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    old = _finished_trial(db, {})
+    accounts.save_account(db, 42, "r", True)
+    accounts.link(db, old.token, 42)
+    new = next_trial(db, old, TODAY, stats=STATS)
+    assert accounts.owner_of(db, new.token).kakao_id == 42

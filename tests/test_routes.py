@@ -215,7 +215,7 @@ def test_seeded_demo_report(client):
     r = client.get(f"/c/{token}/report")
     assert r.status_code == 200
     assert "30일 완주" in r.text or "30일이 지났어요" in r.text
-    assert "카카오톡으로 이어가기" in r.text
+    assert "다음 30일 도전하기" in r.text
     assert client.get(f"/c/{token}").status_code == 200
 
 
@@ -474,3 +474,27 @@ def test_average_is_labeled_by_age_and_sex(client):
     assert "40대 남성 평균" in rep
     for html in (client.get("/").text, rep):
         assert "한국인 평균" not in html.replace("40대 남성 평균", "")
+
+
+def test_next_before_30_days_400(client):
+    loc = _start_and_setup(client)
+    assert client.post(f"{loc}/next").status_code == 400
+
+
+def test_next_twice_same_trial(client):
+    loc = _finished(client, 20, {30: 78.5})
+    with Session(client.engine) as s:
+        before = len(s.scalars(select(Trial)).all())
+    r1, r2 = client.post(f"{loc}/next"), client.post(f"{loc}/next")
+    assert r1.status_code == 303 and r1.headers["location"].endswith("/ready")
+    assert r1.headers["location"] == r2.headers["location"] != f"{loc}/ready"
+    with Session(client.engine) as s:
+        assert len(s.scalars(select(Trial)).all()) == before + 1
+    assert client.get(r1.headers["location"]).status_code == 200
+    rep = client.get(f"{loc}/report").text
+    assert "다음 도전 이어 가기" in rep
+
+
+def test_report_card_has_next_button(client):
+    rep = client.get(f"{_finished(client, 20)}/report").text
+    assert "다음 30일 도전하기" in rep and "곧 오픈" not in rep

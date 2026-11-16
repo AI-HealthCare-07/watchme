@@ -4,7 +4,8 @@ from datetime import date, timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models import DayLog, Trial, WeekDecision
+from app import accounts
+from app.models import DayLog, NextTrial, Trial, WeekDecision
 from app.plan import DAYS, MAX_LEVEL, Profile, choose_variant
 from app.risk import LIMITS, assess
 
@@ -95,6 +96,24 @@ def get_logs(db: Session, token: str) -> list[DayLog]:
 
 def current_day(trial: Trial, today: date) -> int:
     return min(max((today - trial.start_date).days + 1, 1), DAYS)
+
+
+def next_trial(db: Session, trial: Trial, today: date, stats: dict | None = None) -> Trial:
+    """다음 30일 도전: 지금 체중(마지막 기록, 없으면 시작 체중)으로 새 체험, 맞춤 답변 복사. 한 체험에서 한 번만."""
+    done = db.get(NextTrial, trial.token)
+    if done:
+        return db.get(Trial, done.next_token)
+    weighed = [log.weight_kg for log in get_logs(db, trial.token) if log.weight_kg is not None]
+    new = start_trial(db, trial.sex, trial.age, trial.height_cm, weighed[-1] if weighed else trial.weight_kg,
+                      today=today, stats=stats)
+    p = profile_of(trial)
+    save_setup(db, new.token, p.diet_style, p.lunch_place, p.breakfast, p.exercise_min, list(p.free_days))
+    db.add(NextTrial(token=trial.token, next_token=new.token))
+    db.commit()
+    owner = accounts.owner_of(db, trial.token)
+    if owner:
+        accounts.link(db, new.token, owner.kakao_id)
+    return new
 
 
 def purge_expired(db: Session, today: date) -> int:
