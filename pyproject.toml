@@ -11,10 +11,12 @@ dependencies = [
     "psycopg[binary]",
     "reportlab",
     "tzdata",
+    "httpx",
+    "cryptography",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "httpx", "pypdf"]
+dev = ["pytest", "pypdf"]
 stats = ["pyreadstat", "pandas", "numpy"]
 
 [tool.setuptools]

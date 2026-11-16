@@ -4,6 +4,10 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://watchme:${POSTGRES_PASSWORD}@db:5432/watchme
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      # 카카오 연동 (셋 중 하나라도 비면 카카오 기능 꺼짐)
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      TOKEN_KEY: ${TOKEN_KEY:-}
     ports:
       # 127.0.0.1에만 바인딩: Docker는 ufw를 우회하므로 외부 노출은 Funnel/Caddy로만
       - "127.0.0.1:8000:8000"
