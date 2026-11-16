@@ -70,3 +70,10 @@
 - 외부(공개 DNS 8.8.8.8)에서 보이는 Funnel 주소: 103.84.155.217 / .153 (Tailscale 중계, 집 IP 노출 없음).
 - 방문자 IP: `request.client.host`는 Docker 브리지(172.18.0.1)라 쓸모없음. Funnel이 `X-Forwarded-For`에 실제 공인 IP를 **덮어써서** 넣음(가짜 XFF를 보내도 실제 IP로 대체됨 확인). 추가로 `Tailscale-Funnel-Request: ?1` 헤더가 붙음.
   → 요청 제한의 `client_ip()`는 `X-Forwarded-For` 값을 사용, 없으면(서버 내부 curl 등) `client.host`.
+
+## 8. 백업 (2026-11-16)
+- 서버: `scripts/backup.sh`(배포 시 함께 올라감)가 `pg_dump | gzip` → `~/backups/watchme-YYYYMMDD-HHMM.sql.gz`(권한 600), `latest.sql.gz` 링크, 7일 초과 삭제.
+- cron(koo, KST): `0 4 * * * $HOME/watchme/scripts/backup.sh >> $HOME/backups/backup.log 2>&1`
+  - 주의: `(crontab -l; echo ...) | crontab -`가 26.04에서 조용히 빈 crontab을 남김 → 파일로 만들어 `crontab /tmp/ct`로 등록.
+- 복원 검증: 표본 테이블 3행 → 덤프 → 빈 DB `restore_test`에 복원 → 3행 일치, 정리함.
+- 서버 밖 사본: 개발 PC가 `scripts/pull-backup.ps1`로 `scp evrd:backups/latest.sql.gz` → `%USERPROFILE%\Backups\watchme\`(30개 보관). 수동 실행 확인.
