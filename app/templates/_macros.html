@@ -1,1 +1,17 @@
-{% macro risk(vs, lvl) %}{{ vs|vs_text }} <b class="{{ 'bad' if lvl == '높음' else 'good' if lvl == '낮음' else '' }}">({{ lvl }})</b>{% endmacro %}
+{# 위험도 글자: 높음 빨강, 낮음 파랑, 보통 기본색 #}
+{% macro risk(vs, lvl) %}<span class="{{ 'risk-hi' if lvl == '높음' else 'risk-lo' if lvl == '낮음' else '' }}">{{ vs|vs_text }}</span> <small class="muted">({{ lvl }})</small>{% endmacro %}
+
+{# 위험 막대: 가운데 선 = 한국 평균, 너비 = min(vs/2, 1) #}
+{% macro risk_bar(vs) %}<div class="bar" role="img" aria-label="{{ vs|vs_text }}"><i class="{{ 'lo' if vs <= 1 else '' }}" style="width:{{ '%.1f'|format([vs / 2, 1]|min * 100) }}%"></i><u></u></div>{% endmacro %}
+
+{# 개인정보 안내 (시작 화면·입력 화면 공통) #}
+{% macro privacy() %}<p class="muted privacy">수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), 일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일.</p>{% endmacro %}
+
+{# 위험도 두 줄 + 막대 #}
+{% macro risk_rows(a) %}
+<div class="risk-row"><span>고혈압</span><b class="{{ 'risk-hi' if a.hypertension_vs_avg > 1 else 'risk-lo' }}">{{ a.hypertension_vs_avg|vs_text }}</b></div>
+{{ risk_bar(a.hypertension_vs_avg) }}
+<div class="risk-row"><span>당뇨</span><b class="{{ 'risk-hi' if a.diabetes_vs_avg > 1 else 'risk-lo' }}">{{ a.diabetes_vs_avg|vs_text }}</b></div>
+{{ risk_bar(a.diabetes_vs_avg) }}
+<p class="bar-legend">가운데 선 = 한국인 평균</p>
+{% endmacro %}

@@ -1,0 +1,821 @@
+{
+ "note": "일반적인 저염·저당 생활습관 가이드 예시. 개인 질환·복용 약이 있으면 의료진 지시가 우선.",
+ "breakfast": [
+  {
+   "text": "무가당 두유 한 팩 + 바나나 반 개",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "삶은 달걀 2개 + 물 한 잔",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "플레인 요거트 한 컵",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "방울토마토 한 줌 + 두유 한 팩",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "사과 반 개 + 견과류 한 줌",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "우유 한 잔 + 삶은 고구마 작은 것",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "그릭요거트 + 블루베리 한 줌",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "데운 두부 한 조각 + 김(조미 안 된 것)",
+   "habit": "skip",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 소시지 1개 + 방울토마토",
+   "habit": "skip",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "통밀빵 1장 + 삶은 달걀 2개 + 방울토마토",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "오트밀(우유) + 바나나 반 개",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "그릭요거트 + 견과류 + 사과 반 개",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "달걀 스크램블 + 통밀 토스트 1장",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "고구마 1개 + 우유 한 잔",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미 누룽지 반 그릇 + 달걀 1개",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 스크램블 + 통밀빵 1장",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "채소 오믈렛 + 두유 한 잔",
+   "habit": "light",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 샌드위치(통밀빵, 소스 조금)",
+   "habit": "light",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "훈제 닭가슴살 + 채소 스틱 + 두유",
+   "habit": "light",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 달걀찜, 시금치나물",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 달걀말이, 김",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 달걀국, 김치 조금",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 두부부침, 김(조미 안 된 것)",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 순두부(싱겁게), 나물",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 콩나물국 건더기 위주, 버섯볶음",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 된장 채소국, 두부조림(싱겁게)",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 달걀프라이, 애호박볶음",
+   "habit": "full",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 고등어구이, 오이무침",
+   "habit": "full",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 닭가슴살 채소볶음",
+   "habit": "full",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 소고기 미역국(국물 반만)",
+   "habit": "full",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 반 공기, 생선구이, 시금치나물",
+   "habit": "full",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 돼지 안심 수육 조금, 쌈채소",
+   "habit": "full",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  }
+ ],
+ "lunch": [
+  {
+   "text": "잡곡밥, 달걀찜, 오이무침, 김",
+   "place": "home",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥, 달걀말이, 시금치나물",
+   "place": "home",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "메밀국수(쯔유 절반) + 삶은 달걀",
+   "place": "home",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥 반 공기, 달걀국, 채소 쌈",
+   "place": "home",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥, 두부조림(싱겁게), 숙주나물",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미 비빔밥(고추장 절반) + 달걀프라이",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 채소 덮밥(밥 반 공기)",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥, 순두부찌개(싱겁게), 나물 두 가지",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥 + 버섯 들깨 채소볶음",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "콩국수(소금 조금) + 오이",
+   "place": "home",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥, 닭가슴살 채소볶음, 미역국(국물 반만)",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥, 고등어구이, 쌈채소",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥, 소고기 우둔 장조림 조금, 나물",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "현미밥, 돼지 앞다리 수육, 양배추쌈",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "잡곡밥, 생선조림(양념 적게), 숙주나물",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 채소 덮밥(밥 반 공기)",
+   "place": "home",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "비빔밥: 고추장 절반, 국은 건더기 위주",
+   "place": "out",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "김밥 한 줄 + 삶은 달걀 (라면 대신)",
+   "place": "out",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "쌈밥집: 쌈채소 듬뿍, 쌈장은 조금",
+   "place": "out",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "한식 뷔페: 접시 반은 채소, 1/4 단백질, 1/4 밥",
+   "place": "out",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "순두부찌개: 국물 반만, 밥 반 공기",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "산채비빔밥: 고추장 절반",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 전골: 채소 위주, 국물 적게",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "콩국수: 소금은 조금만",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "채소 김밥 + 된장국 건더기 위주",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "메밀 비빔국수: 양념 절반 + 삶은 달걀",
+   "place": "out",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "국밥: 국물 반만, 밥 반 공기",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "생선구이 정식: 밥 반 공기, 채소 반찬부터",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "샤브샤브: 고기·채소 위주, 국수 사리는 빼기",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "백반집: 제육 대신 생선·닭 반찬으로",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "쌀국수: 국물 반만, 고기 추가",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 샐러드 가게: 드레싱은 따로 조금",
+   "place": "out",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "삶은 달걀 2 + 샐러드 + 두유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "그릭요거트 + 바나나 + 견과류",
+   "place": "store",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "컵 샐러드 + 삶은 달걀 + 우유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "고구마 + 삶은 달걀 2 + 무가당 두유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 바 + 샐러드 + 두유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "채소 김밥 한 줄 + 우유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부면 샐러드 + 바나나",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "콩 샐러드 + 통밀빵",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "달걀 김밥 한 줄 + 방울토마토",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "곤약 비빔면(양념 절반) + 두유",
+   "place": "store",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 + 샐러드 + 두유",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "훈제란 2 + 닭가슴살 소시지 + 방울토마토",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 김밥 한 줄 + 우유",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "참치 샐러드(마요네즈 빼고) + 삶은 달걀",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "연어 샐러드 + 무가당 두유",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 도시락(밥은 1/3 남기기)",
+   "place": "store",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  }
+ ],
+ "dinner": [
+  {
+   "text": "채소 듬뿍 달걀볶음, 양배추쌈",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "달걀찜, 데친 브로콜리, 잡곡밥 반 공기",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "채소 수프, 통밀빵 1장, 삶은 달걀",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "버섯 달걀 볶음밥(밥 반 공기, 기름 조금)",
+   "styles": [
+    "veg",
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부구이, 브로콜리·파프리카 샐러드, 잡곡밥 반 공기",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 채소 전골(국물 적게)",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "순두부, 나물 두 가지, 현미밥 반 공기",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "렌틸콩 채소 수프, 통밀빵 1장",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "두부 스테이크, 구운 채소",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "버섯 들깨탕(싱겁게), 잡곡밥 반 공기",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "가지·애호박 구이, 두부, 현미밥 반 공기",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "콩나물 비빔밥(간장 조금) + 달걀",
+   "styles": [
+    "veg",
+    "mixed"
+   ]
+  },
+  {
+   "text": "고등어구이 한 토막, 쌈채소, 잡곡밥 반 공기",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭가슴살 샐러드(드레싱 따로 조금), 고구마 작은 것",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "소고기 우둔 수육, 버섯볶음, 잡곡밥 반 공기",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "연어 또는 흰살생선 구이, 아스파라거스",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭 안심 채소볶음, 현미밥 반 공기",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "돼지 안심 구이, 양배추쌈",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "오징어 채소볶음(싱겁게), 잡곡밥 반 공기",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  },
+  {
+   "text": "닭백숙 살코기, 부추무침",
+   "styles": [
+    "meat",
+    "mixed"
+   ]
+  }
+ ]
+}

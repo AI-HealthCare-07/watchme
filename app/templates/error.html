@@ -1,9 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Watchme · 안내{% endblock %}
-{% block body %}
-<div class="card">
-  <h1>앗</h1>
-  <p>{{ message }}</p>
-  <a class="btn secondary" href="/">처음으로</a>
-</div>
+{% block hero %}<p class="kicker">안내</p><h1>앗, 잠깐만요</h1>{% endblock %}
+{% block sheet %}
+<div class="card"><p>{{ message }}</p></div>
 {% endblock %}
+{% block cta %}<a class="btn btn-soft" href="/">처음으로</a>{% endblock %}

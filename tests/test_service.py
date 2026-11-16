@@ -8,7 +8,10 @@ from sqlalchemy.pool import StaticPool
 from app.db import Base
 from app.models import DayLog
 from app.risk import InvalidInput
-from app.service import current_day, get_logs, get_trial, purge_expired, save_day, start_trial
+from app.service import (
+    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial,
+    purge_expired, save_day, save_setup, start_trial,
+)
 from tests.test_risk import STATS
 
 TODAY = date(2026, 11, 16)
@@ -81,6 +84,52 @@ def test_purge_deletes_trials_90_days_after_end_with_logs(db):
     old_t, kept_t = old.token, kept.token
     save_day(db, old_t, 1, True, 80.0)
     save_day(db, kept_t, 1, True, 80.0)
+    decide_level(db, old_t, 1, True)
     assert purge_expired(db, TODAY) == 1
     assert get_trial(db, old_t) is None and get_logs(db, old_t) == []
     assert get_trial(db, kept_t) is not None and len(get_logs(db, kept_t)) == 1
+
+
+GOOD_SETUP = dict(diet_style="mixed", lunch_place="out", breakfast="light", exercise_min=25, free_days=[5, 2])
+
+
+def test_new_trial_setup_not_done(db):
+    assert _start(db).setup_done is False
+
+
+def test_save_setup_stores_answers(db):
+    t = _start(db).token
+    save_setup(db, t, **GOOD_SETUP)
+    trial = get_trial(db, t)
+    assert trial.setup_done is True
+    assert trial.free_days == "2,5"
+    assert (trial.diet_style, trial.lunch_place, trial.breakfast, trial.exercise_min) == ("mixed", "out", "light", 25)
+
+
+@pytest.mark.parametrize("bad", [
+    {"diet_style": "x"}, {"lunch_place": ""}, {"breakfast": "none"}, {"exercise_min": 30},
+    {"free_days": [1]}, {"free_days": [1, 2, 3]}, {"free_days": [3, 3]}, {"free_days": [7, 1]},
+])
+def test_save_setup_rejects_bad_values(db, bad):
+    t = _start(db).token
+    with pytest.raises(InvalidSetup):
+        save_setup(db, t, **(GOOD_SETUP | bad))
+    assert get_trial(db, t).setup_done is False
+
+
+def test_decide_level_up_keep_and_cap(db):
+    t = _start(db).token
+    assert decide_level(db, t, 1, True) == 1
+    assert decide_level(db, t, 2, False) == 1
+    assert decide_level(db, t, 3, True) == 2
+    assert decide_level(db, t, 4, True) == 2
+    assert get_decisions(db, t) == {1: 1, 2: 1, 3: 2, 4: 2}
+
+
+def test_decide_level_twice_rejected(db):
+    t = _start(db).token
+    decide_level(db, t, 1, True)
+    for week in (1, 0, 5):
+        with pytest.raises(ValueError):
+            decide_level(db, t, week, True)
+    assert get_decisions(db, t) == {1: 1}

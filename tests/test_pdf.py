@@ -1,36 +1,51 @@
+from datetime import date
 from io import BytesIO
 
 from pypdf import PdfReader
 
-from app.pdf import DISCLAIMER, render_pdf
-from app.plan import choose_variant, make_plan, scenario
+from app.pdf import DISCLAIMER, render_week_pdf
+from app.plan import Profile, build_plan, scenario, week_days
 from app.risk import assess
 from tests.test_risk import STATS
 
+PROFILE = Profile("overweight", "mixed", "out", "light", 25, (2, 5))
+START = date(2026, 11, 16)  # 월요일 → 수(3일)·토(6일)가 자유 한 끼
 
-def _pdf():
+
+def _week(week, level=0, points=False):
     a = assess("M", 40, 170, 80, stats=STATS)
-    plan = make_plan(choose_variant(a))
-    return render_pdf(a, plan, scenario(a, stats=STATS), "https://example.test/c/abc", "저장된계획"), plan
-
-
-def test_pdf_has_korean_text_and_required_sections():
-    pdf, plan = _pdf()
-    assert pdf.startswith(b"%PDF")
+    plan = build_plan(PROFILE, START, "seed", {1: level} if level else None)
+    days = [plan[d - 1] for d in week_days(week)]
+    pdf = render_week_pdf(a, week, days, "저장된계획", level, "https://example.test/c/abc",
+                          scenario(a, stats=STATS) if points else None)
     reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) >= 3
     text = "".join(p.extract_text() for p in reader.pages).replace(" ", "").replace("\n", "")
-    assert DISCLAIMER.replace(" ", "") in text
-    assert "시나리오" in text
-    assert plan[0].meals["breakfast"].replace(" ", "") in text
+    return pdf, reader, text, days
 
 
-def test_pdf_embeds_font():
-    pdf, _ = _pdf()
+def test_week_pdf_one_page_with_week_days():
+    pdf, reader, text, days = _week(2)
+    assert pdf.startswith(b"%PDF") and len(reader.pages) == 1
+    for d in days:
+        assert d.meals["breakfast"].replace(" ", "") in text
+    assert "지킴" in text and DISCLAIMER.replace(" ", "") in text
+    assert "자유한끼" in text and "저장된계획" in text and "2주차" in text
     assert b"NanumGothic" in pdf
 
 
-def test_pdf_uses_given_plan_label():
-    # 통계가 나중에 바뀌어도 PDF 계획 이름은 체험 시작 때 저장된 계획을 따른다
-    pdf, _ = _pdf()
-    assert "저장된계획" in PdfReader(BytesIO(pdf)).pages[0].extract_text()
+def test_week1_pdf_has_summary_page():
+    _, reader, text, _ = _week(1, points=True)
+    assert len(reader.pages) == 2
+    assert "시나리오" in text and "내결과요약" in text
+
+
+def test_week_pdf_shows_level():
+    _, _, text, _ = _week(2, level=1)
+    assert "강도1단계" in text and "밥은1/3공기" in text
+    _, _, text0, _ = _week(2)
+    assert "강도" not in text0
+
+
+def test_last_week_has_two_days():
+    _, reader, text, days = _week(5)
+    assert len(days) == 2 and len(reader.pages) == 1 and "5주차" in text

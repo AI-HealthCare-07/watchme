@@ -1,57 +1,94 @@
 {% extends "base.html" %}
-{% block title %}Watchme · Day {{ today }}{% endblock %}
 {% from "_macros.html" import risk %}
-{% block body %}
-<h1>Day {{ today }} / {{ days }}</h1>
-<p class="muted">계획: {{ label }} · 이 페이지 주소가 내 기록 열쇠예요. 즐겨찾기해 두세요.</p>
-
+{% block title %}Watchme · Day {{ today }}{% endblock %}
+{% block brand_note %}{{ label }}{% endblock %}
+{% block hero %}
+<div class="ring" style="--p: {{ (today / days * 100)|round(1) }}%" aria-label="{{ days }}일 중 {{ today }}일째"><div>{{ today }}/{{ days }}</div></div>
+<h1 class="day">Day {{ today }}</h1>
+<p class="sub">{% if streak >= 2 %}{{ streak }}일 연속 지키는 중이에요 🔥{% elif today == 1 %}오늘이 첫날이에요. 가볍게 시작해요 🌱{% else %}오늘 하루만 지켜도 충분해요 💪{% endif %}</p>
+{% if level %}<p style="margin-top:10px"><span class="chip">💪 강도 {{ level }}단계 진행 중</span></p>{% endif %}
+{% endblock %}
+{% block sheet %}
 {% set d = plan[selected - 1] %}
 {% set log = logs.get(selected) %}
-<form class="card" method="post" action="/c/{{ token }}/day/{{ selected }}">
-  <h2>{% if selected == today %}오늘{% else %}Day {{ selected }}{% endif %} 계획</h2>
-  <table>
-    <tr><th>아침</th><td>{{ d.meals.breakfast }}</td></tr>
-    <tr><th>점심</th><td>{{ d.meals.lunch }}</td></tr>
-    <tr><th>저녁</th><td>{{ d.meals.dinner }}</td></tr>
-    <tr><th>운동</th><td>{{ d.exercise }}</td></tr>
-  </table>
-  <label for="weight_kg">체중 (kg, 선택)</label>
-  <input id="weight_kg" name="weight_kg" type="number" inputmode="decimal" step="0.1" min="30" max="250"
-         value="{{ log.weight_kg if log and log.weight_kg is not none else '' }}">
-  <div class="row">
-    <button type="submit" name="kept" value="1">지켰어요</button>
-    <button type="submit" name="kept" value="0" class="secondary">못 지켰어요</button>
+
+{% if summary %}
+<section class="card summary">
+  <h2>📅 {{ summary.week }}주차 요약 <small>{{ summary.days }}일 중 {{ summary.kept }}일 지킴</small></h2>
+  {% if summary.weight_change is none %}
+  <p class="muted">체중 기록 없음 · 다음 주엔 체중도 두 번 이상 적어 봐요.</p>
+  {% else %}
+  <div class="big"><strong class="{{ 'risk-lo' if summary.weight_change < 0 else '' }}">{{ "%+.1f"|format(summary.weight_change) }}kg</strong>
+    <span>{{ "%.1f"|format(summary.weight_start) }} → {{ "%.1f"|format(summary.weight_end) }}kg</span></div>
+  <p class="muted" style="margin-top:6px">고혈압 {{ summary.before.hypertension_vs_avg|vs_text }} → {{ summary.after.hypertension_vs_avg|vs_text }}<br>
+     당뇨 {{ summary.before.diabetes_vs_avg|vs_text }} → {{ summary.after.diabetes_vs_avg|vs_text }}</p>
+  {% endif %}
+  {% if can_up %}
+  <div class="ask">
+    <p><b>잘 지켰는데 체중이 그대로예요.</b> 다음 주는 조금 더 해볼까요?</p>
+    <ul>{% for n in next_notes %}<li>{{ n }}</li>{% endfor %}<li>운동 10분 더</li></ul>
+    <form class="two" method="post" action="/c/{{ token }}/week/{{ summary.week }}/level">
+      <button class="btn btn-sm" name="choice" value="up">올리기</button>
+      <button class="btn btn-sm btn-soft" name="choice" value="keep">이대로 유지</button>
+    </form>
   </div>
-  {% if log %}<p class="muted" style="margin-top:10px">저장됨: {{ "지켰어요" if log.kept else "못 지켰어요" }}. 다시 누르면 바뀌어요.</p>{% endif %}
+  {% elif decided is not none %}
+  <p class="note" style="margin-top:12px">다음 주 강도: <b>{{ decided }}단계</b>로 정했어요.</p>
+  {% endif %}
+  {% if summary.week < 5 %}<a class="btn btn-soft btn-sm" style="margin-top:12px" href="/c/{{ token }}/week/{{ summary.week + 1 }}.pdf">다음 주 계획표 받기</a>{% endif %}
+</section>
+{% endif %}
+
+<form class="card plan" method="post" action="/c/{{ token }}/day/{{ selected }}">
+  <h2>{% if selected == today %}오늘의 계획{% else %}Day {{ selected }} 계획{% endif %} <small>{{ d.date.month }}/{{ d.date.day }} {{ "월화수목금토일"[d.date.weekday()] }}</small></h2>
+  <div class="meal"><i>🍳</i><b>아침</b><span>{{ d.meals.breakfast }}</span></div>
+  <div class="meal"><i>🥗</i><b>점심</b><span>{{ d.meals.lunch }}</span></div>
+  <div class="meal{{ ' free' if d.free_meal }}"><i>{{ "🎉" if d.free_meal else "🍽️" }}</i><b>저녁</b><span>{{ d.meals.dinner }}
+    {% if d.notes %}<span class="notes">{% for n in d.notes %}<em>{{ n }}</em>{% endfor %}</span>{% endif %}</span></div>
+  <div class="meal"><i>🚶</i><b>운동</b><span>{{ d.exercise }}</span></div>
+  <label class="wt">⚖️ 체중 <small>(선택)</small>
+    <span><input name="weight_kg" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="—"
+           value="{{ log.weight_kg if log and log.weight_kg is not none else '' }}"> kg</span></label>
+  <div class="two">
+    <button class="btn" type="submit" name="kept" value="1">지켰어요</button>
+    <button class="btn btn-soft" type="submit" name="kept" value="0">못 지켰어요</button>
+  </div>
+  {% if log %}<p class="saved">{{ "✅ 지켰어요" if log.kept else "기록함: 못 지켰어요" }} · 다시 누르면 바뀌어요</p>{% endif %}
 </form>
 
-<div class="card">
-  <h2>30일 기록</h2>
-  <div class="grid">
+<section class="card tip"><h2>💡 {% if selected == today %}오늘의 팁{% else %}Day {{ selected }} 팁{% endif %}</h2><p>{{ d.tip }}</p></section>
+
+{% if doubt %}
+<section class="card doubt">
+  <h2>🕵️ 잠깐, 정말 다 지켰어요?</h2>
+  <p>꾸준히 지켰는데 체중이 그대로네요. {{ doubt }}</p>
+  <p class="muted" style="margin-top:6px">물 무게 때문에 1~2주 정체는 흔해요. 조금만 더 지켜봐요.</p>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>30일 기록 <small>{{ logs|length }}일 중 {{ logs.values()|selectattr("kept")|list|length }}일 지킴</small></h2>
+  <div class="stamps">
   {% for n in range(1, days + 1) %}
     {% set l = logs.get(n) %}
     {% set cls = ("kept" if l.kept else "missed") if l else "" %}
     {% if n <= today %}
-      <a href="?day={{ n }}" class="{{ cls }} {{ 'sel' if n == selected }}" aria-label="Day {{ n }}">{{ n }}</a>
+      <a href="?day={{ n }}" class="{{ cls }}{{ ' today' if n == today }}{{ ' sel' if n == selected }}" aria-label="Day {{ n }}">{{ n }}</a>
     {% else %}
-      <span class="future" aria-hidden="true">{{ n }}</span>
+      <span aria-hidden="true">{{ n }}</span>
     {% endif %}
   {% endfor %}
   </div>
-  <p class="muted" style="margin-top:10px">지난 날짜를 누르면 그날 기록을 고칠 수 있어요.</p>
-</div>
+  <p class="muted" style="margin-top:10px;font-size:13px">지난 날짜를 누르면 그날 기록을 고칠 수 있어요.</p>
+</section>
 
-{% if finished %}
-<a class="btn" href="/c/{{ token }}/report">30일 변화 리포트 보기</a>
-{% endif %}
+{% if finished %}<a class="btn" href="/c/{{ token }}/report" style="margin-bottom:12px">30일 변화 리포트 보기 🎉</a>{% endif %}
 
-<div class="card">
-  <h2>참고 위험도</h2>
-  <table>
-    <tr><th>BMI</th><td>{{ "%.1f"|format(a.bmi) }} ({{ a.bmi_band }})</td></tr>
-    <tr><th>고혈압</th><td>{{ risk(a.hypertension_vs_avg, a.hypertension_level) }}</td></tr>
-    <tr><th>당뇨</th><td>{{ risk(a.diabetes_vs_avg, a.diabetes_level) }}</td></tr>
-  </table>
-  <div class="row"><a class="btn secondary" href="/c/{{ token }}/plan.pdf">30일 계획 PDF</a></div>
-</div>
+<section class="card">
+  <h2>참고 위험도 <small>BMI {{ "%.1f"|format(a.bmi) }} · {{ a.bmi_band }}</small></h2>
+  <p class="risk-line">고혈압 {{ risk(a.hypertension_vs_avg, a.hypertension_level) }}</p>
+  <p class="risk-line">당뇨 {{ risk(a.diabetes_vs_avg, a.diabetes_level) }}</p>
+  <a class="btn btn-soft btn-sm" style="margin-top:12px" href="/c/{{ token }}/week/{{ week }}.pdf">📄 {{ week }}주차 계획표 PDF</a>
+</section>
+<p class="muted" style="font-size:13px;padding:0 4px">이 페이지 주소가 내 기록 열쇠예요. 즐겨찾기해 두세요.</p>
 {% endblock %}
