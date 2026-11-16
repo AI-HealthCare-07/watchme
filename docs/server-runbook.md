@@ -64,3 +64,9 @@
 - 방화벽: `ufw allow in on tailscale0` + `ufw delete allow OpenSSH` → SSH는 Tailscale에서만. `tailscale set --operator=koo`로 sudo 없이 tailscale 조작.
 - 배포(push-to-deploy): 서버에 `~/watchme.git`(bare) + `scripts/post-receive` 훅. 개발 PC에서 `git push evrd phase1` → `~/watchme`에 체크아웃 → `docker compose up -d --build` → healthz 출력.
   - 서버 `.env`(권한 600)는 git에 없음: 무작위 `POSTGRES_PASSWORD`, `PUBLIC_BASE_URL=https://evrd.<tailnet>.ts.net`.
+
+## 7. Funnel 공개 + 방문자 IP 확인 (2026-11-16)
+- `tailscale funnel --bg 8000` → 처음엔 "Funnel is not enabled" + 허용 링크 → 관리 콘솔에서 Enable(HTTPS 인증서 + ACL funnel 속성) → `https://evrd.<tailnet>.ts.net` 공개. 휴대폰 LTE에서 `/healthz` = `{"ok":true}` 확인.
+- 외부(공개 DNS 8.8.8.8)에서 보이는 Funnel 주소: 103.84.155.217 / .153 (Tailscale 중계, 집 IP 노출 없음).
+- 방문자 IP: `request.client.host`는 Docker 브리지(172.18.0.1)라 쓸모없음. Funnel이 `X-Forwarded-For`에 실제 공인 IP를 **덮어써서** 넣음(가짜 XFF를 보내도 실제 IP로 대체됨 확인). 추가로 `Tailscale-Funnel-Request: ?1` 헤더가 붙음.
+  → 요청 제한의 `client_ip()`는 `X-Forwarded-For` 값을 사용, 없으면(서버 내부 curl 등) `client.host`.
