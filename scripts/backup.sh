@@ -4,6 +4,7 @@
 # 서버 밖 사본은 개발 PC가 가져간다(pull): scripts/pull-backup.ps1
 # ponytail: 서버 밖 사본은 개발 PC가 켜져 있을 때만 생김. 상시 보관이 필요하면 rclone으로 클라우드 저장소에 올리기
 set -euo pipefail
+umask 077  # 건강 데이터: 본인만 읽기
 DIR="$HOME/backups"
 mkdir -p "$DIR"
 OUT="$DIR/watchme-$(date +%Y%m%d-%H%M).sql.gz"
