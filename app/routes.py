@@ -10,11 +10,15 @@ from sqlalchemy.orm import Session
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_pdf
-from app.plan import DAYS, make_plan, scenario, variant_label
+from app.plan import DAYS, LEVEL_NOTES, build_plan, make_plan, scenario, variant_label, week_of
 from app.ratelimit import RateLimiter, client_ip
+from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, vs_text
-from app.service import InvalidSetup, current_day, get_logs, get_trial, save_day, save_setup, start_trial
+from app.service import (
+    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, profile_of, save_day, save_setup,
+    start_trial,
+)
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
@@ -140,6 +144,15 @@ def setup(
     return RedirectResponse(f"/c/{token}", status_code=303)
 
 
+# 의심 카드 원인: 날마다 하나씩 돌아가며
+DOUBTS = (
+    "라떼·주스 같은 음료에 숨은 당은 없었나요?",
+    "입이 심심할 때 집어 먹은 간식은 없었나요?",
+    "소스·드레싱·국물을 생각보다 많이 먹진 않았나요?",
+    "한 그릇 양이 조금씩 늘진 않았나요?",
+)
+
+
 @router.get("/c/{token}")
 def check_page(request: Request, token: str, day: int | None = None,
                db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
@@ -149,15 +162,41 @@ def check_page(request: Request, token: str, day: int | None = None,
     if not trial.setup_done:
         return _to_setup(token)
     today = current_day(trial, today_kst())
-    logs = {log.day: log for log in get_logs(db, token)}
-    selected = day if day and 1 <= day <= today else today
+    log_list = get_logs(db, token)
+    decisions = get_decisions(db, token)
+    plan = build_plan(profile_of(trial), trial.start_date, token, decisions)
+    w = summary_week(today, log_list)
+    summary = week_summary(trial, log_list, w, stats=stats) if w else None
+    can_up = bool(w) and can_level_up(log_list, w, decisions)
+    next_level = min(plan[today - 1].level + 1, 2)
     return _page(
         request, "check.html",
         token=token, a=assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats),
-        label=variant_label(trial.plan_variant), plan=make_plan(trial.plan_variant), logs=logs,
-        today=today, selected=selected, days=DAYS,
-        finished=not days_left(trial, today_kst()),
+        label=variant_label(trial.plan_variant), plan=plan, logs={log.day: log for log in log_list},
+        today=today, selected=day if day and 1 <= day <= today else today, days=DAYS,
+        level=plan[today - 1].level, streak=streak(log_list, today),
+        doubt=DOUBTS[today % 4] if plateau(log_list, today) else None,
+        summary=summary, can_up=can_up, decided=decisions.get(w) if w else None,
+        next_level=next_level, next_notes=() if trial.plan_variant == "high_risk" else LEVEL_NOTES[next_level],
+        week=week_of(today), finished=not days_left(trial, today_kst()),
     )
+
+
+@router.post("/c/{token}/week/{w}/level")
+def level(request: Request, token: str, w: int, choice: str = Form(""), db: Session = Depends(get_db)):
+    if not DAY_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
+    logs = get_logs(db, token)
+    ok = choice in ("up", "keep") and summary_week(current_day(trial, today_kst()), logs) == w
+    if not ok or not can_level_up(logs, w, get_decisions(db, token)):
+        return _error(request, 400, "지금은 강도를 정할 수 없어요. 기록 화면에서 다시 확인해 주세요.")
+    decide_level(db, token, w, choice == "up")
+    return RedirectResponse(f"/c/{token}", status_code=303)
 
 
 @router.post("/c/{token}/day/{n}")

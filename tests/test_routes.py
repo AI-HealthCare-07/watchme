@@ -264,3 +264,119 @@ def test_pages_redirect_to_setup_until_done(client):
 
 def test_privacy_notice_lists_setup_answers(client):
     assert PRIVACY in client.get("/start").text
+
+
+# --- 기록 화면 ---
+from datetime import timedelta
+
+from markupsafe import escape
+
+from app.clock import today_kst
+from app.models import Trial
+from app.plan import build_plan
+from app.service import get_decisions, profile_of
+
+
+def _set_day(client, loc, n):
+    """체험 시작일을 옮겨 오늘을 n일째로 만든다."""
+    with Session(client.engine) as s:
+        trial = s.get(Trial, loc.rsplit("/", 1)[1])
+        trial.start_date = today_kst() - timedelta(days=n - 1)
+        s.commit()
+
+
+def _plan(client, loc):
+    token = loc.rsplit("/", 1)[1]
+    with Session(client.engine) as s:
+        trial = s.get(Trial, token)
+        return build_plan(profile_of(trial), trial.start_date, token, get_decisions(s, token))
+
+
+def _log(client, loc, day, kept=True, weight=""):
+    assert client.post(f"{loc}/day/{day}", data={"kept": "1" if kept else "0", "weight_kg": weight}).status_code == 303
+
+
+def test_check_shows_today_plan_tip_and_streak(client):
+    loc = _start_and_setup(client)
+    day1 = _plan(client, loc)[0]
+    r = client.get(loc)
+    assert r.status_code == 200 and "Day 1" in r.text
+    assert str(escape(day1.meals["breakfast"])) in r.text and str(escape(day1.tip)) in r.text
+    _set_day(client, loc, 3)
+    _log(client, loc, 1)
+    _log(client, loc, 2)
+    assert "2일 연속" in client.get(loc).text
+
+
+def test_free_meal_day_highlighted(client):
+    # 오늘 요일을 자유 한 끼로 고르면 오늘(Day 1) 저녁이 자유 한 끼
+    wd = today_kst().weekday()
+    loc = _start_only(client)
+    client.post(f"{loc}/setup", data=SETUP | {"free_days": [str(wd), str((wd + 1) % 7)]})
+    r = client.get(loc)
+    assert "자유 한 끼" in r.text and "국물·소스는 남기기" in r.text
+
+
+def _plateau_week(client, loc, week, weights=("80.0", "80.3")):
+    _set_day(client, loc, 7 * week)
+    for d in range(7 * week - 6, 7 * week + 1):
+        w = weights[0] if d == 7 * week - 6 else weights[1] if d == 7 * week else ""
+        _log(client, loc, d, True, w)
+
+
+def test_plateau_card(client):
+    loc = _start_and_setup(client)
+    _plateau_week(client, loc, 1)
+    assert "정체는 흔해요" in client.get(loc).text
+    loc2 = _start_and_setup(client)
+    _plateau_week(client, loc2, 1, weights=("80.0", "79.4"))
+    assert "정체는 흔해요" not in client.get(loc2).text
+
+
+def _set_variant(client, loc, variant):
+    with Session(client.engine) as s:
+        s.get(Trial, loc.rsplit("/", 1)[1]).plan_variant = variant
+        s.commit()
+
+
+def test_week_summary_and_level_up(client):
+    loc = _start_and_setup(client)
+    _set_variant(client, loc, "overweight")  # high_risk는 식사 notes가 없음
+    _plateau_week(client, loc, 1)
+    r = client.get(loc)
+    assert "1주차 요약" in r.text and f'action="{loc}/week/1/level"' in r.text
+    assert client.post(f"{loc}/week/1/level", data={"choice": "up"}).status_code == 303
+    _set_day(client, loc, 8)
+    r = client.get(loc)
+    assert "강도 1단계" in r.text and "밥은 1/3 공기" in r.text
+    assert f'action="{loc}/week/1/level"' not in r.text  # 이미 정함
+
+
+def test_level_post_rejected_cases(client):
+    loc = _start_and_setup(client)
+    _plateau_week(client, loc, 1)
+    assert client.post(f"{loc}/week/1/level", data={"choice": "sideways"}).status_code == 400
+    assert client.post(f"{loc}/week/2/level", data={"choice": "up"}).status_code == 400  # 아직 안 온 주
+    assert client.post(f"{loc}/week/1/level", data={"choice": "up"}).status_code == 303
+    assert client.post(f"{loc}/week/1/level", data={"choice": "up"}).status_code == 400  # 두 번째
+    _plateau_week(client, loc, 2)
+    assert client.post(f"{loc}/week/2/level", data={"choice": "up"}).status_code == 303
+    routes.DAY_PER_IP.hits.clear()  # 기록 저장이 많아 분당 제한을 비움
+    _plateau_week(client, loc, 3)
+    assert client.post(f"{loc}/week/3/level", data={"choice": "up"}).status_code == 400  # 최대 2단계
+    token = loc.rsplit("/", 1)[1]
+    with Session(client.engine) as s:
+        assert get_decisions(s, token) == {1: 1, 2: 2}
+    routes.DAY_PER_IP.hits.clear()
+    other = _start_and_setup(client)
+    _plateau_week(client, other, 1, weights=("80.0", "79.0"))
+    assert client.post(f"{other}/week/1/level", data={"choice": "up"}).status_code == 400  # 정체 아님
+    assert client.post("/c/nope/week/1/level", data={"choice": "up"}).status_code == 404
+
+
+def test_no_weights_week_summary(client):
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 7)
+    _log(client, loc, 7)
+    r = client.get(loc)
+    assert r.status_code == 200 and "1주차 요약" in r.text and "체중 기록 없음" in r.text
