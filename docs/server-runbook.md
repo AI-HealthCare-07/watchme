@@ -95,3 +95,9 @@
 - 시작 화면 안내("체험 종료 후 90일")대로, 시작 후 120일(체험 30일 + 90일)이 지난 체험과 기록을 매일 04:30 삭제 (`scripts/purge.py` → `service.purge_expired`). 사용자 승인 후 cron 등록.
 - cron: `30 4 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.purge >> $HOME/purge.log 2>&1` (지운 게 있을 때만 기록).
 - 백업에는 서버 최대 7일, PC 최대 30일 더 남았다가 사라짐.
+
+## 11. 리디자인 배포 (2026-11-16)
+- 내용: 초록 디자인 체계(`app/static/app.css`, `flow.js`), 토스식 입력 → 결과 → 맞춤 5문항, 맞춤 30일 계획(`app/plan.py` + `app/data/{meals,exercises,tips}.json`), 정체 감지·강도 질문(`app/progress.py`, 표 `week_decisions`), 주간 PDF(`/c/<token>/week/<n>.pdf`, `plan.pdf`는 이번 주로 이동), Pretendard 자체 호스팅(`app/static/fonts`, OFL).
+- DB: `trials`에 맞춤 답변 컬럼이 생겨 `create_all`로는 못 바꾸므로, 사용자 승인 후 운영 `trials`(2건)·`day_logs`(30건)를 `DROP TABLE` → 배포 시 `init_db`가 새 표 3개 생성. 지운 데이터는 그날 백업(`~/backups/watchme-20261116-1259.sql.gz`)에 남음.
+- 배포 후: 데모 시드 `docker compose exec -T app python -m scripts.seed_demo` → 리포트 URL 200. `/`, `/start`, 기록·리포트·주간 PDF·CSS·글꼴 200, 외부 src/href 없음 확인.
+- 다음에 표 구조를 또 바꾸면: 지금은 마이그레이션 도구가 없으니 같은 방식(승인 → 백업 확인 → DROP → 배포)이거나 Alembic 도입.
