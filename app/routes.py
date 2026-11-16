@@ -28,7 +28,7 @@ START_GLOBAL = RateLimiter(500, 86400)
 DAY_PER_IP = RateLimiter(30, 60)
 AUTH_PER_IP = RateLimiter(10, 600)
 LIMITERS = (START_PER_IP, START_GLOBAL, DAY_PER_IP, AUTH_PER_IP)
-KAKAO_FLASH = {"linked", "cancel", "nomsg", "taken"}
+KAKAO_FLASH = {"linked", "cancel", "nomsg", "taken", "unlinked"}
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER

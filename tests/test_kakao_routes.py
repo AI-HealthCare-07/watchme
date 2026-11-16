@@ -1,3 +1,4 @@
+from datetime import timedelta
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -172,6 +173,68 @@ def test_check_shows_linked_line(client, kakao_env, monkeypatch):
     login(client, f"{loc}/kakao")
     page = client.get(loc).text
     assert "카톡 알림 켜짐" in page and "카카오로 연결" not in page
+
+
+def test_notify_toggle(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    assert client.post(f"{loc}/kakao/notify", data={"on": "0"}).status_code == 303
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 42).notify is False
+    assert "알림 꺼짐" in client.get(loc).text
+    client.post(f"{loc}/kakao/notify", data={"on": "1"})
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 42).notify is True
+
+
+def test_notify_without_link_400(client, kakao_env):
+    loc = _start_and_setup(client)
+    assert client.post(f"{loc}/kakao/notify", data={"on": "0"}).status_code == 400
+
+
+def test_unlink_deletes_even_if_kakao_fails(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    fake_kakao(monkeypatch, lambda r: httpx.Response(500, text="down"))
+    r = client.post(f"{loc}/kakao/unlink")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}?kakao=unlinked"
+    assert count_accounts(client) == 0
+    with db_of(client) as db:
+        assert accounts.owner_of(db, loc.removeprefix("/c/")) is None
+    page = client.get(r.headers["location"])
+    assert page.status_code == 200 and "연결을 끊었어요" in page.text
+
+
+def test_unlink_calls_kakao_unlink(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    client.post(f"{loc}/kakao/unlink")
+    assert any(r.url.path == "/v1/user/unlink" for r in seen)
+
+
+def test_dead_token_shows_reconnect(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    with db_of(client) as db:
+        accounts.mark_dead(db, 42)
+    page = client.get(loc).text
+    assert "카톡 연결이 끊겼어요" in page and "다시 연결" in page
+
+
+def test_sunday_weight_label(client):
+    from tests.test_routes import _set_day
+    from app.clock import today_kst
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 10)
+    start = today_kst() - timedelta(days=9)
+    sunday = next(n for n in range(1, 11) if (start + timedelta(days=n - 1)).weekday() == 6)
+    weekday = next(n for n in range(1, 11) if (start + timedelta(days=n - 1)).weekday() == 2)
+    assert "체중 재는 날" in client.get(f"{loc}?day={sunday}").text
+    assert "체중 재는 날" not in client.get(f"{loc}?day={weekday}").text
 
 
 def test_auth_rate_limited(client, kakao_env):

@@ -2,7 +2,7 @@
 import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,7 @@ from app.db import get_db
 from app.messages import WELCOME
 from app.plan import DAYS
 from app.ratelimit import client_ip
-from app.routes import AUTH_PER_IP, PUBLIC_BASE_URL, _error, _too_many
+from app.routes import AUTH_PER_IP, DAY_PER_IP, PUBLIC_BASE_URL, _error, _too_many
 from app.service import get_trial
 
 COOKIE = "wm_kakao"
@@ -91,6 +91,33 @@ def _link_trial(request: Request, db: Session, token: str, kakao_id: int, tokens
         except kakao.KakaoError as e:
             print(f"kakao welcome failed: {e}")
     return RedirectResponse(f"/c/{token}?kakao=linked", status_code=303)
+
+
+@router.post("/c/{token}/kakao/notify", dependencies=[Depends(_require_enabled)])
+def kakao_notify(request: Request, token: str, on: str = Form(""), db: Session = Depends(get_db)):
+    if not DAY_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    acc = accounts.owner_of(db, token)
+    if acc is None:
+        return _error(request, 400, "카카오에 연결된 체험이 아니에요.")
+    accounts.set_notify(db, acc.kakao_id, on == "1")
+    return RedirectResponse(f"/c/{token}", status_code=303)
+
+
+@router.post("/c/{token}/kakao/unlink", dependencies=[Depends(_require_enabled)])
+def kakao_unlink(request: Request, token: str, db: Session = Depends(get_db)):
+    if not DAY_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    acc = accounts.owner_of(db, token)
+    if acc is None:
+        return RedirectResponse(f"/c/{token}", status_code=303)
+    if acc.refresh_token_enc:
+        try:  # 카카오 쪽 동의 철회. 실패해도 우리 쪽 정보는 지운다
+            kakao.unlink(kakao.refresh(kakao.decrypt(acc.refresh_token_enc)).access_token)
+        except kakao.KakaoError as e:
+            print(f"kakao unlink failed: {e}")
+    accounts.delete_account(db, acc.kakao_id)
+    return RedirectResponse(f"/c/{token}?kakao=unlinked", status_code=303)
 
 
 def _find_trial(request: Request, db: Session, kakao_id: int, tokens: kakao.Tokens):

@@ -16,8 +16,14 @@
 {{ kakao_flash(kakao.flash) }}
 {% if not finished %}
   {% if not kakao.account %}{{ kakao_card(token) }}
-  {% elif not kakao.account.can_message %}<p class="kline">카톡 메시지 동의가 없어서 알림을 보낼 수 없어요 · <a href="/c/{{ token }}/kakao">다시 연결</a></p>
-  {% else %}<p class="kline">💬 카톡 알림 켜짐</p>
+  {% elif not kakao.account.can_message %}<p class="kline">{{ "카톡 연결이 끊겼어요" if kakao.account.refresh_token_enc is none else "카톡 메시지 동의가 없어서 알림을 보낼 수 없어요" }} · <a href="/c/{{ token }}/kakao">다시 연결</a></p>
+  {% else %}
+  <div class="kline">
+    {% set on = kakao.account.notify %}
+    <span>{{ "💬 카톡 알림 켜짐" if on else "🔕 카톡 알림 꺼짐" }}</span>
+    <form method="post" action="/c/{{ token }}/kakao/notify"><input type="hidden" name="on" value="{{ '0' if on else '1' }}"><button class="linkish">{{ "끄기" if on else "켜기" }}</button></form>
+    <form method="post" action="/c/{{ token }}/kakao/unlink"><button class="linkish">연결 끊기</button></form>
+  </div>
   {% endif %}
 {% endif %}
 {% endif %}
@@ -56,7 +62,7 @@
   <div class="meal{{ ' free' if d.free_meal }}"><i>{{ "🎉" if d.free_meal else "🍽️" }}</i><b>저녁</b><span>{{ d.meals.dinner }}
     {% if d.notes %}<span class="notes">{% for n in d.notes %}<em>{{ n }}</em>{% endfor %}</span>{% endif %}</span></div>
   <div class="meal"><i>🚶</i><b>운동</b><span>{{ d.exercise }}</span></div>
-  <label class="wt">⚖️ 체중 <small>(선택)</small>
+  <label class="wt{{ ' sunday' if d.date.weekday() == 6 }}">⚖️ {% if d.date.weekday() == 6 %}<b>오늘은 체중 재는 날</b>{% else %}체중 <small>(선택)</small>{% endif %}
     <span><input name="weight_kg" type="number" inputmode="decimal" step="0.1" min="30" max="250" placeholder="—"
            value="{{ log.weight_kg if log and log.weight_kg is not none else '' }}"> kg</span></label>
   <div class="two">
