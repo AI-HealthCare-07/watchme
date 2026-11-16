@@ -20,5 +20,8 @@ dev = ["pytest", "httpx", "pypdf"]
 [tool.setuptools]
 packages = ["app"]
 
+[tool.setuptools.package-data]
+app = ["data/*.json", "fonts/*", "templates/*.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
