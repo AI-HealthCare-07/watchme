@@ -1,0 +1,254 @@
+from datetime import timedelta
+from urllib.parse import parse_qs, urlsplit
+
+import httpx
+import pytest
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app import accounts
+from app.models import KakaoAccount
+from tests.test_kakao import fake_kakao, form_of, kakao_env  # noqa: F401  (fixture)
+from tests.test_routes import _start_and_setup, client  # noqa: F401  (fixture)
+
+
+def kakao_api(monkeypatch, kakao_id=42, scope="talk_message", token_status=200):
+    """가짜 카카오: 토큰·회원정보·나에게 보내기. 받은 요청 목록을 돌려준다."""
+    def handler(r):
+        if r.url.path == "/oauth/token":
+            if token_status != 200:
+                return httpx.Response(token_status, text="down")
+            return httpx.Response(200, json={"access_token": "a", "refresh_token": "r", "scope": scope})
+        if r.url.path == "/v2/user/me":
+            return httpx.Response(200, json={"id": kakao_id})
+        return httpx.Response(200, json={"result_code": 0})
+    return fake_kakao(monkeypatch, handler)
+
+
+def memos(seen):
+    return [form_of(r)["template_object"] for r in seen if r.url.path.endswith("/memo/default/send")]
+
+
+def login(client, start_path):
+    """로그인 시작 → 카카오가 돌려보낸 것처럼 콜백 호출."""
+    r = client.get(start_path)
+    assert r.status_code == 303
+    state = parse_qs(urlsplit(r.headers["location"]).query)["state"][0]
+    return client.get(f"/auth/kakao/callback?code=c1&state={state}")
+
+
+def db_of(client):
+    return Session(client.engine)
+
+
+def count_accounts(client):
+    with db_of(client) as db:
+        return db.scalar(select(func.count()).select_from(KakaoAccount))
+
+
+def test_kakao_routes_404_without_keys(client):
+    loc = _start_and_setup(client)
+    for path in (f"{loc}/kakao", "/auth/kakao", "/auth/kakao/callback?code=c&state=s"):
+        assert client.get(path).status_code == 404
+    assert "카카오로 연결" not in client.get(loc).text
+    assert "카카오로 연결" not in client.get(f"{loc}/ready").text
+    assert "카카오로 이어서 하기" not in client.get("/").text
+
+
+def test_start_redirects_to_kakao_without_trial_token(client, kakao_env):
+    loc = _start_and_setup(client)
+    token = loc.removeprefix("/c/")
+    r = client.get(f"{loc}/kakao")
+    assert r.status_code == 303
+    assert r.headers["location"].startswith("https://kauth.kakao.com/oauth/authorize?")
+    assert token not in r.headers["location"]
+    assert "wm_kakao" in r.cookies
+
+
+def test_callback_links_trial_and_sends_welcome(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    r = login(client, f"{loc}/kakao")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}?kakao=linked"
+    with db_of(client) as db:
+        assert accounts.owner_of(db, loc.removeprefix("/c/")).kakao_id == 42
+    assert len(memos(seen)) == 1 and "연결됐어요" in memos(seen)[0]
+    assert "카톡이 연결됐어요" in client.get(r.headers["location"]).text
+    login(client, f"{loc}/kakao")
+    assert len(memos(seen)) == 1  # 환영 메시지는 하루 한 번
+
+
+@pytest.mark.parametrize("case", ["no_cookie", "forged", "state_mismatch"])
+def test_callback_bad_state(client, kakao_env, monkeypatch, case):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    r = client.get(f"{loc}/kakao")
+    state = parse_qs(urlsplit(r.headers["location"]).query)["state"][0]
+    if case == "no_cookie":
+        client.cookies.clear()
+    elif case == "forged":
+        client.cookies.set("wm_kakao", f"{state}.{loc.removeprefix('/c/')}.deadbeef")
+    elif case == "state_mismatch":
+        state = "other"
+    r = client.get(f"/auth/kakao/callback?code=c1&state={state}")
+    assert r.status_code == 400
+    assert count_accounts(client) == 0 and seen == []
+
+
+def test_callback_without_code_or_error_400(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    r = client.get(f"{loc}/kakao")
+    state = parse_qs(urlsplit(r.headers["location"]).query)["state"][0]
+    assert client.get(f"/auth/kakao/callback?state={state}").status_code == 400
+
+
+def test_callback_cancel_returns_to_trial(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    r = client.get(f"{loc}/kakao")
+    state = parse_qs(urlsplit(r.headers["location"]).query)["state"][0]
+    r = client.get(f"/auth/kakao/callback?error=access_denied&state={state}")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}?kakao=cancel"
+    assert seen == []
+    assert "카카오 연결을 취소했어요" in client.get(r.headers["location"]).text
+
+
+def test_callback_without_talk_message_scope(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch, scope="")
+    loc = _start_and_setup(client)
+    r = login(client, f"{loc}/kakao")
+    assert r.headers["location"] == f"{loc}?kakao=nomsg"
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 42).can_message is False
+    assert memos(seen) == []
+    assert "다시 연결" in client.get(loc).text
+
+
+def test_callback_trial_owned_by_other_account(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch, kakao_id=42)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    kakao_api(monkeypatch, kakao_id=43)
+    r = login(client, f"{loc}/kakao")
+    assert r.headers["location"] == f"{loc}?kakao=taken"
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 43) is None
+
+
+def test_callback_kakao_down(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch, token_status=500)
+    loc = _start_and_setup(client)
+    assert login(client, f"{loc}/kakao").status_code == 502
+
+
+def test_login_without_trial_finds_latest(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch, kakao_id=42)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    r = login(client, "/auth/kakao")
+    assert r.status_code == 303 and r.headers["location"] == loc
+    kakao_api(monkeypatch, kakao_id=99)
+    assert login(client, "/auth/kakao").status_code == 404
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 99) is None
+
+
+def test_ready_shows_card_and_no_refresh_when_not_linked(client, kakao_env):
+    loc = _start_and_setup(client)
+    page = client.get(f"{loc}/ready").text
+    assert "카카오로 연결" in page and 'http-equiv="refresh"' not in page
+    assert "카카오로 이어서 하기" in client.get("/").text
+
+
+def test_ready_keeps_refresh_without_keys(client):
+    loc = _start_and_setup(client)
+    assert 'http-equiv="refresh"' in client.get(f"{loc}/ready").text
+
+
+def test_check_shows_linked_line(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    assert "카카오로 연결" in client.get(loc).text
+    login(client, f"{loc}/kakao")
+    page = client.get(loc).text
+    assert "카톡 알림 켜짐" in page and "카카오로 연결" not in page
+
+
+def test_notify_toggle(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    assert client.post(f"{loc}/kakao/notify", data={"on": "0"}).status_code == 303
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 42).notify is False
+    assert "알림 꺼짐" in client.get(loc).text
+    client.post(f"{loc}/kakao/notify", data={"on": "1"})
+    with db_of(client) as db:
+        assert db.get(KakaoAccount, 42).notify is True
+
+
+def test_notify_without_link_400(client, kakao_env):
+    loc = _start_and_setup(client)
+    assert client.post(f"{loc}/kakao/notify", data={"on": "0"}).status_code == 400
+
+
+def test_unlink_deletes_even_if_kakao_fails(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    fake_kakao(monkeypatch, lambda r: httpx.Response(500, text="down"))
+    r = client.post(f"{loc}/kakao/unlink")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}?kakao=unlinked"
+    assert count_accounts(client) == 0
+    with db_of(client) as db:
+        assert accounts.owner_of(db, loc.removeprefix("/c/")) is None
+    page = client.get(r.headers["location"])
+    assert page.status_code == 200 and "연결을 끊었어요" in page.text
+
+
+def test_unlink_with_undecryptable_token_still_deletes(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    with db_of(client) as db:
+        db.get(KakaoAccount, 42).refresh_token_enc = "made-with-an-old-TOKEN_KEY"
+        db.commit()
+    r = client.post(f"{loc}/kakao/unlink")
+    assert r.status_code == 303 and count_accounts(client) == 0
+
+
+def test_unlink_calls_kakao_unlink(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    client.post(f"{loc}/kakao/unlink")
+    assert any(r.url.path == "/v1/user/unlink" for r in seen)
+
+
+def test_dead_token_shows_reconnect(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    with db_of(client) as db:
+        accounts.mark_dead(db, 42)
+    page = client.get(loc).text
+    assert "카톡 연결이 끊겼어요" in page and "다시 연결" in page
+
+
+def test_sunday_weight_label(client):
+    from tests.test_routes import _set_day
+    from app.clock import today_kst
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 10)
+    start = today_kst() - timedelta(days=9)
+    sunday = next(n for n in range(1, 11) if (start + timedelta(days=n - 1)).weekday() == 6)
+    weekday = next(n for n in range(1, 11) if (start + timedelta(days=n - 1)).weekday() == 2)
+    assert "체중 재는 날" in client.get(f"{loc}?day={sunday}").text
+    assert "체중 재는 날" not in client.get(f"{loc}?day={weekday}").text
+
+
+def test_auth_rate_limited(client, kakao_env):
+    loc = _start_and_setup(client)
+    codes = [client.get(f"{loc}/kakao").status_code for _ in range(11)]
+    assert codes[:10] == [303] * 10 and codes[10] == 429

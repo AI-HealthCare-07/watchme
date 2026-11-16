@@ -151,7 +151,13 @@ h1, h2, h3, p { margin: 0; }
 .kakao { background: #fee500; color: #191919; border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
 .kakao h2 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
 .kakao p { font-size: 13.5px; line-height: 1.55; color: #3c3c3c; }
-.kakao .btn, .kakao .btn:disabled { margin-top: 12px; background: #191919; color: #fee500; opacity: .9; cursor: default; }
+.kakao .btn { margin-top: 12px; background: #191919; color: #fee500; }
+/* 카톡 연결 상태 한 줄 (기록 화면) */
+.kline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: 13.5px; color: var(--muted); padding: 0 4px 12px; }
+.kline a, .kline .linkish { color: var(--ink-2); font-weight: 600; }
+.kline form { display: inline; }
+.linkish { background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; cursor: pointer; }
+.wt.sunday b { color: var(--brand-ink); font-weight: 800; }
 
 /* 단계 폼: JS가 없으면 모든 문항이 보이는 일반 폼 */
 .steps .error { margin-bottom: 14px; }

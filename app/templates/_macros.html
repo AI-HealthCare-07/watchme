@@ -5,7 +5,7 @@
 {% macro risk_bar(vs) %}<div class="bar" role="img" aria-label="{{ vs|vs_text }}"><i class="{{ 'lo' if vs <= 1 else '' }}" style="width:{{ '%.1f'|format([vs / 2, 1]|min * 100) }}%"></i><u></u></div>{% endmacro %}
 
 {# 개인정보 안내 (시작 화면·입력 화면 공통) #}
-{% macro privacy() %}<p class="muted privacy">수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), 일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일.</p>{% endmacro %}
+{% macro privacy() %}<p class="muted privacy">수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), 일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일. 카카오로 연결하면 카카오 회원번호와 메시지 발송 권한(암호화 보관)을 저장해요. 연결을 끊으면 바로 지워요.</p>{% endmacro %}
 
 {# 위험도 두 줄 + 막대 #}
 {% macro risk_rows(a) %}
@@ -15,3 +15,21 @@
 {{ risk_bar(a.diabetes_vs_avg) }}
 <p class="bar-legend">가운데 선 = {{ group_label(a.sex, a.age) }} 평균</p>
 {% endmacro %}
+
+{# 카톡 연결 안내 카드 (/ready·기록 화면) #}
+{% macro kakao_card(token) %}
+<section class="kakao">
+  <h2>카톡으로 아침 계획·저녁 체크 받기</h2>
+  <p>아침 7:30엔 오늘 계획, 저녁 9시엔 "잘 지키셨나요?"를 카카오톡 '나와의 채팅'으로 보내 드려요.</p>
+  <a class="btn" href="/c/{{ token }}/kakao">카카오로 연결</a>
+</section>
+{% endmacro %}
+
+{# 카카오 연결 결과 안내 #}
+{% macro kakao_flash(flash) %}{% if flash %}<p class="note" style="margin-bottom:12px">{{ {
+  "linked": "카톡이 연결됐어요 ✅",
+  "cancel": "카카오 연결을 취소했어요",
+  "nomsg": "메시지 동의가 없어서 알림을 보낼 수 없어요",
+  "taken": "이 체험은 다른 카카오 계정에 연결돼 있어요",
+  "unlinked": "카카오 연결을 끊었어요. 저장한 정보도 지웠어요.",
+}[flash] }}</p>{% endif %}{% endmacro %}

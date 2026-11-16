@@ -2,13 +2,16 @@ import secrets
 from datetime import date, timedelta
 
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models import DayLog, Trial, WeekDecision
+from app import accounts
+from app.models import DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
 from app.plan import DAYS, MAX_LEVEL, Profile, choose_variant
 from app.risk import LIMITS, assess
 
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
+SENT_KEEP_DAYS = 40  # 중복 발송 방지 기록은 이만큼만 (체험 30일 + 여유)
 SETUP_CHOICES = {
     "diet_style": {"veg", "meat", "mixed"},
     "lunch_place": {"home", "out", "store"},
@@ -97,6 +100,30 @@ def current_day(trial: Trial, today: date) -> int:
     return min(max((today - trial.start_date).days + 1, 1), DAYS)
 
 
+def next_trial(db: Session, trial: Trial, today: date, stats: dict | None = None) -> Trial:
+    """다음 30일 도전: 지금 체중(마지막 기록, 없으면 시작 체중)으로 새 체험, 맞춤 답변 복사. 한 체험에서 한 번만."""
+    done = db.get(NextTrial, trial.token)
+    if done:
+        return db.get(Trial, done.next_token)
+    weighed = [log.weight_kg for log in get_logs(db, trial.token) if log.weight_kg is not None]
+    new = start_trial(db, trial.sex, trial.age, trial.height_cm, weighed[-1] if weighed else trial.weight_kg,
+                      today=today, stats=stats)
+    p = profile_of(trial)
+    save_setup(db, new.token, p.diet_style, p.lunch_place, p.breakfast, p.exercise_min, list(p.free_days))
+    db.add(NextTrial(token=trial.token, next_token=new.token))
+    try:
+        db.commit()
+    except IntegrityError:  # 두 번 연달아 눌러 다른 요청이 먼저 저장함 → 방금 만든 체험은 지우고 그쪽으로
+        db.rollback()
+        db.delete(new)
+        db.commit()
+        return db.get(Trial, db.scalar(select(NextTrial.next_token).where(NextTrial.token == trial.token)))
+    owner = accounts.owner_of(db, trial.token)
+    if owner:
+        accounts.link(db, new.token, owner.kakao_id)
+    return new
+
+
 def purge_expired(db: Session, today: date) -> int:
     """보관 기간이 끝난 체험과 기록 삭제. 삭제한 체험 수 반환."""
     cutoff = today - timedelta(days=DAYS + RETENTION_DAYS)
@@ -104,6 +131,13 @@ def purge_expired(db: Session, today: date) -> int:
     # SQLite는 FK cascade가 기본으로 꺼져 있어 기록부터 직접 지움
     db.execute(delete(WeekDecision).where(WeekDecision.token.in_(expired)))
     db.execute(delete(DayLog).where(DayLog.token.in_(expired)))
+    db.execute(delete(TrialOwner).where(TrialOwner.token.in_(expired)))
+    db.execute(delete(NextTrial).where(NextTrial.token.in_(expired) | NextTrial.next_token.in_(expired)))
     n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount
+    # 남은 체험이 없는 카카오 계정은 토큰째 삭제
+    orphans = select(KakaoAccount.kakao_id).where(~KakaoAccount.kakao_id.in_(select(TrialOwner.kakao_id)))
+    db.execute(delete(SentMessage).where(
+        SentMessage.kakao_id.in_(orphans) | (SentMessage.day < today - timedelta(days=SENT_KEEP_DAYS))))
+    db.execute(delete(KakaoAccount).where(KakaoAccount.kakao_id.in_(orphans)))
     db.commit()
     return n

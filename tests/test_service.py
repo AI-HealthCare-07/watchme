@@ -133,3 +133,102 @@ def test_decide_level_twice_rejected(db):
         with pytest.raises(ValueError):
             decide_level(db, t, week, True)
     assert get_decisions(db, t) == {1: 1}
+
+
+# --- 다음 30일 도전 ---
+
+def _finished_trial(db, weights):
+    t = _start(db, today=TODAY - timedelta(days=30))
+    save_setup(db, t.token, **GOOD_SETUP)
+    for d, w in weights.items():
+        save_day(db, t.token, d, True, w)
+    return t
+
+
+def test_next_trial_copies_and_uses_last_weight(db):
+    from app.service import next_trial
+    old = _finished_trial(db, {5: 80.0, 20: 78.5})
+    new = next_trial(db, old, TODAY, stats=STATS)
+    assert new.token != old.token and new.weight_kg == 78.5 and new.start_date == TODAY
+    pick = lambda t: (t.sex, t.age, t.height_cm, t.diet_style, t.lunch_place, t.breakfast, t.exercise_min, t.free_days)  # noqa: E731
+    assert pick(new) == pick(old)
+    assert next_trial(db, old, TODAY, stats=STATS).token == new.token
+
+
+def test_next_trial_concurrent_double_submit_returns_existing(db, monkeypatch):
+    from app.models import NextTrial, Trial
+    from app.service import next_trial
+    old = _finished_trial(db, {})
+    first = next_trial(db, old, TODAY, stats=STATS)
+    count = len(db.scalars(select(Trial)).all())
+    real_get = db.get
+    # 두 번째 요청이 첫 요청의 NextTrial 저장 전에 확인한 것처럼: 확인은 비어 있고, 저장은 충돌
+    monkeypatch.setattr(db, "get", lambda model, key: None if model is NextTrial else real_get(model, key))
+    again = next_trial(db, old, TODAY, stats=STATS)
+    assert again.token == first.token
+    assert len(db.scalars(select(Trial)).all()) == count  # 고아 체험 없음
+
+
+def test_next_trial_without_weights_uses_start_weight(db):
+    from app.service import next_trial
+    old = _finished_trial(db, {})
+    assert next_trial(db, old, TODAY, stats=STATS).weight_kg == 80
+
+
+def test_next_trial_inherits_kakao_link(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.service import next_trial
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    old = _finished_trial(db, {})
+    accounts.save_account(db, 42, "r", True)
+    accounts.link(db, old.token, 42)
+    new = next_trial(db, old, TODAY, stats=STATS)
+    assert accounts.owner_of(db, new.token).kakao_id == 42
+
+
+# --- 보관 삭제: 카카오 정보도 같이 ---
+
+def test_purge_removes_orphan_kakao_account(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.models import KakaoAccount
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    old = _start(db, today=TODAY - timedelta(days=121))
+    accounts.save_account(db, 1, "r", True)
+    accounts.link(db, old.token, 1)
+    accounts.claim(db, 1, TODAY - timedelta(days=1), "morning")
+    shared_old, alive = _start(db, today=TODAY - timedelta(days=121)), _start(db)
+    accounts.save_account(db, 2, "r", True)
+    accounts.link(db, shared_old.token, 2)
+    accounts.link(db, alive.token, 2)
+    assert purge_expired(db, TODAY) == 2
+    assert db.get(KakaoAccount, 1) is None and db.get(KakaoAccount, 2) is not None
+    assert accounts.owner_of(db, alive.token).kakao_id == 2
+
+
+def test_purge_old_sent_messages(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.models import SentMessage
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    t = _start(db)
+    accounts.save_account(db, 1, "r", True)
+    accounts.link(db, t.token, 1)
+    accounts.claim(db, 1, TODAY - timedelta(days=41), "morning")
+    accounts.claim(db, 1, TODAY - timedelta(days=39), "morning")
+    purge_expired(db, TODAY)
+    assert [m.day for m in db.scalars(select(SentMessage))] == [TODAY - timedelta(days=39)]
+
+
+def test_purge_removes_next_trial_rows(db):
+    from app.models import NextTrial
+    from app.service import next_trial
+    old = _start(db, today=TODAY - timedelta(days=121))
+    save_setup(db, old.token, **GOOD_SETUP)
+    next_trial(db, old, TODAY - timedelta(days=90), stats=STATS)
+    purge_expired(db, TODAY)
+    assert db.scalars(select(NextTrial)).all() == []

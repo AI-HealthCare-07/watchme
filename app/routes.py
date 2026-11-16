@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from app import accounts, kakao
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_week_pdf
@@ -16,16 +17,19 @@ from app.progress import can_level_up, plateau, streak, summary_week, week_summa
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
-    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, profile_of, save_day, save_setup,
-    start_trial,
+    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, profile_of, save_day,
+    save_setup, start_trial,
 )
+from app.models import NextTrial
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
 START_PER_IP = RateLimiter(5, 600)
 START_GLOBAL = RateLimiter(500, 86400)
 DAY_PER_IP = RateLimiter(30, 60)
-LIMITERS = (START_PER_IP, START_GLOBAL, DAY_PER_IP)
+AUTH_PER_IP = RateLimiter(10, 600)
+LIMITERS = (START_PER_IP, START_GLOBAL, DAY_PER_IP, AUTH_PER_IP)
+KAKAO_FLASH = {"linked", "cancel", "nomsg", "taken", "unlinked"}
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER
@@ -50,6 +54,14 @@ def _to_setup(token: str):
     return RedirectResponse(f"/c/{token}/setup", status_code=303)
 
 
+def _kakao(request: Request, db: Session, token: str) -> dict | None:
+    """카카오 연결 카드·줄 표시용. 키가 없으면 None(카카오 화면 요소 전부 숨김)."""
+    if not kakao.enabled():
+        return None
+    flash = request.query_params.get("kakao")
+    return {"account": accounts.owner_of(db, token), "flash": flash if flash in KAKAO_FLASH else None}
+
+
 def _num(raw: str, cast, label: str):
     try:
         return cast(raw)
@@ -63,7 +75,7 @@ EXAMPLE = ("M", 45, 172, 82)  # 시작 화면 예시 인물
 @router.get("/")
 def landing(request: Request, stats: dict | None = Depends(get_stats)):
     example = assess(*EXAMPLE, stats=stats) if stats else None
-    return _page(request, "landing.html", example=example, preparing=stats is None)
+    return _page(request, "landing.html", example=example, preparing=stats is None, kakao_on=kakao.enabled())
 
 
 @router.get("/start")
@@ -153,7 +165,7 @@ def ready_page(request: Request, token: str, db: Session = Depends(get_db)):
         return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
     if not trial.setup_done:
         return _to_setup(token)
-    return _page(request, "ready.html", token=token)
+    return _page(request, "ready.html", token=token, kakao=_kakao(request, db, token))
 
 
 # 의심 카드 원인: 날마다 하나씩 돌아가며
@@ -190,7 +202,7 @@ def check_page(request: Request, token: str, day: int | None = None,
         doubt=DOUBTS[today % 4] if plateau(log_list, today) else None,
         summary=summary, can_up=can_up, decided=decisions.get(w) if w else None,
         next_level=next_level, next_notes=() if trial.plan_variant == "high_risk" else LEVEL_NOTES[next_level],
-        week=week_of(today), finished=not days_left(trial, today_kst()),
+        week=week_of(today), finished=not days_left(trial, today_kst()), kakao=_kakao(request, db, token),
     )
 
 
@@ -240,7 +252,25 @@ def report_page(request: Request, token: str, db: Session = Depends(get_db), sta
         return _to_setup(token)
     today = today_kst()
     report = build_report(trial, get_logs(db, token), today, stats=stats)
-    return _page(request, "report.html", token=token, report=report, left=days_left(trial, today))
+    nxt = db.get(NextTrial, token)
+    linked = kakao.enabled() and accounts.owner_of(db, token) is not None
+    return _page(request, "report.html", token=token, report=report, left=days_left(trial, today),
+                 next_token=nxt.next_token if nxt else None, linked=linked)
+
+
+@router.post("/c/{token}/next")
+def next_challenge(request: Request, token: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    if not START_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
+    if days_left(trial, today_kst()):
+        return _error(request, 400, "30일을 마친 뒤에 시작할 수 있어요.")
+    new = next_trial(db, trial, today_kst(), stats=stats)
+    return RedirectResponse(f"/c/{new.token}/ready", status_code=303)
 
 
 @router.get("/c/{token}/plan.pdf")

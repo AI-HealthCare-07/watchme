@@ -101,3 +101,19 @@
 - DB: `trials`에 맞춤 답변 컬럼이 생겨 `create_all`로는 못 바꾸므로, 사용자 승인 후 운영 `trials`(2건)·`day_logs`(30건)를 `DROP TABLE` → 배포 시 `init_db`가 새 표 3개 생성. 지운 데이터는 그날 백업(`~/backups/watchme-20261116-1259.sql.gz`)에 남음.
 - 배포 후: 데모 시드 `docker compose exec -T app python -m scripts.seed_demo` → 리포트 URL 200. `/`, `/start`, 기록·리포트·주간 PDF·CSS·글꼴 200, 외부 src/href 없음 확인.
 - 다음에 표 구조를 또 바꾸면: 지금은 마이그레이션 도구가 없으니 같은 방식(승인 → 백업 확인 → DROP → 배포)이거나 Alembic 도입.
+
+## 12. 카카오 연동 (2단계)
+- 설계: `docs/superpowers/specs/2026-11-16-watchme-phase2-design.md`. 키가 하나라도 없으면 카카오 기능 전체가 꺼지고 1단계 흐름만 동작.
+- 카카오 개발자 콘솔 (사용자가 직접):
+  1. 앱 만들기 → 카카오 로그인 활성화.
+  2. Redirect URI: `https://evrd.fyi/auth/kakao/callback`, `http://localhost:8000/auth/kakao/callback`.
+  3. 플랫폼 → Web 사이트 도메인: `https://evrd.fyi`, `http://localhost:8000`.
+  4. 동의항목: "카카오톡 메시지 전송(talk_message)"만 선택 동의. 닉네임 등은 안 씀.
+  5. 클라이언트 시크릿 켜기.
+- 서버 `.env` (권한 600, 값은 사용자가 직접 입력):
+  - `KAKAO_REST_API_KEY`, `KAKAO_CLIENT_SECRET`
+  - `TOKEN_KEY`: 카카오 refresh token 암호화 키(Fernet). 값 출력 없이 생성:
+    `cd ~/watchme && grep -q ^TOKEN_KEY= .env || python3 -c "import base64,os;print('TOKEN_KEY='+base64.urlsafe_b64encode(os.urandom(32)).decode())" >> .env`
+  - `TOKEN_KEY`는 백업(`pg_dump`)에 들어가지 않는다 → 백업 파일만으로는 토큰을 풀 수 없음. 잃어버리면 저장된 토큰을 못 풀어 사용자가 카톡을 다시 연결해야 함.
+- DB: 새 표 `kakao_accounts`, `trial_owners`, `sent_messages`, `next_trials` — 배포 시 `init_db`(`create_all`)가 생성. 기존 표 변경 없음.
+- 첫 실험 결과: (배포 후 기록)

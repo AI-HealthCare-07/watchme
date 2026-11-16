@@ -52,8 +52,10 @@
 
 <div class="kakao">
   <h2>여기서 멈추면 아까워요</h2>
-  <p>2달째부터는 카카오톡으로 매일 아침 계획, 저녁 체크, 일요일 체중 확인을 받아요.</p>
-  <button class="btn" type="button" disabled>카카오톡으로 이어가기 (곧 오픈)</button>
+  <p>지금 체중으로 다음 30일 계획을 바로 만들어 드려요.</p>
+  {% if linked %}<p>새 도전도 카톡으로 이어서 알려 드려요.</p>{% endif %}
+  {% if next_token %}<a class="btn" href="/c/{{ next_token }}">다음 도전 이어 가기</a>
+  {% else %}<form method="post" action="/c/{{ token }}/next"><button class="btn">다음 30일 도전하기</button></form>{% endif %}
 </div>
 {% endif %}
 {% endblock %}
