@@ -8,12 +8,13 @@ from datetime import date, timedelta
 from sqlalchemy.orm import Session
 
 from app.plan import DAYS
-from app.service import save_day, start_trial
+from app.service import save_day, save_setup, start_trial
 
 
 def seed(db: Session, today: date, stats: dict | None = None) -> str:
     start_weight = 82.0
     trial = start_trial(db, "M", 45, 172, start_weight, today=today - timedelta(days=DAYS + 1), stats=stats)
+    save_setup(db, trial.token, "mixed", "out", "light", 25, [2, 5])
     for day in range(1, DAYS + 1):
         # 하루 약 0.08kg 감량 + 측정 흔들림, 체중은 대략 이틀에 한 번
         weight = round(start_weight - 0.08 * day + random.uniform(-0.3, 0.3), 1) if random.random() < 0.5 else None

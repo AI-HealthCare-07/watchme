@@ -9,6 +9,7 @@ from app.risk import Assessment, assess
 TEMPLATES_PATH = Path(__file__).parent / "data" / "templates.json"
 VARIANTS = ("normal", "overweight", "obese", "high_risk")
 DAYS = 30
+MAX_LEVEL = 2  # 강도 단계 상한
 
 # 시나리오 가정 (설계 문서): BMI 23 이상은 12개월간 6% 감량(선형), 미만은 유지
 SCENARIO_MONTHS = (0, 3, 6, 12)

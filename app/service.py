@@ -4,11 +4,21 @@ from datetime import date, timedelta
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models import DayLog, Trial
-from app.plan import DAYS, choose_variant
+from app.models import DayLog, Trial, WeekDecision
+from app.plan import DAYS, MAX_LEVEL, choose_variant
 from app.risk import LIMITS, assess
 
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
+SETUP_CHOICES = {
+    "diet_style": {"veg", "meat", "mixed"},
+    "lunch_place": {"home", "out", "store"},
+    "breakfast": {"skip", "light", "full"},
+    "exercise_min": {10, 25, 45},
+}
+
+
+class InvalidSetup(ValueError):
+    pass
 
 
 def start_trial(db: Session, sex: str, age: int, height_cm: float, weight_kg: float, today: date, stats: dict | None = None) -> Trial:
@@ -43,6 +53,37 @@ def save_day(db: Session, token: str, day: int, kept: bool, weight_kg: float | N
     db.commit()
 
 
+def save_setup(db: Session, token: str, diet_style: str, lunch_place: str, breakfast: str, exercise_min: int, free_days: list[int]) -> None:
+    answers = dict(diet_style=diet_style, lunch_place=lunch_place, breakfast=breakfast, exercise_min=exercise_min)
+    for key, value in answers.items():
+        if value not in SETUP_CHOICES[key]:
+            raise InvalidSetup("선택지 중에서 골라 주세요")
+    days = sorted(set(free_days))
+    if len(days) != 2 or len(free_days) != 2 or not all(0 <= d <= 6 for d in days):
+        raise InvalidSetup("자유 한 끼 요일은 서로 다른 2개를 골라 주세요")
+    trial = db.get(Trial, token)
+    for key, value in answers.items():
+        setattr(trial, key, value)
+    trial.free_days = ",".join(map(str, days))
+    db.commit()
+
+
+def get_decisions(db: Session, token: str) -> dict[int, int]:
+    rows = db.scalars(select(WeekDecision).where(WeekDecision.token == token))
+    return {r.week: r.level for r in rows}
+
+
+def decide_level(db: Session, token: str, week: int, up: bool) -> int:
+    decisions = get_decisions(db, token)
+    if not 1 <= week <= 4 or week in decisions:
+        raise ValueError("이 주차는 결정할 수 없어요")
+    prev = decisions[max(decisions)] if decisions else 0
+    level = min(prev + 1, MAX_LEVEL) if up else prev
+    db.add(WeekDecision(token=token, week=week, level=level))
+    db.commit()
+    return level
+
+
 def get_logs(db: Session, token: str) -> list[DayLog]:
     return list(db.scalars(select(DayLog).where(DayLog.token == token).order_by(DayLog.day)))
 
@@ -56,6 +97,7 @@ def purge_expired(db: Session, today: date) -> int:
     cutoff = today - timedelta(days=DAYS + RETENTION_DAYS)
     expired = select(Trial.token).where(Trial.start_date <= cutoff)
     # SQLite는 FK cascade가 기본으로 꺼져 있어 기록부터 직접 지움
+    db.execute(delete(WeekDecision).where(WeekDecision.token.in_(expired)))
     db.execute(delete(DayLog).where(DayLog.token.in_(expired)))
     n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount
     db.commit()
