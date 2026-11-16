@@ -1,9 +1,11 @@
-"""참고 위험도: 같은 성별·연령대 평균 대비 BMI 구간 유병률 배수.
+"""참고 위험도: 같은 성별·연령대 평균 대비, 내 BMI에서의 예상 유병률 배수.
 
-vs_avg = 유병률(성별, 연령대, BMI 구간) / 유병률(성별, 연령대, 전체)
-수치는 app/data/korea_stats.json (국민건강영양조사 원시자료에서 계산, scripts/knhanes_stats.py).
+vs_avg = sigmoid(b0 + b1·BMI) / 유병률(성별, 연령대, 전체)
+b0, b1은 성별×연령대×질환마다 가중 로지스틱 회귀로 구함 (scripts/knhanes_stats.py,
+국민건강영양조사 원시자료). 결과는 app/data/korea_stats.json.
 """
 import json
+import math
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -12,6 +14,8 @@ STATS_PATH = Path(__file__).parent / "data" / "korea_stats.json"
 
 LIMITS = {"age": (18, 100), "height_cm": (120, 220), "weight_kg": (30, 250)}
 LABELS = {"age": "나이", "height_cm": "키", "weight_kg": "몸무게"}
+# 자료가 드문 극단 BMI는 외삽하지 않고 경계값으로 계산
+MODEL_BMI_RANGE = (16.0, 40.0)
 
 
 class InvalidInput(ValueError):
@@ -71,6 +75,12 @@ def level(vs_avg: float) -> str:
     return "높음"
 
 
+def vs_avg(model: dict, bmi: float) -> float:
+    x = min(max(bmi, MODEL_BMI_RANGE[0]), MODEL_BMI_RANGE[1])
+    p = 1 / (1 + math.exp(-(model["b0"] + model["b1"] * x)))
+    return p / model["all"]
+
+
 def _validate(sex, age, height_cm, weight_kg) -> None:
     if sex not in ("M", "F"):
         raise InvalidInput("성별을 선택해 주세요.")
@@ -89,8 +99,8 @@ def assess(sex: str, age: int, height_cm: float, weight_kg: float, stats: dict |
 
     bmi = round(weight_kg / (height_cm / 100) ** 2, 1)
     band = bmi_band(bmi)
-    ht = group["hypertension"][band] / group["hypertension"]["all"]
-    dm = group["diabetes"][band] / group["diabetes"]["all"]
+    ht = vs_avg(group["hypertension"], bmi)
+    dm = vs_avg(group["diabetes"], bmi)
     return Assessment(
         sex=sex,
         age=age,

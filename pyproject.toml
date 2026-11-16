@@ -15,6 +15,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "httpx", "pypdf"]
+stats = ["pyreadstat", "pandas", "numpy"]
 
 [tool.setuptools]
 packages = ["app"]

@@ -45,3 +45,9 @@ def test_scenario_loses_6_percent_a_year_when_bmi_23_or_more():
 def test_scenario_keeps_weight_when_bmi_below_23():
     pts = scenario(_a(175, 65), stats=STATS)
     assert {p.weight_kg for p in pts} == {65.0}
+
+
+def test_scenario_risk_falls_as_weight_falls():
+    pts = scenario(_a(170, 80), stats=STATS)
+    dm = [p.assessment.diabetes_vs_avg for p in pts]
+    assert dm == sorted(dm, reverse=True) and dm[-1] < dm[0]
