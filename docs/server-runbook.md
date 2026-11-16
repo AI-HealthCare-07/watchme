@@ -77,3 +77,16 @@
   - 주의: `(crontab -l; echo ...) | crontab -`가 26.04에서 조용히 빈 crontab을 남김 → 파일로 만들어 `crontab /tmp/ct`로 등록.
 - 복원 검증: 표본 테이블 3행 → 덤프 → 빈 DB `restore_test`에 복원 → 3행 일치, 정리함.
 - 서버 밖 사본: 개발 PC가 `scripts/pull-backup.ps1`로 `scp evrd:backups/latest.sql.gz` → `%USERPROFILE%\Backups\watchme\`(30개 보관). 수동 실행 확인. Windows 작업 스케줄러 "Watchme pull backup"(로그온 시 + 매일 12:00, 놓치면 가능할 때 실행) 등록, 첫 실행 결과 0.
+
+## 9. evrd.fyi 직접 연결: 포트포워딩 + Caddy + DDNS (2026-11-16)
+- 회선: KT 공유기 <공유기 모델>(GiGA WiFi home), WAN DHCP 공인 IP `<집 공인 IP>` (CGNAT 아님: 공유기 WAN IP = 서버에서 본 공인 IP).
+- 공유기 (관리 페이지 `http://<LAN IP>`):
+  - 장치설정 → 네트워크 관리 → LAN 연결 설정 → 수동 IP 할당: `<MAC>` → `<LAN IP>`
+  - 장치설정 → 트래픽 관리 → 포트 포워딩: TCP 80→<LAN IP>:80, TCP 443→<LAN IP>:443 (소스 IP·포트 비움). DMZ·UPnP 안 씀.
+  - KT는 80/443을 막지 않음 (LTE 폰에서 nginx 테스트 페이지로 확인).
+- Caddy (`compose.yaml`의 `caddy`, `Caddyfile`): `${LAN_IP}:80/443`에만 바인딩. 0.0.0.0:443은 Tailscale Funnel(tailscale0:443)과 충돌하므로. 인증서는 Let's Encrypt HTTP-01 자동 발급·갱신(볼륨 `caddy_data`). 접근 로그 끔.
+- 방문자 IP: Caddy는 들어온 X-Forwarded-For를 버리고 실제 IP로 덮어씀 → `client_ip`(첫 값) 그대로. 위조 XFF 6회 → 6번째 429로 확인. Funnel 경로도 계속 동작.
+- DNS (Porkbun): `evrd.fyi` A → 공인 IP, TTL 600. Vercel A·www CNAME 삭제. google-site-verification TXT는 유지.
+- DDNS: `ddns/update.py` (표준 라이브러리, 호스트 python3), cron 5분마다, 바뀔 때만 `~/ddns.log`에 기록. 키는 서버 `.env`의 `PORKBUN_API_KEY`/`PORKBUN_SECRET_KEY` (사용자가 직접 입력, 600). 도메인 API Access 켜야 동작.
+- `.env`: `LAN_IP=<LAN IP>`, `PUBLIC_BASE_URL=https://evrd.fyi` (QR·링크).
+- 문제 시: `docker compose logs caddy` (인증서), `dig +short evrd.fyi @1.1.1.1` (DNS), `cat ~/ddns.log`. 서버 IP가 바뀌면 공유기 할당과 `.env`의 LAN_IP를 같이 확인.
