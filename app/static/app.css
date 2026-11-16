@@ -35,7 +35,7 @@ h1, h2, h3, p { margin: 0; }
 .brand { display: flex; align-items: center; justify-content: space-between; font-weight: 900; font-size: 15px;
          letter-spacing: .04em; text-decoration: none; }
 .brand small { font-weight: 600; font-size: 12px; opacity: .85; letter-spacing: 0; }
-.hero h1 { font-size: 27px; line-height: 1.3; font-weight: 800; margin-top: 22px; }
+.hero h1 { font-size: 27px; line-height: 1.3; font-weight: 800; margin-top: 22px; text-wrap: balance; word-break: keep-all; }
 .hero .sub { font-size: 14px; opacity: .92; margin-top: 8px; line-height: 1.5; }
 .hero .kicker { font-size: 13px; opacity: .85; margin-top: 22px; font-weight: 600; }
 .hero .kicker + h1 { margin-top: 6px; }
@@ -139,6 +139,13 @@ h1, h2, h3, p { margin: 0; }
 .stamps .today { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--brand); }
 .stamps .sel:not(.today) { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--faint); }
 .risk-line { font-size: 14.5px; margin-top: 4px; }
+
+/* 리포트 */
+.was-text { color: var(--faint); font-weight: 500; font-size: 13px; margin-right: 6px; }
+.kakao { background: #fee500; color: #191919; border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+.kakao h2 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+.kakao p { font-size: 13.5px; line-height: 1.55; color: #3c3c3c; }
+.kakao .btn, .kakao .btn:disabled { margin-top: 12px; background: #191919; color: #fee500; opacity: .9; cursor: default; }
 
 /* 단계 폼: JS가 없으면 모든 문항이 보이는 일반 폼 */
 .steps .error { margin-bottom: 14px; }

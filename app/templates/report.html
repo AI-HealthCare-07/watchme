@@ -1,49 +1,60 @@
 {% extends "base.html" %}
-{% from "_macros.html" import risk %}
 {% block title %}Watchme · 30일 결과{% endblock %}
-{% block body %}
+{% macro compare(name, before, after) %}
+<div class="risk-row"><span>{{ name }}</span>
+  <span>{% if after is not none %}{% if before|vs_text != after|vs_text %}<s class="was-text">{{ before|vs_text }}</s>{% endif %}
+    <b class="{{ 'risk-lo' if after < before else 'risk-hi' if after > 1 else '' }}">{{ after|vs_text }}</b>
+  {% else %}<b>{{ before|vs_text }}</b>{% endif %}</span></div>
+<div class="bar">
+  <i class="was" style="width:{{ '%.1f'|format([before / 2, 1]|min * 100) }}%"></i>
+  {% if after is not none %}<i class="{{ 'lo' if after <= 1 else '' }}" style="width:{{ '%.1f'|format([after / 2, 1]|min * 100) }}%"></i>{% endif %}
+  <u></u>
+</div>
+{% endmacro %}
+{% block hero %}
 {% if report is none %}
-<div class="card">
-  <h1>{{ left }}일 남았어요</h1>
-  <p class="muted">30일이 지나면 처음과 비교한 변화 리포트를 볼 수 있어요. 그때까지 매일 기록해 주세요.</p>
-  <a class="btn" href="/c/{{ token }}">오늘 기록하러 가기</a>
-</div>
+<p class="kicker">30일 결과</p><h1>{{ left }}일 남았어요</h1>
+<p class="sub">30일이 지나면 처음과 비교한 변화 리포트를 볼 수 있어요.</p>
 {% else %}
-{% set r = report %}
-<h1>30일 결과</h1>
-<p class="muted">처음 입력한 몸무게와 마지막으로 기록한 몸무게를 비교했어요.</p>
-
-<div class="card">
-  <h2>기록</h2>
-  <table>
-    <tr><th>지킨 날</th><td><b>{{ r.kept_days }}</b> / 30일</td></tr>
-    <tr><th>기록한 날</th><td>{{ r.logged_days }} / 30일</td></tr>
-    <tr><th>몸무게</th><td>{{ "%.1f"|format(r.start_weight) }}kg
-      {% if r.end_weight is not none %}→ {{ "%.1f"|format(r.end_weight) }}kg
-        <b class="{{ 'good' if r.weight_change < 0 else '' }}">({{ "%+.1f"|format(r.weight_change) }}kg)</b>{% endif %}</td></tr>
-  </table>
-  {% if not r.enough_data %}
-  <p class="muted" style="margin-top:10px">기록이 적어서(체중 2번 이상·10일 이상 필요) 변화는 참고만 해 주세요.</p>
-  {% endif %}
-</div>
-
-<div class="card">
-  <h2>한국 평균과 비교</h2>
-  <table>
-    <tr><th></th><td class="muted">처음</td><td class="muted">지금</td></tr>
-    <tr><th>BMI</th><td>{{ "%.1f"|format(r.before.bmi) }} ({{ r.before.bmi_band }})</td>
-        <td>{% if r.after %}{{ "%.1f"|format(r.after.bmi) }} ({{ r.after.bmi_band }}){% else %}-{% endif %}</td></tr>
-    <tr><th>고혈압</th><td>{{ risk(r.before.hypertension_vs_avg, r.before.hypertension_level) }}</td>
-        <td>{% if r.after %}{{ risk(r.after.hypertension_vs_avg, r.after.hypertension_level) }}{% else %}-{% endif %}</td></tr>
-    <tr><th>당뇨</th><td>{{ risk(r.before.diabetes_vs_avg, r.before.diabetes_level) }}</td>
-        <td>{% if r.after %}{{ risk(r.after.diabetes_vs_avg, r.after.diabetes_level) }}{% else %}-{% endif %}</td></tr>
-  </table>
-</div>
-
-<div class="card">
-  <h2>2달째부터 카카오톡으로 이어가기</h2>
-  <p class="muted">매일 아침 그날 계획, 저녁 체크와 응원 메시지, 일요일 체중 확인을 카카오톡으로 받아요. 곧 열려요.</p>
-</div>
-<a class="btn secondary" href="/c/{{ token }}">기록 페이지로</a>
+{% set n = report.kept_days %}
+<p class="kicker">30일 결과</p>
+{% if n >= 24 %}<h1>30일 완주! {{ n }}일을 지켰어요 🎉</h1>
+{% elif n >= 12 %}<h1>30일 완주! {{ n }}일을 지켰어요</h1>
+{% else %}<h1>30일이 지났어요. {{ n }}일을 지켰어요</h1>{% endif %}
 {% endif %}
 {% endblock %}
+{% block sheet %}
+{% if report is none %}
+<div class="card"><p class="muted">그때까지 매일 기록해 주세요. 체중을 두 번 이상 적어 두면 변화를 더 정확히 비교할 수 있어요.</p></div>
+{% else %}
+{% set r = report %}
+<div class="card">
+  <h2>몸무게 <small>30일 중 {{ r.logged_days }}일 기록</small></h2>
+  {% if r.end_weight is not none %}
+  <div class="big"><strong class="{{ 'risk-lo' if r.weight_change < 0 else '' }}">{{ "%+.1f"|format(r.weight_change) }}kg</strong>
+    <span>{{ "%.1f"|format(r.start_weight) }} → {{ "%.1f"|format(r.end_weight) }}kg</span></div>
+  {% else %}
+  <p class="muted">체중 기록이 없어요. 처음 몸무게 {{ "%.1f"|format(r.start_weight) }}kg 기준으로만 보여 드려요.</p>
+  {% endif %}
+  {% if not r.enough_data %}<p class="muted" style="margin-top:8px;font-size:13px">기록이 적어서(체중 2번 이상·10일 이상 필요) 변화는 참고만 해 주세요.</p>{% endif %}
+</div>
+
+<div class="card">
+  <h2>한국인 평균과 비교 <small>처음 → 지금</small></h2>
+  {{ compare("고혈압", r.before.hypertension_vs_avg, r.after.hypertension_vs_avg if r.after else none) }}
+  {{ compare("당뇨", r.before.diabetes_vs_avg, r.after.diabetes_vs_avg if r.after else none) }}
+  <p class="bar-legend">가운데 선 = 한국인 평균 · 옅은 막대 = 처음</p>
+</div>
+
+{% if r.plateau %}
+<div class="card doubt"><p>🕵️ 마지막 주는 꾸준히 지켰는데 체중이 정체였어요. 음료·간식·소스를 한번 점검해 봐요.</p></div>
+{% endif %}
+
+<div class="kakao">
+  <h2>여기서 멈추면 아까워요</h2>
+  <p>2달째부터는 카카오톡으로 매일 아침 계획, 저녁 체크, 일요일 체중 확인을 받아요.</p>
+  <button class="btn" type="button" disabled>카카오톡으로 이어가기 (곧 오픈)</button>
+</div>
+{% endif %}
+{% endblock %}
+{% block cta %}{% if report is none %}<a class="btn" href="/c/{{ token }}">오늘 기록하러 가기</a>{% else %}<a class="btn btn-soft" href="/c/{{ token }}">기록 화면으로</a>{% endif %}{% endblock %}

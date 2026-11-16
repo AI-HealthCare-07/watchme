@@ -16,7 +16,7 @@
 </div></header>
 {% set cta_html %}{% block cta %}{% endblock %}{% endset %}
 <main class="sheet{{ '' if cta_html|trim else ' no-cta' }}">
-  {% block sheet %}{% block body %}{% endblock %}{% endblock %}
+  {% block sheet %}{% endblock %}
   <p class="foot">{{ DISCLAIMER }}</p>
 </main>
 {% if cta_html|trim %}<div class="cta"><div class="cta-in">{{ cta_html }}</div></div>{% endif %}

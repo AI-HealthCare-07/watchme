@@ -214,8 +214,8 @@ def test_seeded_demo_report(client):
         token = seed(db, today_kst(), stats=STATS)
     r = client.get(f"/c/{token}/report")
     assert r.status_code == 200
-    assert "30일 결과" in r.text
-    assert "카카오톡" in r.text
+    assert "30일 완주" in r.text or "30일이 지났어요" in r.text
+    assert "카카오톡으로 이어가기" in r.text
     assert client.get(f"/c/{token}").status_code == 200
 
 
@@ -406,3 +406,40 @@ def test_no_weights_week_summary(client):
     _log(client, loc, 7)
     r = client.get(loc)
     assert r.status_code == 200 and "1주차 요약" in r.text and "체중 기록 없음" in r.text
+
+
+# --- 30일 리포트 ---
+from app.service import save_day
+
+
+def _finished(client, kept, weights=None):
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 31)
+    token = loc.rsplit("/", 1)[1]
+    with Session(client.engine) as s:
+        for d in range(1, 31):
+            save_day(s, token, d, d <= kept, (weights or {}).get(d))
+    return loc
+
+
+@pytest.mark.parametrize("kept,copy", [
+    (25, "30일 완주! 25일을 지켰어요 🎉"), (15, "30일 완주! 15일을 지켰어요"), (5, "30일이 지났어요. 5일을 지켰어요"),
+])
+def test_report_completion_copy(client, kept, copy):
+    r = client.get(f"{_finished(client, kept, {1: 80.0, 30: 78.5})}/report")
+    assert r.status_code == 200 and copy in r.text
+    assert "-1.5kg" in r.text or "−1.5kg" in r.text
+    if kept < 24:
+        assert "🎉</h1>" not in r.text
+
+
+def test_report_plateau_line(client):
+    r = client.get(f"{_finished(client, 30, {24: 80.0, 30: 80.2})}/report")
+    assert "정체" in r.text
+    r2 = client.get(f"{_finished(client, 30, {24: 80.0, 30: 79.0})}/report")
+    assert "정체" not in r2.text
+
+
+def test_report_without_weights(client):
+    r = client.get(f"{_finished(client, 20)}/report")
+    assert r.status_code == 200 and "체중 기록이 없어요" in r.text
