@@ -39,6 +39,14 @@ def load_stats() -> dict:
     return json.loads(STATS_PATH.read_text(encoding="utf-8"))
 
 
+def get_stats() -> dict | None:
+    """FastAPI 의존성 (테스트에서 교체). 통계 파일이 아직 없으면 None → 화면에서 '준비 중'."""
+    try:
+        return load_stats()
+    except FileNotFoundError:
+        return None
+
+
 def bmi_band(bmi: float) -> str:
     # 대한비만학회 기준
     if bmi < 18.5:
