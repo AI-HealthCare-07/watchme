@@ -105,11 +105,12 @@
 ## 12. 카카오 연동 (2단계)
 - 설계: `docs/superpowers/specs/2026-11-16-watchme-phase2-design.md`. 키가 하나라도 없으면 카카오 기능 전체가 꺼지고 1단계 흐름만 동작.
 - 카카오 개발자 콘솔 (사용자가 직접):
-  1. 앱 만들기 → 카카오 로그인 활성화.
-  2. Redirect URI: `https://evrd.fyi/auth/kakao/callback`, `http://localhost:8000/auth/kakao/callback`.
-  3. 플랫폼 → Web 사이트 도메인: `https://evrd.fyi`, `http://localhost:8000`.
-  4. 동의항목: "카카오톡 메시지 전송(talk_message)"만 선택 동의. 닉네임 등은 안 씀.
-  5. 클라이언트 시크릿 켜기.
+  1. `developers.kakao.com/console/app` → 앱 만들기.
+  2. [카카오 로그인] > [사용 설정] → 상태 ON (OFF면 KOE004).
+  3. [앱] > [플랫폼 키] > [REST API 키] → 카카오 로그인 리다이렉트 URI: `https://evrd.fyi/auth/kakao/callback`, `http://localhost:8000/auth/kakao/callback` (틀리면 KOE006). 호출 허용 IP는 비워 둠.
+  4. 같은 화면 [클라이언트 시크릿] → 코드 확인(기본 활성). REST API 키와 이 코드를 `.env`에 넣음.
+  5. [앱] > [제품 링크 관리] > [웹 도메인]: `https://evrd.fyi` (메시지 버튼 링크 허용).
+  6. [카카오 로그인] > [동의항목] > [접근권한] → "카카오톡 메시지 전송(talk_message)"만 선택 동의. 닉네임 등은 안 씀.
 - 서버 `.env` (권한 600, 값은 사용자가 직접 입력):
   - `KAKAO_REST_API_KEY`, `KAKAO_CLIENT_SECRET`
   - `TOKEN_KEY`: 카카오 refresh token 암호화 키(Fernet). 값 출력 없이 생성:
