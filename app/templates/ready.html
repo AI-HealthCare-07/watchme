@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+{% from "_macros.html" import kakao_card %}
 {% block title %}Watchme · 준비 완료{% endblock %}
-{% block head %}<meta http-equiv="refresh" content="6;url=/c/{{ token }}">{% endblock %}
+{# 카톡 연결 카드가 보이면 읽기 전에 넘어가지 않게 자동 이동을 끈다 #}
+{% block head %}{% if not (kakao and not kakao.account) %}<meta http-equiv="refresh" content="6;url=/c/{{ token }}">{% endif %}{% endblock %}
 {% block hero %}
 <p class="kicker">계획 준비 완료</p>
 <h1>우리 30일 챌린지,<br>같이 힘내 봐요! 💪</h1>
@@ -10,6 +12,7 @@
 </div>
 {% endblock %}
 {% block sheet %}
+{% if kakao and not kakao.account %}{{ kakao_card(token) }}{% endif %}
 <section class="card">
   <h2>시작 전에 꼭 확인해 주세요</h2>
   <ul class="cautions">

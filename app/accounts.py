@@ -19,6 +19,11 @@ def save_account(db: Session, kakao_id: int, refresh_token: str | None, can_mess
     return acc
 
 
+def day_number(trial: Trial, today: date) -> int:
+    """시작일 기준 며칠째 (current_day와 달리 1~30으로 자르지 않음: 31 = 리포트 날)."""
+    return (today - trial.start_date).days + 1
+
+
 def owner_of(db: Session, token: str) -> KakaoAccount | None:
     owner = db.get(TrialOwner, token)
     return db.get(KakaoAccount, owner.kakao_id) if owner else None

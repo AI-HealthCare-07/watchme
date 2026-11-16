@@ -15,3 +15,20 @@
 {{ risk_bar(a.diabetes_vs_avg) }}
 <p class="bar-legend">가운데 선 = {{ group_label(a.sex, a.age) }} 평균</p>
 {% endmacro %}
+
+{# 카톡 연결 안내 카드 (/ready·기록 화면) #}
+{% macro kakao_card(token) %}
+<section class="kakao">
+  <h2>카톡으로 아침 계획·저녁 체크 받기</h2>
+  <p>아침 7:30엔 오늘 계획, 저녁 9시엔 "잘 지키셨나요?"를 카카오톡 '나와의 채팅'으로 보내 드려요.</p>
+  <a class="btn" href="/c/{{ token }}/kakao">카카오로 연결</a>
+</section>
+{% endmacro %}
+
+{# 카카오 연결 결과 안내 #}
+{% macro kakao_flash(flash) %}{% if flash %}<p class="note" style="margin-bottom:12px">{{ {
+  "linked": "카톡이 연결됐어요 ✅",
+  "cancel": "카카오 연결을 취소했어요",
+  "nomsg": "메시지 동의가 없어서 알림을 보낼 수 없어요",
+  "taken": "이 체험은 다른 카카오 계정에 연결돼 있어요",
+}[flash] }}</p>{% endif %}{% endmacro %}

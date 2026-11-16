@@ -21,6 +21,7 @@
   <p style="font-weight:700;margin-bottom:6px">🔒 이름·연락처는 받지 않아요</p>
   {{ privacy() }}
 </div>
+{% if kakao_on %}<p class="muted" style="text-align:center;margin:4px 0 12px">이미 하고 있나요? <a href="/auth/kakao">카카오로 이어서 하기</a></p>{% endif %}
 {% endif %}
 {% endblock %}
 {% block cta %}{% if not preparing %}<a class="btn btn-dark" href="/start">내 위험도 확인하기</a>{% endif %}{% endblock %}

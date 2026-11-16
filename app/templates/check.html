@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import risk %}
+{% from "_macros.html" import risk, kakao_card, kakao_flash %}
 {% block title %}Watchme · Day {{ today }}{% endblock %}
 {% block brand_note %}{{ label }}{% endblock %}
 {% block hero %}
@@ -11,6 +11,16 @@
 {% block sheet %}
 {% set d = plan[selected - 1] %}
 {% set log = logs.get(selected) %}
+
+{% if kakao %}
+{{ kakao_flash(kakao.flash) }}
+{% if not finished %}
+  {% if not kakao.account %}{{ kakao_card(token) }}
+  {% elif not kakao.account.can_message %}<p class="kline">카톡 메시지 동의가 없어서 알림을 보낼 수 없어요 · <a href="/c/{{ token }}/kakao">다시 연결</a></p>
+  {% else %}<p class="kline">💬 카톡 알림 켜짐</p>
+  {% endif %}
+{% endif %}
+{% endif %}
 
 {% if summary %}
 <section class="card summary">
