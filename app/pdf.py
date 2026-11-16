@@ -13,7 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.plan import DayPlan, ScenarioPoint, choose_variant, variant_label
-from app.risk import Assessment
+from app.risk import Assessment, vs_text
 
 DISCLAIMER = "본 결과는 공개 통계 기반의 참고용이며 의학적 진단이 아닙니다."
 
@@ -55,7 +55,7 @@ def _table(rows, widths, header=True) -> Table:
 
 
 def _risk(vs: float, lvl: str) -> str:
-    return f'평균의 {vs:.1f}배 <font color="{LEVEL_COLOR[lvl]}">({lvl})</font>'
+    return f'{vs_text(vs)} <font color="{LEVEL_COLOR[lvl]}">({lvl})</font>'
 
 
 def _qr(url: str, size=32 * mm) -> Drawing:
@@ -92,7 +92,7 @@ def render_pdf(a: Assessment, plan: list[DayPlan], points: list[ScenarioPoint], 
             [40 * mm, 60 * mm, 60 * mm],
         ),
         Paragraph("참고 위험도", H2),
-        Paragraph("같은 성별·연령대 평균과 비교한 유병률 배수입니다.", SMALL),
+        Paragraph("같은 성별·연령대 평균과 비교한 내 BMI의 예상 유병률입니다.", SMALL),
         _table(
             [["", "평균 대비"],
              ["고혈압", _risk(a.hypertension_vs_avg, a.hypertension_level)],

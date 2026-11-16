@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from app.risk import InvalidInput, assess
+from app.risk import InvalidInput, assess, vs_text
 
 
 def _group(h, w, ht, dm):
@@ -95,3 +95,11 @@ def test_out_of_range_rejected(sex, age, h, w):
 def test_missing_age_group_rejected():
     with pytest.raises(InvalidInput):
         assess("M", 70, 170, 70, stats=STATS)  # STATS에 70대 없음
+
+
+@pytest.mark.parametrize(
+    "vs,text",
+    [(1.19, "평균보다 19% 높음"), (0.91, "평균보다 9% 낮음"), (1.004, "평균 수준"), (7.39, "평균보다 639% 높음")],
+)
+def test_vs_text_percent(vs, text):
+    assert vs_text(vs) == text

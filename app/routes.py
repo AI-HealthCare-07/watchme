@@ -13,7 +13,7 @@ from app.pdf import DISCLAIMER, render_pdf
 from app.plan import DAYS, make_plan, scenario, variant_label
 from app.ratelimit import RateLimiter, client_ip
 from app.report import build_report, days_left
-from app.risk import InvalidInput, assess, get_stats
+from app.risk import InvalidInput, assess, get_stats, vs_text
 from app.service import current_day, get_logs, get_trial, save_day, start_trial
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
@@ -25,6 +25,7 @@ LIMITERS = (START_PER_IP, START_GLOBAL, DAY_PER_IP)
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER
+templates.env.filters["vs_text"] = vs_text
 router = APIRouter()
 
 

@@ -81,6 +81,13 @@ def vs_avg(model: dict, bmi: float) -> float:
     return p / model["all"]
 
 
+def vs_text(vs: float) -> str:
+    pct = round((vs - 1) * 100)
+    if pct == 0:
+        return "평균 수준"
+    return f"평균보다 {abs(pct)}% {'높음' if pct > 0 else '낮음'}"
+
+
 def _validate(sex, age, height_cm, weight_kg) -> None:
     if sex not in ("M", "F"):
         raise InvalidInput("성별을 선택해 주세요.")
