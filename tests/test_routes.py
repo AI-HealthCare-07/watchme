@@ -141,3 +141,31 @@ def test_seeded_demo_report(client):
     assert "30일 결과" in r.text
     assert "카카오톡" in r.text
     assert client.get(f"/c/{token}").status_code == 200
+
+
+# --- 디자인 체계 ---
+import re
+
+from app.pdf import DISCLAIMER
+
+EXTERNAL = re.compile(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", re.I)
+
+
+def test_static_css_served(client):
+    r = client.get("/static/app.css")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/css")
+    for needle in ("#0ca678", "@view-transition", "prefers-reduced-motion"):
+        assert needle in r.text
+
+
+def test_pages_have_no_external_requests(client):
+    for path in ("/", "/c/nope"):
+        html = client.get(path).text
+        assert not EXTERNAL.search(html), path
+        assert "@import" not in html and "url(http" not in html
+
+
+def test_error_page_uses_layout(client):
+    r = client.get("/c/nope")
+    assert r.status_code == 404
+    assert "/static/app.css" in r.text and DISCLAIMER in r.text

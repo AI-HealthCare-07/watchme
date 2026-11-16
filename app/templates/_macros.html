@@ -1,1 +1,5 @@
-{% macro risk(vs, lvl) %}{{ vs|vs_text }} <b class="{{ 'bad' if lvl == '높음' else 'good' if lvl == '낮음' else '' }}">({{ lvl }})</b>{% endmacro %}
+{# 위험도 글자: 높음 빨강, 낮음 파랑, 보통 기본색 #}
+{% macro risk(vs, lvl) %}<span class="{{ 'risk-hi' if lvl == '높음' else 'risk-lo' if lvl == '낮음' else '' }}">{{ vs|vs_text }}</span> <small class="muted">({{ lvl }})</small>{% endmacro %}
+
+{# 위험 막대: 가운데 선 = 한국 평균, 너비 = min(vs/2, 1) #}
+{% macro risk_bar(vs) %}<div class="bar" role="img" aria-label="{{ vs|vs_text }}"><i class="{{ 'lo' if vs <= 1 else '' }}" style="width:{{ '%.1f'|format([vs / 2, 1]|min * 100) }}%"></i><u></u></div>{% endmacro %}

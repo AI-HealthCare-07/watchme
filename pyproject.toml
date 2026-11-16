@@ -21,7 +21,7 @@ stats = ["pyreadstat", "pandas", "numpy"]
 packages = ["app"]
 
 [tool.setuptools.package-data]
-app = ["data/*.json", "fonts/*", "templates/*.html"]
+app = ["data/*.json", "fonts/*", "templates/*.html", "static/*", "static/fonts/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

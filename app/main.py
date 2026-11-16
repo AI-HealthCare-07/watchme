@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
 from app.routes import router
@@ -13,6 +15,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="Watchme", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(router)
 
 
