@@ -5,11 +5,17 @@
 ## 하드웨어
 - Lenovo IdeaPad S340-14API (AMD Ryzen 3000 계열 APU)
 - 유선 LAN 포트 없음 → Wi-Fi 또는 USB-LAN 어댑터
-- RAM / SSD: (설치 후 `free -h`, `lsblk`로 기록)
+- CPU Ryzen 5 3500U, RAM 8GB, NVMe SSD 256GB, BIOS AMCN27WW(V1.10)
 
 ## 1. BIOS
 - 진입: 전원 끈 상태에서 측면 Novo 버튼(작은 구멍)을 클립으로 누름 → BIOS Setup. 또는 부팅 중 F2(필요 시 Fn+F2). 부팅 메뉴는 F12.
 - 충전 제한: BIOS 항목 없음 → Ubuntu에서 `ideapad_laptop` 드라이버의 conservation mode로 설정 (5장 참고).
 - 정전 후 자동 켜짐: IdeaPad BIOS에 없음(확인 후 기록). 배터리가 UPS 역할을 하므로 짧은 정전은 영향 없음.
 - Secure Boot: 켠 상태 유지 (Ubuntu 지원).
-- 결과: (기록)
+- 확인 결과(2026-11-16): BIOS에 충전 제한·AC 복귀 항목 없음. Secure Boot 항목은 Boot Mode가 Legacy Support일 때 보이지 않음.
+- 변경:
+  - Boot > Boot Mode: Legacy Support → **UEFI** (그 뒤 Security에 Secure Boot가 나타나면 Enabled 유지)
+  - Boot > PXE Boot to LAN: **Disabled** (LAN 포트 없음, 부팅 지연 방지)
+  - Boot > Fast Boot: **Disabled** (USB 인식 안정)
+  - 그 외 기본값 유지 (AMD SVM Enabled: 가상화용으로 유지)
+  - Exit > Exit Saving Changes
