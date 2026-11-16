@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from app.risk import InvalidInput, assess, vs_text
+from app.risk import InvalidInput, assess, group_label, vs_text
 
 
 def _group(h, w, ht, dm):
@@ -103,3 +103,10 @@ def test_missing_age_group_rejected():
 )
 def test_vs_text_percent(vs, text):
     assert vs_text(vs) == text
+
+
+def test_group_label_names_the_comparison_group():
+    assert group_label("M", 45) == "40대 남성"
+    assert group_label("F", 29) == "20대 여성"
+    assert group_label("F", 18) == "18~29세 여성"
+    assert group_label("M", 82) == "70대 이상 남성"

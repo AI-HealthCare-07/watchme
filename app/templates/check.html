@@ -86,6 +86,7 @@
 
 <section class="card">
   <h2>참고 위험도 <small>BMI {{ "%.1f"|format(a.bmi) }} · {{ a.bmi_band }}</small></h2>
+  <p class="muted" style="font-size:13px;margin:-6px 0 8px">{{ group_label(a.sex, a.age) }} 평균과 비교</p>
   <p class="risk-line">고혈압 {{ risk(a.hypertension_vs_avg, a.hypertension_level) }}</p>
   <p class="risk-line">당뇨 {{ risk(a.diabetes_vs_avg, a.diabetes_level) }}</p>
   <a class="btn btn-soft btn-sm" style="margin-top:12px" href="/c/{{ token }}/week/{{ week }}.pdf">📄 {{ week }}주차 계획표 PDF</a>

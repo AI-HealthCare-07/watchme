@@ -452,3 +452,14 @@ def test_self_hosted_fonts(client):
         assert path in css
         r = client.get(path)
         assert r.status_code == 200 and r.content[:4] == b"wOF2"
+
+
+def test_average_is_labeled_by_age_and_sex(client):
+    assert "40대 남성 평균" in client.get("/").text  # 예시 인물 45세 남성
+    loc = _start_and_setup(client)  # FORM: 45세 남성
+    assert "40대 남성 평균" in client.get(f"{loc}/result").text
+    assert "40대 남성 평균" in client.get(loc).text
+    rep = client.get(f"{_finished(client, 20, {1: 80.0, 30: 79.0})}/report").text
+    assert "40대 남성 평균" in rep
+    for html in (client.get("/").text, rep):
+        assert "한국인 평균" not in html.replace("40대 남성 평균", "")

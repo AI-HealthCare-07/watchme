@@ -14,7 +14,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.plan import PlanDay, ScenarioPoint
-from app.risk import Assessment, vs_text
+from app.risk import Assessment, group_label, vs_text
 
 DISCLAIMER = "본 결과는 공개 통계 기반의 참고용이며 의학적 진단이 아닙니다."
 
@@ -97,24 +97,24 @@ def _qr_box(check_url: str) -> Table:
 
 def _summary_page(a: Assessment, points: list[ScenarioPoint], check_url: str, label: str) -> list:
     sex = "남성" if a.sex == "M" else "여성"
-    band = f"{a.age // 10 * 10}대" if a.age < 70 else "70대 이상"
+    group = group_label(a.sex, a.age)
     return [
         Paragraph("내 결과 요약", H1),
         Spacer(0, 2 * mm),
         Paragraph(f"{sex} · {a.age}세 · 계획: {label}", _style(11, color=MUTED)),
         Spacer(0, 5 * mm),
-        Paragraph(f"나와 한국 평균 ({sex} {band})", H2),
+        Paragraph(f"나와 {group} 평균", H2),
         _table(
-            [["", "나", "한국 평균"],
+            [["", "나", f"{group} 평균"],
              ["키", f"{a.height_cm:g} cm", f"{a.avg_height_cm:.1f} cm"],
              ["몸무게", f"{a.weight_kg:g} kg", f"{a.avg_weight_kg:.1f} kg"],
              ["BMI", f"{a.bmi:.1f} ({a.bmi_band})", "—"]],
             [40 * mm, 70 * mm, 70 * mm],
         ),
         Paragraph("참고 위험도", H2),
-        Paragraph("같은 성별·연령대 평균과 비교한 내 BMI의 예상 유병률이에요.", SMALL),
+        Paragraph(f"{group} 평균과 비교한 내 BMI의 예상 유병률이에요.", SMALL),
         _table(
-            [["", "평균 대비"],
+            [["", f"{group} 평균 대비"],
              ["고혈압", _risk(a.hypertension_vs_avg, a.hypertension_level)],
              ["당뇨", _risk(a.diabetes_vs_avg, a.diabetes_level)]],
             [40 * mm, 140 * mm],

@@ -67,6 +67,13 @@ def age_band(age: int) -> str:
     return str(min(max(age // 10 * 10, 20), 70))
 
 
+def group_label(sex: str, age: int) -> str:
+    """비교 집단 이름: 같은 성별·10세 나이대 (예: "40대 남성")."""
+    band = age_band(age)
+    years = "18~29세" if age < 20 else "70대 이상" if band == "70" else f"{band}대"
+    return f"{years} {'남성' if sex == 'M' else '여성'}"
+
+
 def level(vs_avg: float) -> str:
     if vs_avg < 0.8:
         return "낮음"

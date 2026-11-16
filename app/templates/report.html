@@ -40,10 +40,10 @@
 </div>
 
 <div class="card">
-  <h2>한국인 평균과 비교 <small>처음 → 지금</small></h2>
+  <h2>{{ group_label(r.before.sex, r.before.age) }} 평균과 비교 <small>처음 → 지금</small></h2>
   {{ compare("고혈압", r.before.hypertension_vs_avg, r.after.hypertension_vs_avg if r.after else none) }}
   {{ compare("당뇨", r.before.diabetes_vs_avg, r.after.diabetes_vs_avg if r.after else none) }}
-  <p class="bar-legend">가운데 선 = 한국인 평균 · 옅은 막대 = 처음</p>
+  <p class="bar-legend">가운데 선 = {{ group_label(r.before.sex, r.before.age) }} 평균 · 옅은 막대 = 처음</p>
 </div>
 
 {% if r.plateau %}

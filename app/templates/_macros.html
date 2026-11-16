@@ -13,5 +13,5 @@
 {{ risk_bar(a.hypertension_vs_avg) }}
 <div class="risk-row"><span>당뇨</span><b class="{{ 'risk-hi' if a.diabetes_vs_avg > 1 else 'risk-lo' }}">{{ a.diabetes_vs_avg|vs_text }}</b></div>
 {{ risk_bar(a.diabetes_vs_avg) }}
-<p class="bar-legend">가운데 선 = 한국인 평균</p>
+<p class="bar-legend">가운데 선 = {{ group_label(a.sex, a.age) }} 평균</p>
 {% endmacro %}

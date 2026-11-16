@@ -14,7 +14,7 @@ from app.plan import DAYS, LEVEL_NOTES, WEEKS, build_plan, level_on, scenario, v
 from app.ratelimit import RateLimiter, client_ip
 from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
-from app.risk import InvalidInput, assess, get_stats, vs_text
+from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
     InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, profile_of, save_day, save_setup,
     start_trial,
@@ -30,6 +30,7 @@ LIMITERS = (START_PER_IP, START_GLOBAL, DAY_PER_IP)
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER
 templates.env.filters["vs_text"] = vs_text
+templates.env.globals["group_label"] = group_label
 router = APIRouter()
 
 
