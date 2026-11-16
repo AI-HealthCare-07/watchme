@@ -57,3 +57,10 @@
 - 재부팅 후 IP가 DHCP로 `<LAN IP>` → `<LAN IP>`로 바뀜 → `~/.ssh/config`의 HostName 수정. 근본 해결은 Tailscale(이름으로 접속).
 - 유지 확인: conservation_mode=1, power_save off, ufw/tailscaled/docker active, 부팅 19.7초, reboot-required 없음.
 - 참고: Ubuntu 26.04는 `ssh.socket`이 22번을 듣고 `ssh.service`는 접속 시에만 뜸(inactive가 정상).
+
+## 6. Tailscale + 배포 (2026-11-16)
+- 서버 `sudo tailscale up` → 브라우저 로그인. tailnet `<tailnet>.ts.net`, 서버 `evrd` = `<Tailscale IP>`, 개발 PC `<개발 PC>`.
+- `~/.ssh/config`의 `Host evrd` HostName → `evrd.<tailnet>.ts.net` (IP가 바뀌어도, 외부에서도 접속).
+- 방화벽: `ufw allow in on tailscale0` + `ufw delete allow OpenSSH` → SSH는 Tailscale에서만. `tailscale set --operator=koo`로 sudo 없이 tailscale 조작.
+- 배포(push-to-deploy): 서버에 `~/watchme.git`(bare) + `scripts/post-receive` 훅. 개발 PC에서 `git push evrd phase1` → `~/watchme`에 체크아웃 → `docker compose up -d --build` → healthz 출력.
+  - 서버 `.env`(권한 600)는 git에 없음: 무작위 `POSTGRES_PASSWORD`, `PUBLIC_BASE_URL=https://evrd.<tailnet>.ts.net`.
