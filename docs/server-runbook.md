@@ -30,7 +30,7 @@
   - 해결: 처음부터 다시 부팅 + 휴대폰 USB 테더링, 미러 테스트 실패 → 오프라인 설치. 설치된 시스템에 `wpasupplicant`는 포함되어 있었음.
 
 ## 3. Wi-Fi (설치 후)
-- `sudo apt install -y iw` 후 `sudo iw dev wlp2s0 scan | grep -E "freq:|SSID:"`로 실제 송출 이름 확인 → `<집 공유기>`(2.4GHz) 선택.
+- `sudo apt install -y iw` 후 `sudo iw dev wlp2s0 scan | grep -E "freq:|SSID:"`로 실제 송출 이름 확인 → 실제 연결은 `<Wi-Fi 이름>`(5GHz, KT 공유기 직결). 개발 PC는 그 아래 `<집 공유기>5` 공유기(192.168.0.x).
 - `/etc/netplan/60-wifi.yaml` (권한 600, 들여쓰기 스페이스 2칸):
   ```yaml
   network:
@@ -39,8 +39,16 @@
       wlp2s0:
         dhcp4: true
         access-points:
-          "<집 공유기>":
+          "<Wi-Fi 이름>":
             password: "<비밀번호>"
   ```
 - `sudo netplan apply` → `wlp2s0` UP, `<LAN IP>/24`.
-- 관찰: 개발 PC는 `192.168.0.x` 대역인데 서버(`<LAN IP>`)로 ping이 됨 → 공유기가 두 단계(이중 NAT)일 가능성. 포트포워딩 과제(Task 9)에서 확인 필요. ping 지연 90–300ms로 높음 → Wi-Fi 절전 모드 의심, 끄기 예정.
+- 네트워크: 인터넷 ─ KT 공유기(<LAN IP>) ─┬ 서버 evrd(<LAN IP>)
+                                        └ <집 공유기> 공유기(192.168.0.x) ─ 개발 PC. 포트포워딩은 KT 공유기 한 곳만 하면 됨.
+- ping 지연 90–300ms → Wi-Fi 절전(power_save on)이 원인. 끈 뒤 3–5ms.
+
+## 4. SSH 키 + 초기 설정 (2026-11-16)
+- 개발 PC: `ssh-keygen -t ed25519` → `~/.ssh/config`에 `Host evrd` 별칭. 공개키는 `Get-Content id_ed25519.pub | ssh evrd "umask 077; mkdir -p ~/.ssh; cat >> ~/.ssh/authorized_keys"`로 등록(비밀번호 입력 대기 2분 넘기면 서버가 연결을 끊음 → 다시 실행).
+- `scripts/server-setup.sh`를 `scp`로 올리고 `ssh -t evrd "sudo bash ~/server-setup.sh"` 실행(sudo 비밀번호 1회).
+  - SSH 비밀번호 로그인 차단(`/etc/ssh/sshd_config.d/10-hardening.conf`), ufw 활성(SSH만 허용), 덮개 무시, 배터리 conservation_mode=1(tmpfiles로 부팅 시 유지), Wi-Fi 절전 off(systemd 서비스), 테더링 netplan 정리, 시간대 KST, 업데이트, Docker 29.9, Tailscale 1.104.
+- 검증: 비밀번호 로그인 시도 → `Permission denied (publickey)`, ping 4ms, `power_save off`, docker 그룹 포함.
