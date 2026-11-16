@@ -50,6 +50,15 @@ def latest_trial(db: Session, kakao_id: int) -> Trial | None:
     )
 
 
+def active_trial(db: Session, kakao_id: int, today: date) -> Trial | None:
+    """발송 대상 체험: 셋업을 마쳤고 1~31일째(31 = 리포트 날)인 것 중 가장 최근에 만든 것."""
+    trials = db.scalars(
+        select(Trial).join(TrialOwner, TrialOwner.token == Trial.token)
+        .where(TrialOwner.kakao_id == kakao_id).order_by(Trial.created_at.desc())
+    )
+    return next((t for t in trials if t.setup_done and 1 <= day_number(t, today) <= 31), None)
+
+
 def set_notify(db: Session, kakao_id: int, on: bool) -> None:
     db.get(KakaoAccount, kakao_id).notify = on
     db.commit()
