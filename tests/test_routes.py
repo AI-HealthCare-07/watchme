@@ -135,21 +135,47 @@ def test_pdf_uses_public_base_url(client, monkeypatch):
     loc = _start_and_setup(client)
     seen = {}
 
-    def fake_render(a, plan, points, check_url, label):
-        seen["url"] = check_url
+    def fake_render(a, week, days, label, level, check_url, points=None):
+        seen.update(url=check_url, week=week, n=len(days), points=points is not None)
         return b"%PDF-fake"
 
-    monkeypatch.setattr(routes, "render_pdf", fake_render)
+    monkeypatch.setattr(routes, "render_week_pdf", fake_render)
     monkeypatch.setattr(routes, "PUBLIC_BASE_URL", "https://public.example")
-    r = client.get(f"{loc}/plan.pdf")
+    r = client.get(f"{loc}/week/1.pdf")
     assert r.status_code == 200 and r.content.startswith(b"%PDF")
     assert r.headers["content-type"] == "application/pdf"
-    assert seen["url"] == f"https://public.example{loc}"
+    assert 'filename="watchme-week1.pdf"' in r.headers["content-disposition"]
+    assert seen == {"url": f"https://public.example{loc}", "week": 1, "n": 7, "points": True}
 
 
 def test_real_pdf_renders(client):
-    r = client.get(f"{_start_and_setup(client)}/plan.pdf")
-    assert r.content.startswith(b"%PDF")
+    r = client.get(f"{_start_and_setup(client)}/week/1.pdf")
+    assert r.status_code == 200 and r.content.startswith(b"%PDF")
+
+
+def test_week_pdf_range_and_timing(client):
+    loc = _start_and_setup(client)
+    for w in (0, 6):
+        assert client.get(f"{loc}/week/{w}.pdf").status_code == 404
+    assert client.get(f"{loc}/week/x.pdf").status_code == 404
+    r = client.get(f"{loc}/week/2.pdf")
+    assert r.status_code == 400 and "의학적 진단" in r.text  # 아직 안 온 주: 안내 화면
+    _set_day(client, loc, 7)
+    assert client.get(f"{loc}/week/2.pdf").status_code == 200
+    assert client.get("/c/nope/week/1.pdf").status_code == 404
+
+
+def test_plan_pdf_redirects_to_current_week(client):
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 9)
+    r = client.get(f"{loc}/plan.pdf")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}/week/2.pdf"
+
+
+def test_week_pdf_redirects_to_setup(client):
+    loc = _start_only(client)
+    r = client.get(f"{loc}/week/1.pdf")
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}/setup"
 
 
 def test_start_rate_limited_per_ip(client):
@@ -257,7 +283,7 @@ def test_setup_unknown_token_404(client):
 
 def test_pages_redirect_to_setup_until_done(client):
     loc = _start_only(client)
-    for r in (client.get(loc), client.get(f"{loc}/report"), client.get(f"{loc}/plan.pdf"),
+    for r in (client.get(loc), client.get(f"{loc}/report"), client.get(f"{loc}/week/1.pdf"),
               client.post(f"{loc}/day/1", data={"kept": "1"})):
         assert r.status_code == 303 and r.headers["location"] == f"{loc}/setup"
 

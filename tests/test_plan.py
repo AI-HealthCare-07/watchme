@@ -2,7 +2,9 @@ from dataclasses import replace
 
 import pytest
 
-from app.plan import VARIANTS, choose_variant, make_plan, scenario
+from datetime import date as _date
+
+from app.plan import VARIANTS, Profile as _Profile, build_plan as _build, choose_variant, scenario, variant_label
 from app.risk import assess
 from tests.test_risk import STATS
 
@@ -13,15 +15,13 @@ def _a(h, w, sex="M", age=40):
 
 @pytest.mark.parametrize("variant", VARIANTS)
 def test_every_variant_has_30_full_days(variant):
-    plan = make_plan(variant)
-    assert [d.day for d in plan] == list(range(1, 31))
-    for d in plan:
-        assert set(d.meals) == {"breakfast", "lunch", "dinner"}
-        assert all(d.meals.values()) and d.exercise
-
-
-def test_plan_is_deterministic():
-    assert make_plan("obese") == make_plan("obese")
+    for diet, lunch, bf, minutes in (("veg", "home", "full", 10), ("meat", "out", "skip", 45), ("mixed", "store", "light", 25)):
+        plan = _build(_Profile(variant, diet, lunch, bf, minutes, (0, 6)), _date(2026, 11, 16), "s", {1: 1, 2: 2})
+        assert [d.day for d in plan] == list(range(1, 31))
+        for d in plan:
+            assert set(d.meals) == {"breakfast", "lunch", "dinner"}
+            assert all(d.meals.values()) and d.exercise and d.tip
+    assert variant_label(variant)
 
 
 def test_variant_by_band_and_risk():

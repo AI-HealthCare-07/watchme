@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.clock import today_kst
 from app.db import get_db
-from app.pdf import DISCLAIMER, render_pdf
-from app.plan import DAYS, LEVEL_NOTES, build_plan, make_plan, scenario, variant_label, week_of
+from app.pdf import DISCLAIMER, render_week_pdf
+from app.plan import DAYS, LEVEL_NOTES, WEEKS, build_plan, level_on, scenario, variant_label, week_days, week_of
 from app.ratelimit import RateLimiter, client_ip
 from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
@@ -232,14 +232,29 @@ def report_page(request: Request, token: str, db: Session = Depends(get_db), sta
 
 
 @router.get("/c/{token}/plan.pdf")
-def plan_pdf(request: Request, token: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+def plan_pdf(request: Request, token: str, db: Session = Depends(get_db)):
     trial = get_trial(db, token)
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요.")
+    week = week_of(current_day(trial, today_kst()))
+    return RedirectResponse(f"/c/{token}/week/{week}.pdf", status_code=303)
+
+
+@router.get("/c/{token}/week/{w}.pdf")
+def week_pdf(request: Request, token: str, w: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    trial = get_trial(db, token)
+    week = int(w) if w.isdigit() else 0
+    if trial is None or not 1 <= week <= WEEKS:
+        return _error(request, 404, "계획표를 찾을 수 없어요.")
     if not trial.setup_done:
         return _to_setup(token)
+    if week > 1 and current_day(trial, today_kst()) < 7 * (week - 1):
+        return _error(request, 400, f"{week}주차 계획표는 {7 * (week - 1)}일째부터 받을 수 있어요.")
+    decisions = get_decisions(db, token)
+    plan = build_plan(profile_of(trial), trial.start_date, token, decisions)
+    days = [plan[d - 1] for d in week_days(week)]
     a = assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats)
-    pdf = render_pdf(a, make_plan(trial.plan_variant), scenario(a, stats=stats), f"{PUBLIC_BASE_URL}/c/{token}",
-                     variant_label(trial.plan_variant))
+    pdf = render_week_pdf(a, week, days, variant_label(trial.plan_variant), level_on(decisions, days[0].day),
+                          f"{PUBLIC_BASE_URL}/c/{token}", scenario(a, stats=stats) if week == 1 else None)
     return Response(pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": 'inline; filename="watchme-30days.pdf"'})
+                    headers={"Content-Disposition": f'inline; filename="watchme-week{week}.pdf"'})

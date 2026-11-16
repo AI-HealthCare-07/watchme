@@ -1,4 +1,4 @@
-"""30일 식단·운동 계획과 1년 체중 시나리오."""
+"""맞춤 30일 식단·운동 계획과 1년 체중 시나리오."""
 import json
 import random
 from dataclasses import dataclass
@@ -10,7 +10,6 @@ from pathlib import Path
 from app.risk import Assessment, assess
 
 DATA = Path(__file__).parent / "data"
-TEMPLATES_PATH = DATA / "templates.json"
 VARIANTS = ("normal", "overweight", "obese", "high_risk")
 DAYS = 30
 WEEKS = 5  # 1–7, 8–14, 15–21, 22–28, 29–30
@@ -23,13 +22,6 @@ RAMP = {1: 0.6, 2: 0.75, 3: 0.9}  # 주차별 운동 시간 비율 (그 외 1.0)
 # 시나리오 가정 (설계 문서): BMI 23 이상은 12개월간 6% 감량(선형), 미만은 유지
 SCENARIO_MONTHS = (0, 3, 6, 12)
 YEARLY_LOSS = 0.06
-
-
-@dataclass(frozen=True)
-class DayPlan:
-    day: int
-    meals: dict[str, str]
-    exercise: str
 
 
 @dataclass(frozen=True)
@@ -59,11 +51,6 @@ class ScenarioPoint:
     month: int
     weight_kg: float
     assessment: Assessment
-
-
-@cache
-def _templates() -> dict:
-    return json.loads(TEMPLATES_PATH.read_text(encoding="utf-8"))
 
 
 @cache
@@ -163,12 +150,6 @@ def choose_variant(a: Assessment) -> str:
     if "높음" in (a.hypertension_level, a.diabetes_level):
         return "high_risk"
     return {"비만": "obese", "과체중": "overweight"}.get(a.bmi_band, "normal")
-
-
-def make_plan(variant: str) -> list[DayPlan]:
-    t = _templates()
-    meals, exercise = t["meals"], t["variants"][variant]["exercise"]
-    return [DayPlan(day=d, meals=dict(meals[(d - 1) % 7]), exercise=exercise[(d - 1) % 7]) for d in range(1, DAYS + 1)]
 
 
 def scenario(a: Assessment, stats: dict | None = None) -> list[ScenarioPoint]:
