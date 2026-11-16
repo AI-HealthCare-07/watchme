@@ -1,6 +1,6 @@
 from datetime import UTC, date, datetime
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import BigInteger, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base
@@ -46,3 +46,37 @@ class WeekDecision(Base):
     token: Mapped[str] = mapped_column(ForeignKey("trials.token", ondelete="CASCADE"), primary_key=True)
     week: Mapped[int] = mapped_column(primary_key=True)
     level: Mapped[int]
+
+
+class KakaoAccount(Base):
+    __tablename__ = "kakao_accounts"
+
+    kakao_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)  # 카카오 회원번호
+    refresh_token_enc: Mapped[str | None] = mapped_column(Text)  # Fernet 암호문 (키는 서버 .env에만)
+    can_message: Mapped[bool]  # talk_message 동의 + 토큰 유효
+    notify: Mapped[bool] = mapped_column(default=True)  # 사용자가 켠/끈 상태
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
+
+
+class TrialOwner(Base):
+    __tablename__ = "trial_owners"
+
+    token: Mapped[str] = mapped_column(ForeignKey("trials.token", ondelete="CASCADE"), primary_key=True)
+    kakao_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("kakao_accounts.kakao_id"))
+
+
+class SentMessage(Base):
+    __tablename__ = "sent_messages"
+
+    # (계정, 날짜, 종류)마다 한 번만 = 중복 발송 방지
+    kakao_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=False)
+    day: Mapped[date] = mapped_column(primary_key=True)  # KST 날짜 (속성 이름 date는 타입과 겹쳐서 day)
+    kind: Mapped[str] = mapped_column(String(8), primary_key=True)  # morning/evening/report/welcome
+
+
+class NextTrial(Base):
+    __tablename__ = "next_trials"
+
+    # 한 체험에서 다음 30일 도전은 한 번만
+    token: Mapped[str] = mapped_column(ForeignKey("trials.token", ondelete="CASCADE"), primary_key=True)
+    next_token: Mapped[str] = mapped_column(ForeignKey("trials.token"))
