@@ -76,4 +76,4 @@
 - cron(koo, KST): `0 4 * * * $HOME/watchme/scripts/backup.sh >> $HOME/backups/backup.log 2>&1`
   - 주의: `(crontab -l; echo ...) | crontab -`가 26.04에서 조용히 빈 crontab을 남김 → 파일로 만들어 `crontab /tmp/ct`로 등록.
 - 복원 검증: 표본 테이블 3행 → 덤프 → 빈 DB `restore_test`에 복원 → 3행 일치, 정리함.
-- 서버 밖 사본: 개발 PC가 `scripts/pull-backup.ps1`로 `scp evrd:backups/latest.sql.gz` → `%USERPROFILE%\Backups\watchme\`(30개 보관). 수동 실행 확인.
+- 서버 밖 사본: 개발 PC가 `scripts/pull-backup.ps1`로 `scp evrd:backups/latest.sql.gz` → `%USERPROFILE%\Backups\watchme\`(30개 보관). 수동 실행 확인. Windows 작업 스케줄러 "Watchme pull backup"(로그온 시 + 매일 12:00, 놓치면 가능할 때 실행) 등록, 첫 실행 결과 0.
