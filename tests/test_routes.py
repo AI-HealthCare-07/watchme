@@ -443,3 +443,12 @@ def test_report_plateau_line(client):
 def test_report_without_weights(client):
     r = client.get(f"{_finished(client, 20)}/report")
     assert r.status_code == 200 and "체중 기록이 없어요" in r.text
+
+
+def test_self_hosted_fonts(client):
+    css = client.get("/static/app.css").text
+    for w in ("Regular", "SemiBold", "Bold", "ExtraBold"):
+        path = f"/static/fonts/Pretendard-{w}.subset.woff2"
+        assert path in css
+        r = client.get(path)
+        assert r.status_code == 200 and r.content[:4] == b"wOF2"

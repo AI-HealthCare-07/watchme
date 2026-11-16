@@ -1,4 +1,10 @@
 /* Watchme 디자인 체계: 위 초록 영역 + 아래 둥근 시트 + 하단 고정 버튼 */
+
+/* Pretendard v1.3.9 (SIL OFL 1.1, fonts/OFL.txt), 자체 호스팅 */
+@font-face { font-family: Pretendard; font-weight: 400; font-display: swap; src: url("/static/fonts/Pretendard-Regular.subset.woff2") format("woff2"); }
+@font-face { font-family: Pretendard; font-weight: 600; font-display: swap; src: url("/static/fonts/Pretendard-SemiBold.subset.woff2") format("woff2"); }
+@font-face { font-family: Pretendard; font-weight: 700; font-display: swap; src: url("/static/fonts/Pretendard-Bold.subset.woff2") format("woff2"); }
+@font-face { font-family: Pretendard; font-weight: 800 900; font-display: swap; src: url("/static/fonts/Pretendard-ExtraBold.subset.woff2") format("woff2"); }
 :root {
   --brand: #0ca678; --brand-ink: #087f5b; --brand-soft: #e6fcf5;
   --ink: #191f28; --ink-2: #4e5968; --muted: #6b7684; --faint: #8b95a1;
