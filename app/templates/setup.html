@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Watchme · 맞춤 질문{% endblock %}
+{% macro choice(name, value, text, note="") %}<label><input type="radio" name="{{ name }}" value="{{ value }}" required {% if form[name] == value %}checked{% endif %}><span>{{ text }}</span>{% if note %}<small>{{ note }}</small>{% endif %}</label>{% endmacro %}
+{% block hero %}<p class="kicker">맞춤 계획</p><h1>생활에 맞춰<br>30일 계획을 짜 드릴게요</h1>{% endblock %}
+{% block sheet %}
+<form id="steps" class="steps card" method="post" action="/c/{{ token }}/setup">
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <fieldset class="step" data-name="식사 스타일">
+    <legend class="q">평소 어떤 음식을<br>좋아하세요?</legend>
+    <div class="pick list">
+      {{ choice("diet_style", "veg", "🥗 채식 위주") }}
+      {{ choice("diet_style", "meat", "🍖 고기·생선 좋아함") }}
+      {{ choice("diet_style", "mixed", "🍱 골고루") }}
+    </div>
+    <p class="hint">채식 위주면 고기·생선 없이 달걀·두부·유제품으로 짜요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="점심">
+    <legend class="q">점심은 주로<br>어디서 드세요?</legend>
+    <div class="pick list">
+      {{ choice("lunch_place", "home", "🏠 집밥") }}
+      {{ choice("lunch_place", "out", "🏢 회사·외식") }}
+      {{ choice("lunch_place", "store", "🏪 편의점") }}
+    </div>
+    <p class="hint">외식·편의점이면 메뉴 고르는 요령으로 알려 드려요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="아침">
+    <legend class="q">아침은<br>어떻게 드세요?</legend>
+    <div class="pick list">
+      {{ choice("breakfast", "skip", "☕ 거의 안 먹음") }}
+      {{ choice("breakfast", "light", "🍌 간단히") }}
+      {{ choice("breakfast", "full", "🍚 챙겨 먹음") }}
+    </div>
+    <p class="hint">안 먹는 편이면 아주 간단한 것부터 시작해요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="운동 시간">
+    <legend class="q">하루에 운동할 시간은<br>얼마나 되세요?</legend>
+    <div class="pick three">
+      {{ choice("exercise_min", "10", "10분") }}
+      {{ choice("exercise_min", "25", "20~30분") }}
+      {{ choice("exercise_min", "45", "1시간") }}
+    </div>
+    <p class="hint">첫 주는 가볍게 시작해서 조금씩 늘려요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="자유 한 끼" data-pick="2">
+    <legend class="q">자유 한 끼 요일<br>2개를 골라 주세요</legend>
+    <div class="pick seven">
+      {% for d in ["월", "화", "수", "목", "금", "토", "일"] %}
+      <label><input type="checkbox" name="free_days" value="{{ loop.index0 }}" {% if loop.index0|string in form.free_days %}checked{% endif %}><span>{{ d }}</span></label>
+      {% endfor %}
+    </div>
+    <p class="hint">고른 요일 저녁엔 먹고 싶은 걸 즐겨요 🎉 정확히 2개를 골라 주세요.</p>
+  </fieldset>
+</form>
+{% endblock %}
+{% block cta %}<button class="btn" type="submit" form="steps">내 계획 만들기</button>{% endblock %}

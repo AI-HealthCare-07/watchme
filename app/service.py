@@ -5,7 +5,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models import DayLog, Trial, WeekDecision
-from app.plan import DAYS, MAX_LEVEL, choose_variant
+from app.plan import DAYS, MAX_LEVEL, Profile, choose_variant
 from app.risk import LIMITS, assess
 
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
@@ -66,6 +66,11 @@ def save_setup(db: Session, token: str, diet_style: str, lunch_place: str, break
         setattr(trial, key, value)
     trial.free_days = ",".join(map(str, days))
     db.commit()
+
+
+def profile_of(trial: Trial) -> Profile:
+    a, b = (int(d) for d in trial.free_days.split(","))
+    return Profile(trial.plan_variant, trial.diet_style, trial.lunch_place, trial.breakfast, trial.exercise_min, (a, b))
 
 
 def get_decisions(db: Session, token: str) -> dict[int, int]:

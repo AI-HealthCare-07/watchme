@@ -14,7 +14,7 @@ from app.plan import DAYS, make_plan, scenario, variant_label
 from app.ratelimit import RateLimiter, client_ip
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, vs_text
-from app.service import current_day, get_logs, get_trial, save_day, start_trial
+from app.service import InvalidSetup, current_day, get_logs, get_trial, save_day, save_setup, start_trial
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
@@ -39,6 +39,10 @@ def _error(request: Request, status: int, message: str):
 
 def _too_many(request: Request):
     return _error(request, 429, "요청이 너무 많아요. 잠시 후 다시 시도해 주세요.")
+
+
+def _to_setup(token: str):
+    return RedirectResponse(f"/c/{token}/setup", status_code=303)
 
 
 def _num(raw: str, cast, label: str):
@@ -97,12 +101,53 @@ def result_page(request: Request, token: str, db: Session = Depends(get_db), sta
     return _page(request, "result.html", token=token, a=a, later=scenario(a, stats=stats)[1].assessment)
 
 
+@router.get("/c/{token}/setup")
+def setup_form(request: Request, token: str, db: Session = Depends(get_db)):
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
+    if trial.setup_done:
+        return RedirectResponse(f"/c/{token}", status_code=303)
+    return _page(request, "setup.html", token=token, form={"free_days": []}, error=None)
+
+
+@router.post("/c/{token}/setup")
+def setup(
+    request: Request,
+    token: str,
+    diet_style: str = Form(""),
+    lunch_place: str = Form(""),
+    breakfast: str = Form(""),
+    exercise_min: str = Form(""),
+    free_days: list[str] = Form([]),
+    db: Session = Depends(get_db),
+):
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요.")
+    if trial.setup_done:
+        return RedirectResponse(f"/c/{token}", status_code=303)
+    form = {"diet_style": diet_style, "lunch_place": lunch_place, "breakfast": breakfast,
+            "exercise_min": exercise_min, "free_days": free_days}
+    try:
+        try:
+            minutes, days = int(exercise_min), [int(d) for d in free_days]
+        except ValueError:
+            raise InvalidSetup("선택지 중에서 골라 주세요") from None
+        save_setup(db, token, diet_style, lunch_place, breakfast, minutes, days)
+    except InvalidSetup as e:
+        return _page(request, "setup.html", 400, token=token, form=form, error=str(e))
+    return RedirectResponse(f"/c/{token}", status_code=303)
+
+
 @router.get("/c/{token}")
 def check_page(request: Request, token: str, day: int | None = None,
                db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
     trial = get_trial(db, token)
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
+    if not trial.setup_done:
+        return _to_setup(token)
     today = current_day(trial, today_kst())
     logs = {log.day: log for log in get_logs(db, token)}
     selected = day if day and 1 <= day <= today else today
@@ -123,6 +168,8 @@ def save(request: Request, token: str, n: int, kept: str = Form(""), weight_kg: 
     trial = get_trial(db, token)
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
     if not 1 <= n <= current_day(trial, today_kst()):
         return _error(request, 400, "아직 기록할 수 없는 날이에요.")
     try:
@@ -138,6 +185,8 @@ def report_page(request: Request, token: str, db: Session = Depends(get_db), sta
     trial = get_trial(db, token)
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
     today = today_kst()
     report = build_report(trial, get_logs(db, token), today, stats=stats)
     return _page(request, "report.html", token=token, report=report, left=days_left(trial, today))
@@ -148,6 +197,8 @@ def plan_pdf(request: Request, token: str, db: Session = Depends(get_db), stats:
     trial = get_trial(db, token)
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요.")
+    if not trial.setup_done:
+        return _to_setup(token)
     a = assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats)
     pdf = render_pdf(a, make_plan(trial.plan_variant), scenario(a, stats=stats), f"{PUBLIC_BASE_URL}/c/{token}",
                      variant_label(trial.plan_variant))

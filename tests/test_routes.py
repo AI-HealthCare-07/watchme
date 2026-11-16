@@ -35,10 +35,22 @@ def client():
     app.dependency_overrides.clear()
 
 
-def _start(client):
+SETUP = {"diet_style": "veg", "lunch_place": "store", "breakfast": "skip", "exercise_min": "25", "free_days": ["2", "5"]}
+PRIVACY = ("수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), "
+           "일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일.")
+
+
+def _start_only(client):
     r = client.post("/start", data=FORM)
     assert r.status_code == 303
     return r.headers["location"].removesuffix("/result")
+
+
+def _start_and_setup(client):
+    loc = _start_only(client)
+    r = client.post(f"{loc}/setup", data=SETUP)
+    assert r.status_code == 303 and r.headers["location"] == loc
+    return loc
 
 
 def test_start_form_has_notice(client):
@@ -77,7 +89,7 @@ def test_start_redirects_to_result(client):
 def test_result_page(client):
     from app.risk import assess, vs_text
 
-    loc = _start(client)
+    loc = _start_only(client)
     a = assess("M", 45, 170, 80, stats=STATS)
     r = client.get(f"{loc}/result")
     assert r.status_code == 200
@@ -104,7 +116,7 @@ def test_unknown_token_404(client):
 
 
 def test_double_submit_same_day_keeps_one_row(client):
-    loc = _start(client)
+    loc = _start_and_setup(client)
     assert client.post(f"{loc}/day/1", data={"kept": "1", "weight_kg": "80.2"}).status_code == 303
     assert client.post(f"{loc}/day/1", data={"kept": "0", "weight_kg": ""}).status_code == 303
     with Session(client.engine) as s:
@@ -115,12 +127,12 @@ def test_double_submit_same_day_keeps_one_row(client):
 @pytest.mark.parametrize("day,data", [(31, {"kept": "1"}), (0, {"kept": "1"}), (2, {"kept": "1"}), (1, {"kept": "1", "weight_kg": "abc"})])
 def test_bad_day_post_is_400(client, day, data):
     # day 2는 아직 오지 않은 날(시작 당일은 day 1)
-    loc = _start(client)
+    loc = _start_and_setup(client)
     assert client.post(f"{loc}/day/{day}", data=data).status_code == 400
 
 
 def test_pdf_uses_public_base_url(client, monkeypatch):
-    loc = _start(client)
+    loc = _start_and_setup(client)
     seen = {}
 
     def fake_render(a, plan, points, check_url, label):
@@ -136,13 +148,13 @@ def test_pdf_uses_public_base_url(client, monkeypatch):
 
 
 def test_real_pdf_renders(client):
-    r = client.get(f"{_start(client)}/plan.pdf")
+    r = client.get(f"{_start_and_setup(client)}/plan.pdf")
     assert r.content.startswith(b"%PDF")
 
 
 def test_start_rate_limited_per_ip(client):
     for _ in range(5):
-        _start(client)
+        _start_only(client)
     r = client.post("/start", data=FORM)
     assert r.status_code == 429
     # 다른 IP(Funnel이 넣어 주는 X-Forwarded-For)는 영향 없음
@@ -158,7 +170,7 @@ def test_without_stats_shows_preparing_not_500(client):
 
 
 def test_report_before_30_days_shows_remaining(client):
-    url = _start(client)
+    url = _start_and_setup(client)
     r = client.get(f"{url}/report")
     assert r.status_code == 200
     assert "30일 남았어요" in r.text
@@ -205,3 +217,50 @@ def test_error_page_uses_layout(client):
     r = client.get("/c/nope")
     assert r.status_code == 404
     assert "/static/app.css" in r.text and DISCLAIMER in r.text
+
+
+# --- 맞춤 질문 ---
+def test_setup_form_has_five_steps(client):
+    loc = _start_only(client)
+    r = client.get(f"{loc}/setup")
+    assert r.status_code == 200
+    assert r.text.count('<fieldset class="step"') == 5
+    for name in ("diet_style", "lunch_place", "breakfast", "exercise_min", "free_days"):
+        assert f'name="{name}"' in r.text
+
+
+def test_setup_saves_and_redirects(client):
+    loc = _start_only(client)
+    r = client.post(f"{loc}/setup", data=SETUP)
+    assert r.status_code == 303 and r.headers["location"] == loc
+    assert client.get(loc).status_code == 200
+    # 한 번 정하면 끝: 다시 열면 기록 화면으로
+    assert client.get(f"{loc}/setup").headers["location"] == loc
+
+
+@pytest.mark.parametrize("bad", [
+    {"diet_style": "x"}, {"free_days": ["2"]}, {"free_days": ["1", "2", "3"]}, {"free_days": ["3", "3"]},
+    {"free_days": ["a", "1"]}, {"exercise_min": "abc"}, {"exercise_min": "30"},
+])
+def test_setup_bad_values_400(client, bad):
+    loc = _start_only(client)
+    r = client.post(f"{loc}/setup", data=SETUP | bad)
+    assert r.status_code == 400
+    assert 'class="error"' in r.text and 'name="free_days"' in r.text
+    assert client.get(loc).status_code == 303  # 저장 안 됨
+
+
+def test_setup_unknown_token_404(client):
+    assert client.get("/c/nope/setup").status_code == 404
+    assert client.post("/c/nope/setup", data=SETUP).status_code == 404
+
+
+def test_pages_redirect_to_setup_until_done(client):
+    loc = _start_only(client)
+    for r in (client.get(loc), client.get(f"{loc}/report"), client.get(f"{loc}/plan.pdf"),
+              client.post(f"{loc}/day/1", data={"kept": "1"})):
+        assert r.status_code == 303 and r.headers["location"] == f"{loc}/setup"
+
+
+def test_privacy_notice_lists_setup_answers(client):
+    assert PRIVACY in client.get("/start").text
