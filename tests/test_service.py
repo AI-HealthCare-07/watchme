@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app.db import Base
 from app.models import DayLog
 from app.risk import InvalidInput
-from app.service import current_day, get_logs, get_trial, save_day, start_trial
+from app.service import current_day, get_logs, get_trial, purge_expired, save_day, start_trial
 from tests.test_risk import STATS
 
 TODAY = date(2026, 11, 16)
@@ -72,3 +72,15 @@ def test_current_day_clamped(db):
 
 def test_unknown_token_is_none(db):
     assert get_trial(db, "없는토큰") is None
+
+
+def test_purge_deletes_trials_90_days_after_end_with_logs(db):
+    # 체험 30일 + 보관 90일 = 시작 후 120일째에 삭제
+    old = _start(db, today=TODAY - timedelta(days=120))
+    kept = _start(db, today=TODAY - timedelta(days=119))
+    old_t, kept_t = old.token, kept.token
+    save_day(db, old_t, 1, True, 80.0)
+    save_day(db, kept_t, 1, True, 80.0)
+    assert purge_expired(db, TODAY) == 1
+    assert get_trial(db, old_t) is None and get_logs(db, old_t) == []
+    assert get_trial(db, kept_t) is not None and len(get_logs(db, kept_t)) == 1

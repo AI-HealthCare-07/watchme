@@ -131,6 +131,7 @@ def plan_pdf(request: Request, token: str, db: Session = Depends(get_db), stats:
     if trial is None:
         return _error(request, 404, "체험을 찾을 수 없어요.")
     a = assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats)
-    pdf = render_pdf(a, make_plan(trial.plan_variant), scenario(a, stats=stats), f"{PUBLIC_BASE_URL}/c/{token}")
+    pdf = render_pdf(a, make_plan(trial.plan_variant), scenario(a, stats=stats), f"{PUBLIC_BASE_URL}/c/{token}",
+                     variant_label(trial.plan_variant))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": 'inline; filename="watchme-30days.pdf"'})

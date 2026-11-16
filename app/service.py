@@ -1,12 +1,14 @@
 import secrets
-from datetime import date
+from datetime import date, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models import DayLog, Trial
 from app.plan import DAYS, choose_variant
 from app.risk import LIMITS, assess
+
+RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
 
 
 def start_trial(db: Session, sex: str, age: int, height_cm: float, weight_kg: float, today: date, stats: dict | None = None) -> Trial:
@@ -47,3 +49,14 @@ def get_logs(db: Session, token: str) -> list[DayLog]:
 
 def current_day(trial: Trial, today: date) -> int:
     return min(max((today - trial.start_date).days + 1, 1), DAYS)
+
+
+def purge_expired(db: Session, today: date) -> int:
+    """보관 기간이 끝난 체험과 기록 삭제. 삭제한 체험 수 반환."""
+    cutoff = today - timedelta(days=DAYS + RETENTION_DAYS)
+    expired = select(Trial.token).where(Trial.start_date <= cutoff)
+    # SQLite는 FK cascade가 기본으로 꺼져 있어 기록부터 직접 지움
+    db.execute(delete(DayLog).where(DayLog.token.in_(expired)))
+    n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount
+    db.commit()
+    return n

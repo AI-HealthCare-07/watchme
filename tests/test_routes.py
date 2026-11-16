@@ -86,7 +86,7 @@ def test_pdf_uses_public_base_url(client, monkeypatch):
     loc = _start(client)
     seen = {}
 
-    def fake_render(a, plan, points, check_url):
+    def fake_render(a, plan, points, check_url, label):
         seen["url"] = check_url
         return b"%PDF-fake"
 

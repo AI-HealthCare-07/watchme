@@ -12,7 +12,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from app.plan import DayPlan, ScenarioPoint, choose_variant, variant_label
+from app.plan import DayPlan, ScenarioPoint
 from app.risk import Assessment, vs_text
 
 DISCLAIMER = "본 결과는 공개 통계 기반의 참고용이며 의학적 진단이 아닙니다."
@@ -75,13 +75,13 @@ def _footer(canvas, doc):
     canvas.restoreState()
 
 
-def render_pdf(a: Assessment, plan: list[DayPlan], points: list[ScenarioPoint], check_url: str) -> bytes:
+def render_pdf(a: Assessment, plan: list[DayPlan], points: list[ScenarioPoint], check_url: str, label: str) -> bytes:
     sex = "남성" if a.sex == "M" else "여성"
     band = f"{a.age // 10 * 10}대" if a.age < 70 else "70대 이상"
     story = [
         Paragraph("Watchme 30일 생활습관 챌린지", H1),
         Spacer(0, 2 * mm),
-        Paragraph(f"{sex} · {a.age}세 · 계획: {variant_label(choose_variant(a))}", _style(11, color=MUTED)),
+        Paragraph(f"{sex} · {a.age}세 · 계획: {label}", _style(11, color=MUTED)),
         Spacer(0, 6 * mm),
         Paragraph(f"나와 한국 평균 ({sex} {band})", H2),
         _table(
