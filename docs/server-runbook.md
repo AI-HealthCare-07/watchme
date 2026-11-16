@@ -90,3 +90,8 @@
 - DDNS: `ddns/update.py` (표준 라이브러리, 호스트 python3), cron 5분마다, 바뀔 때만 `~/ddns.log`에 기록. 키는 서버 `.env`의 `PORKBUN_API_KEY`/`PORKBUN_SECRET_KEY` (사용자가 직접 입력, 600). 도메인 API Access 켜야 동작.
 - `.env`: `LAN_IP=<LAN IP>`, `PUBLIC_BASE_URL=https://evrd.fyi` (QR·링크).
 - 문제 시: `docker compose logs caddy` (인증서), `dig +short evrd.fyi @1.1.1.1` (DNS), `cat ~/ddns.log`. 서버 IP가 바뀌면 공유기 할당과 `.env`의 LAN_IP를 같이 확인.
+
+## 10. 보관 기간 삭제 (2026-11-16)
+- 시작 화면 안내("체험 종료 후 90일")대로, 시작 후 120일(체험 30일 + 90일)이 지난 체험과 기록을 매일 04:30 삭제 (`scripts/purge.py` → `service.purge_expired`). 사용자 승인 후 cron 등록.
+- cron: `30 4 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.purge >> $HOME/purge.log 2>&1` (지운 게 있을 때만 기록).
+- 백업에는 서버 최대 7일, PC 최대 30일 더 남았다가 사라짐.
