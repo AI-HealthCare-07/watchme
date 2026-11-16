@@ -116,4 +116,5 @@
     `cd ~/watchme && grep -q ^TOKEN_KEY= .env || python3 -c "import base64,os;print('TOKEN_KEY='+base64.urlsafe_b64encode(os.urandom(32)).decode())" >> .env`
   - `TOKEN_KEY`는 백업(`pg_dump`)에 들어가지 않는다 → 백업 파일만으로는 토큰을 풀 수 없음. 잃어버리면 저장된 토큰을 못 풀어 사용자가 카톡을 다시 연결해야 함.
 - DB: 새 표 `kakao_accounts`, `trial_owners`, `sent_messages`, `next_trials` — 배포 시 `init_db`(`create_all`)가 생성. 기존 표 변경 없음.
-- 첫 실험 결과: (배포 후 기록)
+- 배포(2026-11-16): main merge 후 `git push evrd main` → healthz OK. 서버 `.env`에 `TOKEN_KEY` 생성(값 출력 없이), 새 표 4개 생성 확인, 기존 `trials` 유지. 카카오 키 입력 전이라 `kakao.enabled()` = False(카카오 경로 404, 버튼 숨김). 리포트 카드 "다음 30일 도전하기" 확인.
+- 첫 실험 결과: (카카오 키 입력 후 기록)
