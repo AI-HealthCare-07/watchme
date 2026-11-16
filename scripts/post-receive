@@ -1,0 +1,15 @@
+#!/bin/sh
+# 서버의 ~/watchme.git/hooks/post-receive.
+# 개발 PC에서 `git push evrd <branch>` 하면 그 브랜치를 ~/watchme에 풀고 compose로 재배포.
+# .env는 git에 없으므로 ~/watchme/.env가 그대로 유지된다.
+set -e
+TARGET="$HOME/watchme"
+mkdir -p "$TARGET"
+while read -r _old new ref; do
+  echo "deploy: $ref ($new)"
+  git --git-dir="$HOME/watchme.git" --work-tree="$TARGET" checkout -f "$new"
+done
+cd "$TARGET"
+docker compose up -d --build --remove-orphans
+sleep 3
+curl -fsS localhost:8000/healthz && echo " <- healthz"
