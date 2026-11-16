@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Watchme · Day {{ today }}{% endblock %}
-{% macro risk(vs, lvl) %}평균의 {{ "%.1f"|format(vs) }}배 <b class="{{ 'bad' if lvl == '높음' else 'good' if lvl == '낮음' else '' }}">({{ lvl }})</b>{% endmacro %}
+{% from "_macros.html" import risk %}
 {% block body %}
 <h1>Day {{ today }} / {{ days }}</h1>
 <p class="muted">계획: {{ label }} · 이 페이지 주소가 내 기록 열쇠예요. 즐겨찾기해 두세요.</p>

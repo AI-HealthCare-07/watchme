@@ -117,3 +117,27 @@ def test_without_stats_shows_preparing_not_500(client):
     r = client.get("/")
     assert r.status_code == 200 and "준비 중" in r.text
     assert client.post("/start", data=FORM).status_code == 503
+
+
+def test_report_before_30_days_shows_remaining(client):
+    url = _start(client)
+    r = client.get(f"{url}/report")
+    assert r.status_code == 200
+    assert "30일 남았어요" in r.text
+
+
+def test_report_unknown_token_404(client):
+    assert client.get("/c/nope/report").status_code == 404
+
+
+def test_seeded_demo_report(client):
+    from app.clock import today_kst
+    from scripts.seed_demo import seed
+
+    with Session(client.engine) as db:
+        token = seed(db, today_kst(), stats=STATS)
+    r = client.get(f"/c/{token}/report")
+    assert r.status_code == 200
+    assert "30일 결과" in r.text
+    assert "카카오톡" in r.text
+    assert client.get(f"/c/{token}").status_code == 200

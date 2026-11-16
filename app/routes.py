@@ -12,6 +12,7 @@ from app.db import get_db
 from app.pdf import DISCLAIMER, render_pdf
 from app.plan import DAYS, make_plan, scenario, variant_label
 from app.ratelimit import RateLimiter, client_ip
+from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats
 from app.service import current_day, get_logs, get_trial, save_day, start_trial
 
@@ -91,7 +92,7 @@ def check_page(request: Request, token: str, day: int | None = None,
         token=token, a=assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats),
         label=variant_label(trial.plan_variant), plan=make_plan(trial.plan_variant), logs=logs,
         today=today, selected=selected, days=DAYS,
-        finished=(today_kst() - trial.start_date).days >= DAYS,
+        finished=not days_left(trial, today_kst()),
     )
 
 
@@ -111,6 +112,16 @@ def save(request: Request, token: str, n: int, kept: str = Form(""), weight_kg: 
     except ValueError:
         return _error(request, 400, "몸무게는 30~250 사이 숫자로 입력해 주세요.")
     return RedirectResponse(f"/c/{token}", status_code=303)
+
+
+@router.get("/c/{token}/report")
+def report_page(request: Request, token: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요.")
+    today = today_kst()
+    report = build_report(trial, get_logs(db, token), today, stats=stats)
+    return _page(request, "report.html", token=token, report=report, left=days_left(trial, today))
 
 
 @router.get("/c/{token}/plan.pdf")

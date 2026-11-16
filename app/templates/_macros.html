@@ -1,0 +1,1 @@
+{% macro risk(vs, lvl) %}평균의 {{ "%.1f"|format(vs) }}배 <b class="{{ 'bad' if lvl == '높음' else 'good' if lvl == '낮음' else '' }}">({{ lvl }})</b>{% endmacro %}
