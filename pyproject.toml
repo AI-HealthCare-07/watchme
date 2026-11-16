@@ -10,7 +10,6 @@ dependencies = [
     "sqlalchemy",
     "psycopg[binary]",
     "reportlab",
-    "qrcode[pil]",
     "tzdata",
 ]
 
