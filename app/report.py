@@ -4,6 +4,7 @@ from datetime import date
 
 from app.models import DayLog, Trial
 from app.plan import DAYS
+from app.progress import plateau
 from app.risk import Assessment, assess
 
 
@@ -17,6 +18,7 @@ class Report:
     before: Assessment
     after: Assessment | None
     enough_data: bool
+    plateau: bool = False
 
 
 def days_left(trial: Trial, today: date) -> int:
@@ -38,4 +40,5 @@ def build_report(trial: Trial, logs: list[DayLog], today: date, stats: dict | No
         before=before,
         after=assess(trial.sex, trial.age, trial.height_cm, end, stats=stats) if end is not None else None,
         enough_data=len(weighed) >= 2 and len(logs) >= 10,
+        plateau=plateau(logs, DAYS),
     )

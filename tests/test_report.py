@@ -45,3 +45,9 @@ def test_report_needs_two_weights_and_ten_checks():
 def test_no_report_before_30_days():
     assert build_report(_trial(), [], START + timedelta(days=28), stats=STATS) is None  # 29일째
     assert build_report(_trial(), [], START + timedelta(days=29), stats=STATS) is None  # 30일째
+
+
+def test_report_plateau_flag():
+    logs = _logs(30, {24: 78.0, 30: 78.1})
+    assert build_report(_trial(), logs, DONE, stats=STATS).plateau is True
+    assert build_report(_trial(), [], DONE, stats=STATS).plateau is False
