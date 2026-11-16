@@ -142,7 +142,18 @@ def setup(
         save_setup(db, token, diet_style, lunch_place, breakfast, minutes, days)
     except InvalidSetup as e:
         return _page(request, "setup.html", 400, token=token, form=form, error=str(e))
-    return RedirectResponse(f"/c/{token}", status_code=303)
+    return RedirectResponse(f"/c/{token}/ready", status_code=303)
+
+
+@router.get("/c/{token}/ready")
+def ready_page(request: Request, token: str, db: Session = Depends(get_db)):
+    """계획 저장 직후 잠깐 보여 주는 응원 + 주의사항 화면. 몇 초 뒤 Day 1로 넘어간다."""
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
+    if not trial.setup_done:
+        return _to_setup(token)
+    return _page(request, "ready.html", token=token)
 
 
 # 의심 카드 원인: 날마다 하나씩 돌아가며

@@ -201,6 +201,15 @@ h1, h2, h3, p { margin: 0; }
              font-size: 16px; text-align: right; cursor: pointer; }
 .done-item span { color: var(--faint); font-size: 13px; font-weight: 600; text-align: left; }
 
+/* 준비 완료 화면: 로딩처럼 차오르는 막대 (meta refresh 6초에 맞춤) */
+.loading { margin-top: 20px; font-size: 14px; opacity: .92; }
+.loading .prog { background: rgba(255, 255, 255, .25); margin: 0 0 10px; }
+.loading .prog i { background: #fff; width: 100%; animation: fill-up 6s linear; }
+.loading a { color: inherit; margin-left: 6px; }
+@keyframes fill-up { from { width: 0; } }
+.cautions { padding-left: 18px; color: var(--ink-2); line-height: 1.6; font-size: 15px; }
+.cautions li + li { margin-top: 8px; }
+
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }

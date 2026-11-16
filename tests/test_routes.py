@@ -49,7 +49,7 @@ def _start_only(client):
 def _start_and_setup(client):
     loc = _start_only(client)
     r = client.post(f"{loc}/setup", data=SETUP)
-    assert r.status_code == 303 and r.headers["location"] == loc
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}/ready"
     return loc
 
 
@@ -258,7 +258,7 @@ def test_setup_form_has_five_steps(client):
 def test_setup_saves_and_redirects(client):
     loc = _start_only(client)
     r = client.post(f"{loc}/setup", data=SETUP)
-    assert r.status_code == 303 and r.headers["location"] == loc
+    assert r.status_code == 303 and r.headers["location"] == f"{loc}/ready"
     assert client.get(loc).status_code == 200
     # 한 번 정하면 끝: 다시 열면 기록 화면으로
     assert client.get(f"{loc}/setup").headers["location"] == loc
@@ -284,8 +284,19 @@ def test_setup_unknown_token_404(client):
 def test_pages_redirect_to_setup_until_done(client):
     loc = _start_only(client)
     for r in (client.get(loc), client.get(f"{loc}/report"), client.get(f"{loc}/week/1.pdf"),
-              client.post(f"{loc}/day/1", data={"kept": "1"})):
+              client.get(f"{loc}/ready"), client.post(f"{loc}/day/1", data={"kept": "1"})):
         assert r.status_code == 303 and r.headers["location"] == f"{loc}/setup"
+
+
+def test_ready_page_cheers_warns_and_moves_on_to_day_1(client):
+    loc = _start_and_setup(client)
+    r = client.get(f"{loc}/ready")
+    assert r.status_code == 200
+    assert "30일 챌린지" in r.text and "같이 힘내" in r.text
+    assert "의료진" in r.text and "의학적 진단이 아니에요" in r.text
+    assert f'http-equiv="refresh" content="6;url={loc}"' in r.text  # JS 없이도 Day 1로
+    assert f'href="{loc}"' in r.text
+    assert client.get("/c/nope/ready").status_code == 404
 
 
 def test_privacy_notice_lists_setup_answers(client):
