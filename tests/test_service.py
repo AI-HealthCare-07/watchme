@@ -172,3 +172,49 @@ def test_next_trial_inherits_kakao_link(db, monkeypatch):
     accounts.link(db, old.token, 42)
     new = next_trial(db, old, TODAY, stats=STATS)
     assert accounts.owner_of(db, new.token).kakao_id == 42
+
+
+# --- 보관 삭제: 카카오 정보도 같이 ---
+
+def test_purge_removes_orphan_kakao_account(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.models import KakaoAccount
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    old = _start(db, today=TODAY - timedelta(days=121))
+    accounts.save_account(db, 1, "r", True)
+    accounts.link(db, old.token, 1)
+    accounts.claim(db, 1, TODAY - timedelta(days=1), "morning")
+    shared_old, alive = _start(db, today=TODAY - timedelta(days=121)), _start(db)
+    accounts.save_account(db, 2, "r", True)
+    accounts.link(db, shared_old.token, 2)
+    accounts.link(db, alive.token, 2)
+    assert purge_expired(db, TODAY) == 2
+    assert db.get(KakaoAccount, 1) is None and db.get(KakaoAccount, 2) is not None
+    assert accounts.owner_of(db, alive.token).kakao_id == 2
+
+
+def test_purge_old_sent_messages(db, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.models import SentMessage
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    t = _start(db)
+    accounts.save_account(db, 1, "r", True)
+    accounts.link(db, t.token, 1)
+    accounts.claim(db, 1, TODAY - timedelta(days=41), "morning")
+    accounts.claim(db, 1, TODAY - timedelta(days=39), "morning")
+    purge_expired(db, TODAY)
+    assert [m.day for m in db.scalars(select(SentMessage))] == [TODAY - timedelta(days=39)]
+
+
+def test_purge_removes_next_trial_rows(db):
+    from app.models import NextTrial
+    from app.service import next_trial
+    old = _start(db, today=TODAY - timedelta(days=121))
+    save_setup(db, old.token, **GOOD_SETUP)
+    next_trial(db, old, TODAY - timedelta(days=90), stats=STATS)
+    purge_expired(db, TODAY)
+    assert db.scalars(select(NextTrial)).all() == []

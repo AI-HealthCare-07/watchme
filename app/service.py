@@ -5,11 +5,12 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app import accounts
-from app.models import DayLog, NextTrial, Trial, WeekDecision
+from app.models import DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
 from app.plan import DAYS, MAX_LEVEL, Profile, choose_variant
 from app.risk import LIMITS, assess
 
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
+SENT_KEEP_DAYS = 40  # 중복 발송 방지 기록은 이만큼만 (체험 30일 + 여유)
 SETUP_CHOICES = {
     "diet_style": {"veg", "meat", "mixed"},
     "lunch_place": {"home", "out", "store"},
@@ -123,6 +124,13 @@ def purge_expired(db: Session, today: date) -> int:
     # SQLite는 FK cascade가 기본으로 꺼져 있어 기록부터 직접 지움
     db.execute(delete(WeekDecision).where(WeekDecision.token.in_(expired)))
     db.execute(delete(DayLog).where(DayLog.token.in_(expired)))
+    db.execute(delete(TrialOwner).where(TrialOwner.token.in_(expired)))
+    db.execute(delete(NextTrial).where(NextTrial.token.in_(expired) | NextTrial.next_token.in_(expired)))
     n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount
+    # 남은 체험이 없는 카카오 계정은 토큰째 삭제
+    orphans = select(KakaoAccount.kakao_id).where(~KakaoAccount.kakao_id.in_(select(TrialOwner.kakao_id)))
+    db.execute(delete(SentMessage).where(
+        SentMessage.kakao_id.in_(orphans) | (SentMessage.day < today - timedelta(days=SENT_KEEP_DAYS))))
+    db.execute(delete(KakaoAccount).where(KakaoAccount.kakao_id.in_(orphans)))
     db.commit()
     return n

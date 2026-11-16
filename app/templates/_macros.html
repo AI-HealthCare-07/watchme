@@ -5,7 +5,7 @@
 {% macro risk_bar(vs) %}<div class="bar" role="img" aria-label="{{ vs|vs_text }}"><i class="{{ 'lo' if vs <= 1 else '' }}" style="width:{{ '%.1f'|format([vs / 2, 1]|min * 100) }}%"></i><u></u></div>{% endmacro %}
 
 {# 개인정보 안내 (시작 화면·입력 화면 공통) #}
-{% macro privacy() %}<p class="muted privacy">수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), 일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일.</p>{% endmacro %}
+{% macro privacy() %}<p class="muted privacy">수집 항목: 성별·나이·키·몸무게, 생활 답변(식사 스타일·점심 장소·아침 습관·운동 시간·자유 한 끼 요일), 일일 체크 기록. 이름·연락처는 받지 않아요. 보관: 체험 종료 후 90일. 카카오로 연결하면 카카오 회원번호와 메시지 발송 권한(암호화 보관)을 저장해요. 연결을 끊으면 바로 지워요.</p>{% endmacro %}
 
 {# 위험도 두 줄 + 막대 #}
 {% macro risk_rows(a) %}
