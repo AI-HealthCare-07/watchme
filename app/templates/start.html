@@ -1,31 +1,41 @@
 {% extends "base.html" %}
-{% block body %}
-<h1>30일 생활습관 챌린지</h1>
-<p class="muted">키·나이·몸무게로 한국 평균과 비교한 고혈압·당뇨 참고 위험도를 보고, 30일 식단·운동 계획을 받아보세요.</p>
-
+{% from "_macros.html" import privacy %}
+{% block title %}Watchme · 시작하기{% endblock %}
+{% block hero %}<p class="kicker">1분이면 돼요</p><h1>내 몸 정보를<br>알려주세요</h1>{% endblock %}
+{% block sheet %}
 {% if preparing %}
-<div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있습니다.</p></div>
+<div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있어요.</p></div>
 {% else %}
-<form class="card" method="post" action="/start">
+<form id="steps" class="steps card" method="post" action="/start">
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-  <fieldset class="seg-wrap"><legend>성별</legend>
-  <div class="seg">
-    <label><input type="radio" name="sex" value="M" {% if form.sex == "M" %}checked{% endif %}>남성</label>
-    <label><input type="radio" name="sex" value="F" {% if form.sex == "F" %}checked{% endif %}>여성</label>
-  </div></fieldset>
-  <label for="age">나이</label>
-  <input id="age" name="age" type="number" inputmode="numeric" min="18" max="100" value="{{ form.age or '' }}" required>
-  <label for="height_cm">키 (cm)</label>
-  <input id="height_cm" name="height_cm" type="number" inputmode="decimal" step="0.1" min="120" max="220" value="{{ form.height_cm or '' }}" required>
-  <label for="weight_kg">몸무게 (kg)</label>
-  <input id="weight_kg" name="weight_kg" type="number" inputmode="decimal" step="0.1" min="30" max="250" value="{{ form.weight_kg or '' }}" required>
-  <div class="row"><button type="submit">시작하기</button></div>
+  <fieldset class="step" data-name="성별">
+    <legend class="q">성별을<br>알려주세요</legend>
+    <div class="pick">
+      <label><input type="radio" name="sex" value="M" required {% if form.sex == "M" %}checked{% endif %}><span>남성</span></label>
+      <label><input type="radio" name="sex" value="F" {% if form.sex == "F" %}checked{% endif %}><span>여성</span></label>
+    </div>
+    <p class="hint">통계는 성별·나이대별로 달라서 필요해요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="나이">
+    <legend class="q">나이가<br>어떻게 되세요?</legend>
+    <label class="field"><span class="lab">나이</span>
+      <span class="num"><input name="age" type="number" inputmode="numeric" min="18" max="100" value="{{ form.age or '' }}" required><em>세</em></span></label>
+    <p class="hint">18~100세 사이로 입력해 주세요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="키">
+    <legend class="q">키는<br>몇 cm인가요?</legend>
+    <label class="field"><span class="lab">키</span>
+      <span class="num"><input name="height_cm" type="number" inputmode="decimal" step="0.1" min="120" max="220" value="{{ form.height_cm or '' }}" required><em>cm</em></span></label>
+    <p class="hint">120~220cm 사이로 입력해 주세요.</p>
+  </fieldset>
+  <fieldset class="step" data-name="몸무게">
+    <legend class="q">몸무게는<br>몇 kg인가요?</legend>
+    <label class="field"><span class="lab">몸무게</span>
+      <span class="num"><input name="weight_kg" type="number" inputmode="decimal" step="0.1" min="30" max="250" value="{{ form.weight_kg or '' }}" required><em>kg</em></span></label>
+    <p class="hint">30~250kg 사이로 입력해 주세요.</p>
+  </fieldset>
 </form>
+<div class="card">{{ privacy() }}</div>
 {% endif %}
-
-<div class="card">
-  <h2>개인정보 안내</h2>
-  <p class="muted">수집 항목: 성별·나이·키·몸무게·일일 체크 기록. 이름·연락처는 받지 않아요.<br>
-  보관: 체험 종료 후 90일. 시작하면 나만의 링크가 만들어지니 꼭 저장해 두세요(링크를 잃어버리면 기록을 찾을 수 없어요).</p>
-</div>
 {% endblock %}
+{% block cta %}{% if not preparing %}<button class="btn" type="submit" form="steps" data-last="결과 보기">결과 보기</button>{% endif %}{% endblock %}

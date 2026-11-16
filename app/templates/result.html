@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import risk_rows %}
+{% block title %}Watchme · 내 결과{% endblock %}
+{% set levels = [a.hypertension_level, a.diabetes_level] %}
+{% block hero %}
+<p class="kicker">{{ a.age }}세 {{ "남성" if a.sex == "M" else "여성" }} · BMI {{ "%.1f"|format(a.bmi) }}</p>
+{% if levels == ["낮음", "낮음"] %}
+<h1>고혈압·당뇨 위험이<br>평균보다 낮아요 👏</h1>
+{% elif "높음" in levels %}
+{% set names = [] %}{% if a.hypertension_level == "높음" %}{% set _ = names.append("고혈압") %}{% endif %}{% if a.diabetes_level == "높음" %}{% set _ = names.append("당뇨") %}{% endif %}
+<h1>{{ names|join("·") }} 위험이<br>평균보다 높은 편이에요</h1>
+{% else %}
+<h1>고혈압·당뇨 위험이<br>평균 근처예요</h1>
+{% endif %}
+{% endblock %}
+{% block sheet %}
+<div class="card">{{ risk_rows(a) }}</div>
+{% if a.bmi >= 23 %}
+{% set key = "diabetes_vs_avg" if a.diabetes_vs_avg > a.hypertension_vs_avg else "hypertension_vs_avg" %}
+<p class="note">계획대로 3개월 꾸준히 하면<br><b>{{ "당뇨" if key == "diabetes_vs_avg" else "고혈압" }} {{ a|attr(key)|vs_text }} → {{ later|attr(key)|vs_text }}</b>까지 낮아질 수 있어요</p>
+{% else %}
+<p class="note">지금 체중이 좋아요. 30일 동안 <b>습관을 다져서 유지</b>하는 게 목표예요.</p>
+{% endif %}
+<p class="muted" style="margin-top:12px">다음은 생활 질문 5개예요. 답에 맞춰 식단·운동 계획을 만들어 드려요.</p>
+{% endblock %}
+{% block cta %}<a class="btn btn-dark" href="/c/{{ token }}/setup">내 30일 계획 만들기</a>{% endblock %}

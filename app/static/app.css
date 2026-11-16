@@ -98,6 +98,51 @@ h1, h2, h3, p { margin: 0; }
 
 .error { color: var(--risk); font-weight: 700; font-size: 14.5px; }
 
+/* 단계 폼: JS가 없으면 모든 문항이 보이는 일반 폼 */
+.steps .error { margin-bottom: 14px; }
+.step { border: 0; padding: 0; margin: 0 0 28px; min-width: 0; }
+.step:last-of-type { margin-bottom: 4px; }
+.q { font-size: 22px; font-weight: 800; line-height: 1.35; padding: 0; margin-bottom: 18px; }
+.pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pick.three { grid-template-columns: repeat(3, 1fr); }
+.pick.seven { grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.pick label { position: relative; display: grid; place-items: center; gap: 2px; min-height: 64px; padding: 12px 6px;
+              border: 1.5px solid var(--line); border-radius: 14px; text-align: center; font-weight: 700; cursor: pointer;
+              transition: border-color .15s, background .15s; }
+.pick.seven label { min-height: 52px; padding: 8px 0; border-radius: 12px; }
+.pick label small { display: block; font-size: 12px; color: var(--faint); font-weight: 600; }
+.pick input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.pick label:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-ink); }
+.pick label:has(input:focus-visible) { outline: 2px solid var(--brand); outline-offset: 2px; }
+.pick label:has(input:disabled) { opacity: .45; cursor: default; }
+.field .lab { display: block; font-size: 13px; color: var(--brand-ink); font-weight: 700; }
+.num { display: flex; align-items: baseline; gap: 6px; border-bottom: 2px solid var(--brand); padding: 2px 0 4px; }
+.num input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 28px;
+             font-weight: 800; padding: 0; outline: none; -moz-appearance: textfield; appearance: textfield; }
+.num input::-webkit-outer-spin-button, .num input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.num em { font-style: normal; color: var(--faint); font-weight: 600; font-size: 17px; }
+.hint { font-size: 13px; color: var(--faint); margin-top: 12px; }
+.step.invalid:has(.num) .hint { color: var(--risk); font-weight: 600; }
+.step.invalid .pick label { border-color: var(--risk); }
+.step.invalid .num { border-color: var(--risk); }
+
+/* JS가 켜지면: 한 화면에 한 질문 */
+.steps.js .step { display: none; margin: 0; }
+.steps.js .step.on { display: block; }
+.step.on.fwd { animation: in-from-right .32s cubic-bezier(.2, .8, .2, 1); }
+.step.on.back { animation: in-from-left .32s cubic-bezier(.2, .8, .2, 1); }
+@keyframes in-from-right { from { opacity: 0; transform: translateX(28px); } }
+@keyframes in-from-left { from { opacity: 0; transform: translateX(-28px); } }
+.steps-top { display: flex; align-items: center; justify-content: space-between; color: var(--faint); font-size: 14px; font-weight: 600; }
+.steps-top .back { border: 0; background: none; color: var(--ink); font: inherit; font-size: 20px; padding: 4px 8px 4px 0; cursor: pointer; }
+.prog { height: 3px; border-radius: 2px; background: var(--track); margin: 8px 0 22px; overflow: hidden; }
+.prog i { display: block; height: 100%; width: 0; background: var(--brand); transition: width .3s ease; }
+.done-list:not(:empty) { margin-top: 24px; }
+.done-item { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; width: 100%; padding: 12px 0;
+             border: 0; border-top: 1px solid var(--line); background: none; color: var(--ink-2); font: inherit;
+             font-size: 16px; text-align: right; cursor: pointer; }
+.done-item span { color: var(--faint); font-size: 13px; font-weight: 600; text-align: left; }
+
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }

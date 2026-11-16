@@ -48,7 +48,16 @@ def _num(raw: str, cast, label: str):
         raise InvalidInput(f"{label}를 숫자로 입력해 주세요.") from None
 
 
+EXAMPLE = ("M", 45, 172, 82)  # 시작 화면 예시 인물
+
+
 @router.get("/")
+def landing(request: Request, stats: dict | None = Depends(get_stats)):
+    example = assess(*EXAMPLE, stats=stats) if stats else None
+    return _page(request, "landing.html", example=example, preparing=stats is None)
+
+
+@router.get("/start")
 def start_form(request: Request, stats: dict | None = Depends(get_stats)):
     return _page(request, "start.html", form={}, error=None, preparing=stats is None)
 
@@ -76,7 +85,16 @@ def start(
         )
     except InvalidInput as e:
         return _page(request, "start.html", 400, form=form, error=str(e))
-    return RedirectResponse(f"/c/{trial.token}", status_code=303)
+    return RedirectResponse(f"/c/{trial.token}/result", status_code=303)
+
+
+@router.get("/c/{token}/result")
+def result_page(request: Request, token: str, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    trial = get_trial(db, token)
+    if trial is None:
+        return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
+    a = assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats)
+    return _page(request, "result.html", token=token, a=a, later=scenario(a, stats=stats)[1].assessment)
 
 
 @router.get("/c/{token}")

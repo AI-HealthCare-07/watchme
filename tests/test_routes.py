@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, select
@@ -36,21 +38,56 @@ def client():
 def _start(client):
     r = client.post("/start", data=FORM)
     assert r.status_code == 303
-    return r.headers["location"]
+    return r.headers["location"].removesuffix("/result")
 
 
 def test_start_form_has_notice(client):
+    for path in ("/", "/start"):
+        r = client.get(path)
+        assert r.status_code == 200
+        assert "수집 항목" in r.text
+
+
+def test_landing_shows_example_from_model(client):
+    from app.risk import assess, vs_text
+
+    a = assess("M", 45, 172, 82, stats=STATS)
     r = client.get("/")
     assert r.status_code == 200
-    assert "수집 항목" in r.text
+    assert vs_text(a.hypertension_vs_avg) in r.text and vs_text(a.diabetes_vs_avg) in r.text
+    assert "내 위험도 확인하기" in r.text and 'href="/start"' in r.text
+    assert "이름·연락처는 받지 않아요" in r.text
 
 
-def test_start_redirects_to_check_page(client):
-    loc = _start(client)
-    assert loc.startswith("/c/")
-    r = client.get(loc)
+def test_start_form_works_without_js(client):
+    r = client.get("/start")
     assert r.status_code == 200
-    assert "의학적 진단이 아닙니다" in r.text
+    assert r.text.count("<form") == 1
+    for name in ("sex", "age", "height_cm", "weight_kg"):
+        assert f'name="{name}"' in r.text
+    assert r.text.count('<fieldset class="step"') == 4
+
+
+def test_start_redirects_to_result(client):
+    r = client.post("/start", data=FORM)
+    assert r.status_code == 303
+    assert re.fullmatch(r"/c/[\w-]+/result", r.headers["location"])
+
+
+def test_result_page(client):
+    from app.risk import assess, vs_text
+
+    loc = _start(client)
+    a = assess("M", 45, 170, 80, stats=STATS)
+    r = client.get(f"{loc}/result")
+    assert r.status_code == 200
+    assert vs_text(a.hypertension_vs_avg) in r.text and vs_text(a.diabetes_vs_avg) in r.text
+    assert f'href="{loc}/setup"' in r.text
+    assert "3개월" in r.text
+
+
+def test_result_unknown_token_404(client):
+    assert client.get("/c/nope/result").status_code == 404
 
 
 @pytest.mark.parametrize("field,value", [("age", "0"), ("age", "abc"), ("height_cm", ""), ("sex", "")])
@@ -114,8 +151,9 @@ def test_start_rate_limited_per_ip(client):
 
 def test_without_stats_shows_preparing_not_500(client):
     app.dependency_overrides[get_stats] = lambda: None
-    r = client.get("/")
-    assert r.status_code == 200 and "준비 중" in r.text
+    for path in ("/", "/start"):
+        r = client.get(path)
+        assert r.status_code == 200 and "준비 중" in r.text
     assert client.post("/start", data=FORM).status_code == 503
 
 
@@ -144,8 +182,6 @@ def test_seeded_demo_report(client):
 
 
 # --- 디자인 체계 ---
-import re
-
 from app.pdf import DISCLAIMER
 
 EXTERNAL = re.compile(r"""(?:src|href)\s*=\s*["']?(?:https?:)?//""", re.I)
