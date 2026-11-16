@@ -207,6 +207,17 @@ def test_unlink_deletes_even_if_kakao_fails(client, kakao_env, monkeypatch):
     assert page.status_code == 200 and "연결을 끊었어요" in page.text
 
 
+def test_unlink_with_undecryptable_token_still_deletes(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    with db_of(client) as db:
+        db.get(KakaoAccount, 42).refresh_token_enc = "made-with-an-old-TOKEN_KEY"
+        db.commit()
+    r = client.post(f"{loc}/kakao/unlink")
+    assert r.status_code == 303 and count_accounts(client) == 0
+
+
 def test_unlink_calls_kakao_unlink(client, kakao_env, monkeypatch):
     seen = kakao_api(monkeypatch)
     loc = _start_and_setup(client)

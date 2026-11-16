@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from urllib.parse import urlencode
 
 import httpx
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 ENV_VARS = ("KAKAO_REST_API_KEY", "KAKAO_CLIENT_SECRET", "TOKEN_KEY")
 AUTH = "https://kauth.kakao.com"
@@ -49,7 +49,10 @@ def encrypt(plain: str) -> str:
 
 
 def decrypt(token: str) -> str:
-    return _fernet().decrypt(token.encode()).decode()
+    try:
+        return _fernet().decrypt(token.encode()).decode()
+    except InvalidToken:  # TOKEN_KEY가 바뀌었거나 잃어버림 → 다시 연결해야 함
+        raise KakaoAuthError("저장된 토큰을 풀 수 없음 (TOKEN_KEY 변경?)") from None
 
 
 def _mac(value: str) -> str:

@@ -94,6 +94,35 @@ def test_auth_error_marks_dead_and_continues(db, monkeypatch):  # noqa: F811
     assert sent[0][0] == "Bearer a-r2"
 
 
+def test_undecryptable_token_marks_dead_and_continues(db, monkeypatch):  # noqa: F811
+    sent = kakao_ok(monkeypatch)
+    linked_trial(db, 3, kakao_id=1, refresh="r1")
+    linked_trial(db, 3, kakao_id=2, refresh="r2")
+    db.get(KakaoAccount, 1).refresh_token_enc = "made-with-an-old-TOKEN_KEY"
+    db.commit()
+    assert send_all(db, "morning", TODAY) == (1, 1)
+    assert db.get(KakaoAccount, 1).can_message is False
+    assert sent[0][0] == "Bearer a-r2"
+
+
+def test_kakao_5xx_continues_to_next_account(db, monkeypatch):  # noqa: F811
+    sent = []
+
+    def handler(r):
+        if r.url.path == "/oauth/token":
+            return httpx.Response(200, json={"access_token": f"a-{form_of(r)['refresh_token']}"})
+        if r.headers["authorization"] == "Bearer a-r1":
+            return httpx.Response(500, text="down")
+        sent.append(r.headers["authorization"])
+        return httpx.Response(200, json={"result_code": 0})
+
+    fake_kakao(monkeypatch, handler)
+    linked_trial(db, 3, kakao_id=1, refresh="r1")
+    linked_trial(db, 3, kakao_id=2, refresh="r2")
+    assert send_all(db, "morning", TODAY) == (1, 1)
+    assert sent == ["Bearer a-r2"] and db.get(KakaoAccount, 1).can_message is True
+
+
 def test_new_refresh_token_saved(db, monkeypatch):  # noqa: F811
     kakao_ok(monkeypatch, refresh_body={"access_token": "a", "refresh_token": "r2"})
     linked_trial(db, 3)

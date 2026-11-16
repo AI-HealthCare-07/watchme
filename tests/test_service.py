@@ -155,6 +155,20 @@ def test_next_trial_copies_and_uses_last_weight(db):
     assert next_trial(db, old, TODAY, stats=STATS).token == new.token
 
 
+def test_next_trial_concurrent_double_submit_returns_existing(db, monkeypatch):
+    from app.models import NextTrial, Trial
+    from app.service import next_trial
+    old = _finished_trial(db, {})
+    first = next_trial(db, old, TODAY, stats=STATS)
+    count = len(db.scalars(select(Trial)).all())
+    real_get = db.get
+    # 두 번째 요청이 첫 요청의 NextTrial 저장 전에 확인한 것처럼: 확인은 비어 있고, 저장은 충돌
+    monkeypatch.setattr(db, "get", lambda model, key: None if model is NextTrial else real_get(model, key))
+    again = next_trial(db, old, TODAY, stats=STATS)
+    assert again.token == first.token
+    assert len(db.scalars(select(Trial)).all()) == count  # 고아 체험 없음
+
+
 def test_next_trial_without_weights_uses_start_weight(db):
     from app.service import next_trial
     old = _finished_trial(db, {})

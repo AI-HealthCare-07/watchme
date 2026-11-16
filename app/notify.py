@@ -56,4 +56,8 @@ def send_all(db: Session, kind: Literal["morning", "evening"], today: date) -> t
         except kakao.KakaoError as e:
             print(f"kakao {acc.kakao_id} send failed: {e}")
             failed += 1
+        except Exception as e:  # 한 계정의 예상 못 한 오류(이상한 응답 등)가 나머지 발송을 막지 않게
+            db.rollback()
+            print(f"kakao {acc.kakao_id} unexpected error: {e!r}")
+            failed += 1
     return sent, failed

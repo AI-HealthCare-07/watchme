@@ -2,6 +2,7 @@ import secrets
 from datetime import date, timedelta
 
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import accounts
@@ -110,7 +111,13 @@ def next_trial(db: Session, trial: Trial, today: date, stats: dict | None = None
     p = profile_of(trial)
     save_setup(db, new.token, p.diet_style, p.lunch_place, p.breakfast, p.exercise_min, list(p.free_days))
     db.add(NextTrial(token=trial.token, next_token=new.token))
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:  # 두 번 연달아 눌러 다른 요청이 먼저 저장함 → 방금 만든 체험은 지우고 그쪽으로
+        db.rollback()
+        db.delete(new)
+        db.commit()
+        return db.get(Trial, db.scalar(select(NextTrial.next_token).where(NextTrial.token == trial.token)))
     owner = accounts.owner_of(db, trial.token)
     if owner:
         accounts.link(db, new.token, owner.kakao_id)
