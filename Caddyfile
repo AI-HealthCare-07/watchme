@@ -1,0 +1,5 @@
+# evrd.fyi → app. 인증서는 Caddy가 Let's Encrypt로 자동 발급·갱신 (80/443 포트포워딩 필요).
+# 접근 로그는 켜지 않음: /c/<token> 경로가 남지 않게.
+evrd.fyi {
+	reverse_proxy app:8000
+}

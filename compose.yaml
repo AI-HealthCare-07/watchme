@@ -11,6 +11,21 @@ services:
       - db
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2
+    ports:
+      # LAN IP에만 바인딩: 0.0.0.0:443은 Tailscale Funnel(tailscale0:443)과 충돌.
+      # 공유기 포트포워딩 80/443 → 이 IP (DHCP 고정 할당 필요)
+      - "${LAN_IP}:80:80"
+      - "${LAN_IP}:443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
   db:
     image: postgres:16
     environment:
@@ -23,3 +38,5 @@ services:
 
 volumes:
   pgdata:
+  caddy_data:
+  caddy_config:
