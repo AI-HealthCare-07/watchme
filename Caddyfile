@@ -3,3 +3,8 @@
 evrd.fyi {
 	reverse_proxy app:8000
 }
+
+# DotWalk API (별도 compose, ~/dotwalk). edge 네트워크의 별칭으로 연결.
+dotwalk.evrd.fyi {
+	reverse_proxy dotwalk-api:8000
+}

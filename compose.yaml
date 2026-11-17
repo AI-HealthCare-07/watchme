@@ -26,6 +26,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks: [default, edge]
     depends_on:
       - app
     restart: unless-stopped
@@ -39,6 +40,10 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+
+networks:
+  edge:
+    external: true # 다른 앱(DotWalk)과 Caddy를 공유. 서버에서 한 번: docker network create edge
 
 volumes:
   pgdata:
