@@ -118,4 +118,6 @@
   - `TOKEN_KEY`는 백업(`pg_dump`)에 들어가지 않는다 → 백업 파일만으로는 토큰을 풀 수 없음. 잃어버리면 저장된 토큰을 못 풀어 사용자가 카톡을 다시 연결해야 함.
 - DB: 새 표 `kakao_accounts`, `trial_owners`, `sent_messages`, `next_trials` — 배포 시 `init_db`(`create_all`)가 생성. 기존 표 변경 없음.
 - 배포(2026-11-16): main merge 후 `git push evrd main` → healthz OK. 서버 `.env`에 `TOKEN_KEY` 생성(값 출력 없이), 새 표 4개 생성 확인, 기존 `trials` 유지. 카카오 키 입력 전이라 `kakao.enabled()` = False(카카오 경로 404, 버튼 숨김). 리포트 카드 "다음 30일 도전하기" 확인.
-- 첫 실험 결과: (카카오 키 입력 후 기록)
+- 키 입력 후(2026-11-17): `docker compose up -d`로 app 재생성 → `kakao.enabled()` = True, `/auth/kakao` → 카카오 로그인 화면(KOE 오류 없음).
+- 첫 실험 결과(2026-11-17, 폰): 환영 메시지 도착 ✅, 버튼 → 기록 화면 열림 ✅, **폰 알림은 안 울림** ❌ ("나와의 채팅"은 푸시가 없음 — 예상대로). DB: `kakao_accounts` 1건(can_message·notify 켜짐), `trial_owners` 1건, `sent_messages` welcome 1건.
+  - 영향: 아침/저녁 메시지도 조용히 쌓임 → 사용자가 카톡을 열어야 봄. 알림이 필요하면 다른 채널(카카오톡 채널 메시지 등, 비즈 앱 필요)을 따로 검토.
