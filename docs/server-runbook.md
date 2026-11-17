@@ -121,3 +121,7 @@
 - 키 입력 후(2026-11-17): `docker compose up -d`로 app 재생성 → `kakao.enabled()` = True, `/auth/kakao` → 카카오 로그인 화면(KOE 오류 없음).
 - 첫 실험 결과(2026-11-17, 폰): 환영 메시지 도착 ✅, 버튼 → 기록 화면 열림 ✅, **폰 알림은 안 울림** ❌ ("나와의 채팅"은 푸시가 없음 — 예상대로). DB: `kakao_accounts` 1건(can_message·notify 켜짐), `trial_owners` 1건, `sent_messages` welcome 1건.
   - 영향: 아침/저녁 메시지도 조용히 쌓임 → 사용자가 카톡을 열어야 봄. 알림이 필요하면 다른 채널(카카오톡 채널 메시지 등, 비즈 앱 필요)을 따로 검토.
+- 발송 cron(2026-11-17 등록, KST, 8장 파일 방식으로 기존 3줄 유지):
+  - `30 7 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send morning >> $HOME/send.log 2>&1`
+  - `0 21 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send evening >> $HOME/send.log 2>&1`
+  - 보낼 게 없으면 아무것도 안 찍음 → `send.log`가 비어 있어도 정상. 첫 발송(11-17 21:00, 11-18 07:30) 결과: (확인 후 기록)
