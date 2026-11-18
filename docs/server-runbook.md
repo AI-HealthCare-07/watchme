@@ -151,3 +151,10 @@
 - 카톡 링크 미리보기가 예전 모습(그림 없음)으로 남으면: 카카오 "카카오톡 URL 메타 정보 관리"(예전 이름 공유 디버거, `https://developers.kakao.com/tool/debugger/sharing`)에서 캐시 초기화. 단 2026-11-18 기준 이 도구는 `https://evrd.fyi/`에 "유효하지 않은 URL" 오류를 냄(카카오 쪽 문제로 보임). 그럴 땐 `og:image` 주소에 `?v=2` 같은 꼬리를 붙여 카카오가 그림을 새로 읽게 한다.
 - 확인(2026-11-18): 사용자가 폰 카톡에서 `https://evrd.fyi/` 미리보기(초록 아이콘·제목) 정상 확인.
 - 배포(2026-11-18, `40c6d9c`): landing 브랜치 main merge 후 `git push evrd main` → healthz OK. 운영 랜딩 장면 5개(카카오 켜짐), `og:image` = `https://evrd.fyi/static/icons/og.png`, 아이콘·manifest·story.js 200 확인.
+
+## 15. 주간 리포트 + 체중 그래프 + 자랑 카드 (2026-11-18)
+- 화면: `/c/{token}/week/{1~4}` (7w일째 기록 후 또는 7w+1일째부터), 카드 `/c/{token}/week/{w}/card.png` (또래 비교가 나오는 주만, `no-store`).
+- 카톡: 8·15·22·29일째 아침 7:30에는 계획 대신 지난주 리포트 메시지 하나(`sent_messages.kind = "week"`). cron은 그대로.
+- 또래 비교 자료: `app/data/korea_stats.json`의 `walk`(국민건강영양조사 걷기 문항). 다시 만들 때는 로컬에서
+  `python -m scripts.knhanes_stats data/raw` → JSON만 커밋. **`data/raw/` 원본은 커밋하지 않는다.**
+- 새 DB 표 없음 → 운영 DB 변경 없이 배포만 하면 된다. Pillow는 reportlab이 이미 설치하던 것(의존성에 이름만 적음).
