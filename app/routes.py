@@ -1,3 +1,4 @@
+import hashlib
 import os
 import time
 from pathlib import Path
@@ -35,6 +36,11 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER
 templates.env.filters["vs_text"] = vs_text
 templates.env.globals["group_label"] = group_label
+templates.env.globals["PUBLIC_BASE_URL"] = PUBLIC_BASE_URL
+# 정적 파일 내용이 바뀌면 주소(?v=)도 바뀌어, 폰에 예전 CSS·JS가 남지 않는다
+STATIC = Path(__file__).parent / "static"
+ASSET_V = hashlib.sha256(b"".join(p.read_bytes() for p in sorted(STATIC.glob("*.css")) + sorted(STATIC.glob("*.js")))).hexdigest()[:8]
+templates.env.globals["ASSET_V"] = ASSET_V
 router = APIRouter()
 
 

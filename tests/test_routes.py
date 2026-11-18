@@ -253,6 +253,28 @@ def test_static_css_served(client):
         assert needle in r.text
 
 
+def test_head_has_icons_and_link_preview(client):
+    page = client.get("/").text
+    assert '<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">' in page
+    assert '<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">' in page
+    assert '<link rel="manifest" href="/static/manifest.webmanifest">' in page
+    assert '<meta property="og:image" content="http://localhost:8000/static/icons/og.png">' in page
+    assert '<meta property="og:title" content="Watchme · 30일 생활습관 챌린지">' in page
+    for path in ("icons/favicon.svg", "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png",
+                 "icons/og.png", "manifest.webmanifest"):
+        assert client.get(f"/static/{path}").status_code == 200
+
+
+def test_static_urls_carry_content_version(client):
+    from app.routes import ASSET_V
+    page = client.get("/").text
+    assert len(ASSET_V) == 8 and f"/static/app.css?v={ASSET_V}" in page and f"/static/flow.js?v={ASSET_V}" in page
+
+
+def test_brand_shows_icon_on_every_page(client):
+    assert '<img class="brand-icon" src="/static/icons/favicon.svg"' in client.get("/start").text
+
+
 def test_pages_have_no_external_requests(client):
     for path in ("/", "/c/nope"):
         html = client.get(path).text

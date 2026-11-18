@@ -32,6 +32,8 @@ h1, h2, h3, p { margin: 0; }
 .hero-in { max-width: 480px; margin: 0 auto; padding: 0 20px; position: relative; }
 .brand { display: flex; align-items: center; justify-content: space-between; font-weight: 900; font-size: 15px;
          letter-spacing: .04em; text-decoration: none; }
+.brand-name { display: flex; align-items: center; gap: 7px; }
+.brand-icon { border-radius: 5px; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .5); }
 .brand small { font-weight: 600; font-size: 12px; opacity: .85; letter-spacing: 0; }
 .hero h1 { font-size: 27px; line-height: 1.3; font-weight: 800; margin-top: 22px; text-wrap: balance; word-break: keep-all; }
 .hero .sub { font-size: 14px; opacity: .92; margin-top: 8px; line-height: 1.5; }

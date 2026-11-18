@@ -8,13 +8,21 @@
 <meta name="theme-color" content="#0ca678">
 <meta name="color-scheme" content="only light">
 <title>{% block title %}Watchme{% endblock %}</title>
-<link rel="stylesheet" href="/static/app.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Watchme">
+<meta property="og:title" content="Watchme · 30일 생활습관 챌린지">
+<meta property="og:description" content="내 혈압·혈당 위험을 또래 평균과 비교하고, 30일 맞춤 계획을 받아 보세요.">
+<meta property="og:image" content="{{ PUBLIC_BASE_URL }}/static/icons/og.png">
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<link rel="manifest" href="/static/manifest.webmanifest">
+<link rel="stylesheet" href="/static/app.css?v={{ ASSET_V }}">
 {% block head %}{% endblock %}
 </head>
 <body>
 {% block topbar %}{% endblock %}
 <header class="hero"><div class="hero-in">
-  <a class="brand" href="/">WATCHME <small>{% block brand_note %}30일 생활습관 챌린지{% endblock %}</small></a>
+  <a class="brand" href="/"><span class="brand-name"><img class="brand-icon" src="/static/icons/favicon.svg" width="20" height="20" alt="">WATCHME</span> <small>{% block brand_note %}30일 생활습관 챌린지{% endblock %}</small></a>
   {% block hero %}{% endblock %}
 </div></header>
 {% set cta_html %}{% block cta %}{% endblock %}{% endset %}
@@ -23,6 +31,6 @@
   <p class="foot">{{ DISCLAIMER }}</p>
 </main>
 {% if cta_html|trim %}<div class="cta"><div class="cta-in">{{ cta_html }}</div></div>{% endif %}
-<script src="/static/flow.js" defer></script>
+<script src="/static/flow.js?v={{ ASSET_V }}" defer></script>
 </body>
 </html>
