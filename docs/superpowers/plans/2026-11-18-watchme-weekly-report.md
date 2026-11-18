@@ -117,7 +117,7 @@ def test_walk_table_shares():
   - `app_rank(db: Session, trial: Trial, week: int, kept: int, today: date) -> int | None`
     - 비교 대상: 다른 체험 중 `start_date <= today - 7·week일`이고, 그 주 `DayLog`가 1개 이상인 체험.
     - 비교 대상이 30명 미만이면 None.
-    - N = ceil(100·(나보다 kept가 큰 수 + 1)/(비교 대상 수 + 1)). N > 50이면 None.
+    - N = ceil(100·(나보다 kept가 크거나 같은 수 + 1)/(비교 대상 수 + 1)). N > 50이면 None.
   - `cheer(week: int, kept: int, prev_kept: int | None) -> str`: 문구는 아래에 정확히 적었다.
   - `@dataclass(frozen=True) class WeekReport`
     - `week: int`

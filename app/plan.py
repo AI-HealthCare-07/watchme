@@ -44,6 +44,7 @@ class PlanDay:
     notes: tuple[str, ...]
     tip: str
     level: int
+    exercise_min: int = 0  # 그날 총 운동 분(쉬는 날 0, ×2회는 합친 값)
 
 
 @dataclass(frozen=True)
@@ -82,16 +83,19 @@ def _shuffled(items: list, seed: str, slot: str) -> list:
     return items
 
 
-def _exercise(profile: Profile, day: int, level: int, activities: list[str], rest: str) -> str:
+def _exercise(profile: Profile, day: int, level: int, activities: list[str], rest: str) -> tuple[str, int]:
+    """(문장, 그날 총 분)."""
     if day % 7 == 0:
-        return rest
+        return rest, 0
     minutes = max(10, ceil(profile.exercise_min * RAMP.get(week_of(day), 1.0) / 5) * 5) + 10 * level
     text = activities[(day - 1) % len(activities)]
     if profile.variant == "high_risk":
         if minutes > 30:  # 한 번 30분 상한 → 나눠서 두 번
-            return text.format(m=min(30, ceil(minutes / 2 / 5) * 5)) + " ×2회"
-        return text.format(m=minutes)
-    return text.format(m=min(minutes, 70))
+            each = min(30, ceil(minutes / 2 / 5) * 5)
+            return text.format(m=each) + " ×2회", 2 * each
+        return text.format(m=minutes), minutes
+    minutes = min(minutes, 70)
+    return text.format(m=minutes), minutes
 
 
 def _pools(profile: Profile) -> dict[str, list[str]]:
@@ -159,7 +163,8 @@ def build_plan(profile: Profile, start_date: date, seed: str, decisions: dict[in
             tip = take("relevant", "general")
         else:
             tip = take("general")
-        plan.append(PlanDay(d, day_date, day_meals, _exercise(profile, d, level, activities, ex["rest"]), free, notes, tip, level))
+        exercise, minutes = _exercise(profile, d, level, activities, ex["rest"])
+        plan.append(PlanDay(d, day_date, day_meals, exercise, free, notes, tip, level, minutes))
     return plan
 
 

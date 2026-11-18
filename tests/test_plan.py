@@ -204,3 +204,16 @@ def test_floor_ok_half_rule():
         keep = -(-len(items) // 2)  # 올림
         assert floor_ok(PROFILE, frozenset(items[: len(items) - keep]))
         assert not floor_ok(PROFILE, frozenset(items[: len(items) - keep + 1]))
+
+
+@pytest.mark.parametrize("variant, minutes", [("high_risk", 45), ("high_risk", 10), ("normal", 45)])
+def test_exercise_min_matches_text(variant, minutes):
+    import re
+    plan = _build(_Profile(variant, "mixed", "out", "light", minutes, (0, 6)), _date(2026, 11, 16), "s", {1: 1, 2: 2})
+    for d in plan:
+        if d.day % 7 == 0:
+            assert d.exercise_min == 0
+            continue
+        each = int(re.search(r"(\d+)분", d.exercise).group(1))
+        assert d.exercise_min == (2 * each if "×2회" in d.exercise else each)
+    assert any("×2회" in d.exercise for d in plan) == (variant == "high_risk" and minutes == 45)
