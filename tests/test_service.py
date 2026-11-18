@@ -290,3 +290,21 @@ def test_purge_removes_next_trial_rows(db):
     next_trial(db, old, TODAY - timedelta(days=90), stats=STATS)
     purge_expired(db, TODAY)
     assert db.scalars(select(NextTrial)).all() == []
+
+
+@pytest.mark.filterwarnings("ignore::sqlalchemy.exc.SAWarning")  # 경쟁을 흉내 내느라 같은 키 객체가 둘
+def test_ai_pick_concurrent_double_submit_returns_existing(db, monkeypatch):
+    from app.models import AiPick
+    from app.service import apply_ai_request
+    from tests.test_ai import fake_gemini, reply
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    fake_gemini(monkeypatch, lambda r: reply('{"exclude": [], "reason": ""}'))
+    t = _start(db)
+    save_setup(db, t.token, "mixed", "out", "light", 25, [5, 6])
+    first = apply_ai_request(db, t, "매운 거")
+    real_get = db.get
+    # 두 번째 요청이 첫 요청의 저장 전에 확인한 것처럼: 확인은 비어 있고, 저장은 충돌
+    monkeypatch.setattr(db, "get", lambda model, key: None if model is AiPick else real_get(model, key))
+    again = apply_ai_request(db, t, "매운 거")
+    assert again.token == first.token and again.status == first.status
+    assert len(db.scalars(select(AiPick)).all()) == 1

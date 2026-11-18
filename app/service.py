@@ -129,7 +129,11 @@ def apply_ai_request(db: Session, trial: Trial, text: str) -> AiPick | None:
     row = AiPick(token=trial.token, request=text, status=status,
                  excluded=json.dumps(sorted(gone), ensure_ascii=False), reason=reason)
     db.add(row)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:  # 두 번 연달아 눌러 다른 요청이 먼저 저장함 → 그쪽 결과를 쓴다
+        db.rollback()
+        return db.scalars(select(AiPick).where(AiPick.token == trial.token)).one()
     return row
 
 

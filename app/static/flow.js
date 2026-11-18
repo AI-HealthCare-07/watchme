@@ -75,6 +75,8 @@
       show(bad, "back");
       steps[bad].classList.add("invalid");
     } else {
+      // 한 번만 보낸다: 계획 만들기는 AI 때문에 몇 초 걸려서 두 번 누르기 쉽다
+      if (btn) { btn.disabled = true; btn.textContent = "잠시만요…"; }
       form.submit();
     }
   }
@@ -101,6 +103,9 @@
     limitPicks(s);
     s.querySelectorAll(".num input").forEach((i) => i.setAttribute("enterkeyhint", "next"));
   });
+
+  // 뒤로 가기로 돌아오면 브라우저가 잠긴 버튼을 그대로 보여 줄 수 있어서 다시 푼다
+  window.addEventListener("pageshow", (e) => { if (e.persisted && btn) { btn.disabled = false; show(cur); } });
 
   // 서버가 오류로 폼을 다시 보여주면 첫 번째로 틀린 문항부터
   const firstBad = form.querySelector(".error") ? steps.findIndex((x) => !valid(x)) : -1;

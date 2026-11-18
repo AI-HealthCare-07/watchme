@@ -5,6 +5,7 @@
 """
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 
 import httpx
@@ -14,8 +15,11 @@ import httpx
 DEFAULT_MODEL = "gemini-3.5-flash-lite"
 URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 REASON_MAX = 80
+TOTAL_TIMEOUT = 8  # 사용자가 기다리는 최대 시간(초). httpx 제한은 연결·읽기 단계마다 따로라 합치면 넘을 수 있다
 
 http = httpx.Client(timeout=8)  # 테스트에서 MockTransport 클라이언트로 바꿔 끼운다
+# ponytail: 늦은 호출은 스레드에서 httpx 제한까지 마저 돌다 끝난다. 동시 사용자가 많아지면 async로
+_pool = ThreadPoolExecutor(max_workers=4)
 
 PROMPT = """너는 식단·운동 목록에서 사용자 요청에 맞지 않는 항목의 번호만 고르는 도우미야.
 규칙:
@@ -48,6 +52,7 @@ def enabled() -> bool:
 
 def _prompt(request: str, candidates: dict[str, str]) -> str:
     items = "\n".join(f"{k}: {v}" for k, v in candidates.items())
+    request = request.replace("<", "＜").replace(">", "＞")  # 요청 글이 </요청>으로 블록을 닫지 못하게
     return f"{PROMPT}{request}\n</요청>\n\n목록:\n{items}"
 
 
@@ -71,19 +76,20 @@ def _parse(text: str, candidates: dict[str, str]) -> Pick:
 def choose(request: str, candidates: dict[str, str]) -> Pick:
     model = os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL
     body = {"contents": [{"parts": [{"text": _prompt(request, candidates)}]}]}
+    call = _pool.submit(http.post, URL.format(model=model), json=body,
+                        headers={"x-goog-api-key": os.environ.get("GEMINI_API_KEY", "")})
     try:
-        r = http.post(URL.format(model=model), json=body,
-                      headers={"x-goog-api-key": os.environ.get("GEMINI_API_KEY", "")})
-    except httpx.TimeoutException:
+        r = call.result(timeout=TOTAL_TIMEOUT)
+    except (TimeoutError, httpx.TimeoutException):
         raise AiError("timeout") from None
     except httpx.HTTPError:
         raise AiError("http") from None
     if r.status_code != 200:
         raise AiError("http")
     try:
-        text = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-    except (ValueError, KeyError, IndexError, TypeError):
+        parts = r.json()["candidates"][0]["content"]["parts"]
+        # 응답이 여러 조각으로 올 수 있다. 생각(thought) 조각은 빼고 글만 잇는다
+        text = "".join(p["text"] for p in parts if not p.get("thought"))
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
         raise AiError("invalid") from None
-    if not isinstance(text, str):
-        raise AiError("invalid")
     return _parse(text, candidates)
