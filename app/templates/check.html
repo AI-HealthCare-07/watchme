@@ -4,13 +4,14 @@
 {% block brand_note %}{{ label }}{% endblock %}
 {% block hero %}
 <div class="ring" style="--p: {{ (today / days * 100)|round(1) }}%" aria-label="{{ days }}일 중 {{ today }}일째"><div>{{ today }}/{{ days }}</div></div>
-<h1 class="day">Day {{ today }}</h1>
-<p class="sub">{% if streak >= 2 %}{{ streak }}일 연속 지키는 중이에요 🔥{% elif today == 1 %}오늘이 첫날이에요. 가볍게 시작해요 🌱{% else %}오늘 하루만 지켜도 충분해요 💪{% endif %}</p>
+<h1 class="day">Day {{ selected }}</h1>
+<p class="sub">{% if selected != today %}지난 날 기록이에요 · 오늘은 Day {{ today }}{% elif streak >= 2 %}{{ streak }}일 연속 지키는 중이에요 🔥{% elif today == 1 %}오늘이 첫날이에요. 가볍게 시작해요 🌱{% else %}오늘 하루만 지켜도 충분해요 💪{% endif %}</p>
 {% if level %}<p style="margin-top:10px"><span class="chip">💪 강도 {{ level }}단계 진행 중</span></p>{% endif %}
 {% endblock %}
 {% block sheet %}
 {% set d = plan[selected - 1] %}
 {% set log = logs.get(selected) %}
+{% if selected != today %}<p class="past">📝 지난 기록을 고치는 중이에요 · Day {{ selected }} ({{ d.date.month }}/{{ d.date.day }} {{ "월화수목금토일"[d.date.weekday()] }})<a href="/c/{{ token }}">오늘(Day {{ today }})로 돌아가기 →</a></p>{% endif %}
 
 {% if kakao %}
 {{ kakao_flash(kakao.flash) }}
@@ -20,9 +21,10 @@
   {% else %}
   <div class="kline">
     {% set on = kakao.account.notify %}
-    <span>{{ "💬 카톡 알림 켜짐" if on else "🔕 카톡 알림 꺼짐" }}</span>
+    <span>{{ "💬 카톡 메시지 받는 중" if on else "🔕 카톡 메시지 꺼짐" }}</span>
     <form method="post" action="/c/{{ token }}/kakao/notify"><input type="hidden" name="on" value="{{ '0' if on else '1' }}"><button class="linkish">{{ "끄기" if on else "켜기" }}</button></form>
     <form method="post" action="/c/{{ token }}/kakao/unlink"><button class="linkish">연결 끊기</button></form>
+    {% if on %}<small>폰 알림은 울리지 않아요. 카톡 '나와의 채팅'을 직접 열어 확인해 주세요.</small>{% endif %}
   </div>
   {% endif %}
 {% endif %}

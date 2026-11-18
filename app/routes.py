@@ -240,7 +240,8 @@ def save(request: Request, token: str, n: int, kept: str = Form(""), weight_kg: 
         save_day(db, token, n, kept == "1", weight)
     except ValueError:
         return _error(request, 400, "몸무게는 30~250 사이 숫자로 입력해 주세요.")
-    return RedirectResponse(f"/c/{token}", status_code=303)
+    today = current_day(trial, today_kst())
+    return RedirectResponse(f"/c/{token}" if n == today else f"/c/{token}?day={n}", status_code=303)
 
 
 @router.get("/c/{token}/report")

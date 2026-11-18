@@ -384,8 +384,9 @@ def test_week_summary_and_level_up(client):
     r = client.get(loc)
     assert "1주차 요약" in r.text and f'action="{loc}/week/1/level"' in r.text
     assert client.post(f"{loc}/week/1/level", data={"choice": "up"}).status_code == 303
-    _set_day(client, loc, 8)
-    r = client.get(loc)
+    _set_day(client, loc, 9)
+    n = 9 if _plan(client, loc)[7].free_meal else 8  # 자유 한 끼(수·토) 저녁엔 메모가 없어서, 아닌 날을 본다
+    r = client.get(f"{loc}?day={n}")
     assert "강도 1단계" in r.text and "밥은 1/3 공기" in r.text
     assert f'action="{loc}/week/1/level"' not in r.text  # 이미 정함
 
@@ -499,3 +500,28 @@ def test_next_twice_same_trial(client):
 def test_report_card_has_next_button(client):
     rep = client.get(f"{_finished(client, 20)}/report").text
     assert "다음 30일 도전하기" in rep and "곧 오픈" not in rep
+
+
+def test_past_day_view_is_clearly_marked(client):
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 2)
+    page = client.get(f"{loc}?day=1").text
+    assert '<h1 class="day">Day 1</h1>' in page
+    assert "지난 기록을 고치는 중" in page and f'href="{loc}"' in page and "오늘(Day 2)로 돌아가기" in page
+    today = client.get(loc).text
+    assert '<h1 class="day">Day 2</h1>' in today and "지난 기록을 고치는 중" not in today
+
+
+def test_saving_past_day_stays_on_that_day(client):
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 2)
+    r = client.post(f"{loc}/day/1", data={"kept": "1", "weight_kg": ""})
+    assert r.headers["location"] == f"{loc}?day=1"
+    assert "✅ 지켰어요" in client.get(r.headers["location"]).text
+    assert client.post(f"{loc}/day/2", data={"kept": "1", "weight_kg": ""}).headers["location"] == loc
+
+
+def test_pages_are_light_only(client):
+    css = client.get("/static/app.css").text
+    assert "prefers-color-scheme" not in css and "color-scheme: only light" in css
+    assert '<meta name="color-scheme" content="only light">' in client.get("/").text

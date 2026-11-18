@@ -172,7 +172,7 @@ def test_check_shows_linked_line(client, kakao_env, monkeypatch):
     assert "카카오로 연결" in client.get(loc).text
     login(client, f"{loc}/kakao")
     page = client.get(loc).text
-    assert "카톡 알림 켜짐" in page and "카카오로 연결" not in page
+    assert "카톡 메시지 받는 중" in page and "카카오로 연결" not in page
 
 
 def test_notify_toggle(client, kakao_env, monkeypatch):
@@ -182,7 +182,7 @@ def test_notify_toggle(client, kakao_env, monkeypatch):
     assert client.post(f"{loc}/kakao/notify", data={"on": "0"}).status_code == 303
     with db_of(client) as db:
         assert db.get(KakaoAccount, 42).notify is False
-    assert "알림 꺼짐" in client.get(loc).text
+    assert "카톡 메시지 꺼짐" in client.get(loc).text
     client.post(f"{loc}/kakao/notify", data={"on": "1"})
     with db_of(client) as db:
         assert db.get(KakaoAccount, 42).notify is True
@@ -252,3 +252,16 @@ def test_auth_rate_limited(client, kakao_env):
     loc = _start_and_setup(client)
     codes = [client.get(f"{loc}/kakao").status_code for _ in range(11)]
     assert codes[:10] == [303] * 10 and codes[10] == 429
+
+
+SELF_CHECK = "'나와의 채팅'을 직접 열어"
+
+
+def test_self_check_notice_on_card_welcome_and_linked_line(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    assert SELF_CHECK in client.get(f"{loc}/ready").text
+    assert SELF_CHECK in client.get(loc).text
+    login(client, f"{loc}/kakao")
+    assert SELF_CHECK in memos(seen)[0]
+    assert SELF_CHECK in client.get(loc).text
