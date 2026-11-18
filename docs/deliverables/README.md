@@ -35,8 +35,8 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 |---|---|---|
 | 2 Gemini 클라이언트(`app/ai.py`) | ✅ | — |
 | 3 새 표 `ai_picks`·계획에 제외 반영 | ✅ | erd |
-| 4 설정 화면 한 줄 요청·AI 호출 | 구현 전 | api, wireframes, requirements |
+| 4 설정 화면 한 줄 요청·AI 호출 | ✅ | api, wireframes, requirements |
 | 5 준비·기록 화면 안내·개인정보 문구·다음 도전 복사 | 구현 전 | wireframes, requirements |
 | 6 runbook·배포·첫 실험 | 구현 전 | links, demo-script, ppt-outline |
 
-- 마지막 갱신: 2026-11-18 (기준 커밋 `5e825bf`, 브랜치 `phase3`, 테스트 250개 통과)
+- 마지막 갱신: 2026-11-18 (기준 커밋 `8898f8a`, 브랜치 `phase3`, 테스트 264개 통과)
