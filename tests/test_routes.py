@@ -533,3 +533,11 @@ def test_check_screen_is_compact(client):
     assert "<b>아침</b>" not in page and "지난 날짜를 누르면" not in page and "오늘의 팁" not in page
     assert '<span class="chip">' in page.split('<main', 1)[0]  # 계획 이름은 제목 밑 칩
     assert "<details" in page and "참고 위험도" in page
+
+
+def test_landing_and_result_are_compact(client):
+    page = client.get("/").text
+    assert '<details class="card fold"><summary>🔒 이름·연락처는 받지 않아요</summary>' in page and PRIVACY in page
+    loc = _start_only(client)
+    page = client.get(f"{loc}/result").text
+    assert "다음은 생활 질문 5개예요" not in page and "질문 5개로 맞춤 계획" in page

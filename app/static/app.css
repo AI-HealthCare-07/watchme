@@ -94,6 +94,13 @@ h1, h2, h3, p { margin: 0; }
 .feat div { background: var(--card); border-radius: 14px; padding: 12px 4px; font-size: 12.5px; color: var(--muted); }
 .feat strong { display: block; font-size: 18px; color: var(--brand-ink); font-weight: 800; }
 
+.fold { margin-top: 12px; }
+.fold summary { font-weight: 700; font-size: 15px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: '›'; color: var(--faint); }
+.fold[open] summary::after { content: '⌄'; }
+.fold .privacy { margin-top: 10px; font-size: 13px; }
+.kresume { display: block; text-align: center; background: #fee500; color: #191919; border-radius: 14px; padding: 13px; font-weight: 700; font-size: 15px; text-decoration: none; margin-bottom: 12px; }
 .error { color: var(--risk); font-weight: 700; font-size: 14.5px; }
 
 /* 기록 화면 */

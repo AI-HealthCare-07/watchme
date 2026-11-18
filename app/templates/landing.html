@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from "_macros.html" import risk_rows, privacy %}
 {% block hero %}
-<h1>내 혈압·혈당 위험,<br>같은 나이대·성별<br>평균과 비교해 보세요</h1>
-<p class="sub">국민건강영양조사(2022–2024) 성인 약 1만 7천 명 데이터로 계산해요</p>
+<h1>내 혈압·혈당 위험,<br>또래 평균과 비교해 보세요</h1>
+<p class="sub">국민건강영양조사 성인 1만 7천 명 기준</p>
 {% endblock %}
 {% block sheet %}
 {% if preparing %}
 <div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있어요.</p></div>
 {% else %}
 <div class="card">
-  <p class="muted" style="font-size:12.5px;margin-bottom:12px">예시 · 45세 남성 172cm 82kg</p>
+  <p class="muted" style="font-size:12.5px;margin-bottom:12px">예시 · 45세 남성</p>
   {{ risk_rows(example) }}
 </div>
 <div class="feat">
@@ -17,11 +17,8 @@
   <div><strong>맞춤</strong>30일 계획</div>
   <div><strong>0원</strong>무료 체험</div>
 </div>
-<div class="card" style="margin-top:12px">
-  <p style="font-weight:700;margin-bottom:6px">🔒 이름·연락처는 받지 않아요</p>
-  {{ privacy() }}
-</div>
-{% if kakao_on %}<p class="muted" style="text-align:center;margin:4px 0 12px">이미 하고 있나요? <a href="/auth/kakao">카카오로 이어서 하기</a></p>{% endif %}
+<details class="card fold"><summary>🔒 이름·연락처는 받지 않아요</summary>{{ privacy() }}</details>
+{% if kakao_on %}<a class="kresume" href="/auth/kakao">💬 카카오로 이어서 하기</a>{% endif %}
 {% endif %}
 {% endblock %}
 {% block cta %}{% if not preparing %}<a class="btn btn-dark" href="/start">내 위험도 확인하기</a>{% endif %}{% endblock %}

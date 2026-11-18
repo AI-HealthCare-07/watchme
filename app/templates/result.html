@@ -17,10 +17,10 @@
 <div class="card">{{ risk_rows(a) }}</div>
 {% if a.bmi >= 23 %}
 {% set key = "diabetes_vs_avg" if a.diabetes_vs_avg > a.hypertension_vs_avg else "hypertension_vs_avg" %}
-<p class="note">계획대로 3개월 꾸준히 하면<br><b>{{ "당뇨" if key == "diabetes_vs_avg" else "고혈압" }} {{ a|attr(key)|vs_text }} → {{ later|attr(key)|vs_text }}</b>까지 낮아질 수 있어요</p>
+<p class="note">3개월 꾸준히 하면<br><b>{{ "당뇨" if key == "diabetes_vs_avg" else "고혈압" }} {{ a|attr(key)|vs_text }} → {{ later|attr(key)|vs_text }}</b>까지 낮아질 수 있어요</p>
 {% else %}
-<p class="note">지금 체중이 좋아요. 30일 동안 <b>습관을 다져서 유지</b>하는 게 목표예요.</p>
+<p class="note">지금 체중이 좋아요. 목표는 <b>30일 습관 유지</b>예요.</p>
 {% endif %}
-<p class="muted" style="margin-top:12px">다음은 생활 질문 5개예요. 답에 맞춰 식단·운동 계획을 만들어 드려요.</p>
+<p class="muted" style="margin-top:12px;text-align:center">질문 5개로 맞춤 계획을 만들어요</p>
 {% endblock %}
 {% block cta %}<a class="btn btn-dark" href="/c/{{ token }}/setup">내 30일 계획 만들기</a>{% endblock %}
