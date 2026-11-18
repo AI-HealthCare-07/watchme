@@ -142,3 +142,10 @@
 - 키 입력 후(2026-11-18): `docker compose up -d` → `ai.enabled()` = True. 기본 모델로 가짜 후보 2개 시험 호출 → 매운 메뉴만 골라 정상.
 - 첫 실험 결과(2026-11-18, 폰): 설정 6단계에 매운 음식 요청 → `ai_picks` `ok` 1건(매운 메뉴 1개 제외), 실패 로그 없음. 기록 화면 칩은 서버 HTML에 있음 확인(사용자는 카톡 연결된 11/17 체험을 보고 있었던 것으로 보임).
 - 피드백 반영(2026-11-18, `b7688e9`): 준비 화면 AI 안내를 "🤖 이 계획은 AI가 내 요청에 맞춰 골라 줬어요" 한 줄로(뺀 항목 안 보여 줌, 자동 이동 다시 켬), 카톡 카드 "카카오로 연결" 밑에 "바로 시작" 버튼.
+
+## 14. 랜딩 스토리형 개편 + 대표 아이콘 (2026-11-18)
+- 설계·계획: `docs/superpowers/specs/2026-11-18-watchme-landing-icon-design.md`, `docs/superpowers/plans/2026-11-18-watchme-landing-icon.md`.
+- 아이콘 파일: `app/static/icons/`(favicon.svg, apple-touch-icon 180, icon-192/512, og.png 1200×630). 다시 만들 때 `.venv/Scripts/python scripts/make_icons.py`(Pillow, 개발 PC에서만).
+- CSS·JS 주소에 `?v=내용해시`가 붙어 배포 후 폰에 예전 파일이 남지 않음(`ASSET_V`, 서버 시작 때 계산).
+- 사용자 몫: 카카오 개발자 콘솔 → 앱 → 앱 아이콘에 `app/static/icons/icon-512.png` 올리기(로그인 동의 화면에 보임).
+- 카톡 링크 미리보기가 예전 모습(그림 없음)으로 남으면: 카카오 개발자 사이트 "공유 디버거"(developers.kakao.com → 도구 → 공유 디버거)에 `https://evrd.fyi/` 입력 → 캐시 초기화. 카카오는 한 번 읽은 미리보기를 한동안 저장해 두기 때문.
