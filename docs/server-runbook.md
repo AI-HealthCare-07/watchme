@@ -138,4 +138,5 @@
 - DB: 새 표 `ai_picks` — 배포 시 `init_db`(`create_all`)가 생성. 기존 표 변경 없음. 보관 삭제(`scripts/purge.py`)가 체험과 함께 지움.
 - 실패 확인: `docker compose logs app | grep "ai pick failed"` → 종류만 찍힘(`timeout`·`http`·`invalid`·`floor`). 요청 문장은 로그에 안 남김. `http`가 계속 나오면 키·모델 이름·무료 한도(429) 확인.
 - 상태 보기: `docker compose exec -T db psql -U watchme -c "select status, count(*) from ai_picks group by status"`.
-- 첫 실험 결과: (배포 후 기록)
+- 배포(2026-11-18, `0c88242`): main merge 후 `git push evrd main` → healthz OK, 새 표 `ai_picks` 생성(0건), 기존 `trials` 7건 유지, 시작 화면 개인정보 문장 반영 확인. 키 입력 전이라 `ai.enabled()` = False(설정 6단계 숨김).
+- 첫 실험 결과: (키 입력 후 기록)
