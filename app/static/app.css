@@ -93,9 +93,6 @@ h1, h2, h3, p { margin: 0; }
 .bar-legend { font-size: 11px; color: var(--faint); text-align: center; margin-top: 4px; }
 
 /* 특징 3칸 */
-.feat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
-.feat div { background: var(--card); border-radius: 14px; padding: 12px 4px; font-size: 12.5px; color: var(--muted); }
-.feat strong { display: block; font-size: 18px; color: var(--brand-ink); font-weight: 800; }
 
 .fold { margin-top: 12px; }
 .fold summary { font-weight: 700; font-size: 15px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; }
@@ -103,7 +100,6 @@ h1, h2, h3, p { margin: 0; }
 .fold summary::after { content: '›'; color: var(--faint); }
 .fold[open] summary::after { content: '⌄'; }
 .fold .privacy { margin-top: 10px; font-size: 13px; }
-.kresume { display: block; text-align: center; background: #fee500; color: #191919; border-radius: 14px; padding: 13px; font-weight: 700; font-size: 15px; text-decoration: none; margin-bottom: 12px; }
 .error { color: var(--risk); font-weight: 700; font-size: 14.5px; }
 
 /* 기록 화면 */
@@ -239,6 +235,70 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 @keyframes fill-up { from { width: 0; } }
 .cautions { padding-left: 18px; color: var(--ink-2); line-height: 1.6; font-size: 15px; }
 .cautions li + li { margin-top: 8px; }
+
+/* 랜딩 스토리: JS 없으면 장면이 세로로 쌓이고, story.js가 .js를 붙이면 한 장면씩 넘어간다 */
+.story { max-width: 480px; margin: 0 auto; position: relative; background: var(--bg); }
+.story .scene { padding: 72px 24px 40px; }
+.story .scene.g { background: linear-gradient(165deg, #20c997, #0ca678 55%, #099268); color: var(--hero-ink); }
+.story .kick { font-size: 13px; font-weight: 700; color: var(--brand-ink); }
+.story .g .kick { color: rgba(255, 255, 255, .85); }
+.story h1 { font-size: 28px; line-height: 1.3; font-weight: 800; margin-top: 8px; word-break: keep-all; }
+.story h2 { font-size: 23px; line-height: 1.32; font-weight: 800; margin-top: 6px; word-break: keep-all; }
+.story .sub { font-size: 14px; color: var(--muted); margin-top: 12px; }
+.story .g .sub { color: rgba(255, 255, 255, .88); }
+.story .sub.small { font-size: 12.5px; text-align: center; }
+.story .rk { margin: 22px 0 0; box-shadow: 0 10px 30px rgba(25, 31, 40, .08); }
+.story .ex { font-size: 12.5px; margin-bottom: 12px; }
+.story .cal { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 22px auto 0; width: min(100%, 300px); }
+.story .cal i { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-size: 12px;
+                font-weight: 700; background: var(--brand); color: #fff; }
+.story .cal i.free { background: #ffd43b; color: var(--ink); }
+.story .kroom { margin-top: 18px; background: #b2c7d9; border-radius: 18px; padding: 10px 10px 12px; }
+.story .kroom .hd { text-align: center; font-size: 12px; font-weight: 700; color: #3c4a57; padding: 2px 0 8px; }
+.story .msg { display: flex; align-items: flex-end; gap: 5px; justify-content: flex-end; margin-top: 8px; }
+.story .msg time { font-size: 10.5px; color: #4e5968; flex: none; }
+.story .bub { width: 240px; max-width: 78%; background: #fee500; border-radius: 14px 4px 14px 14px; overflow: hidden; font-size: 12.5px; line-height: 1.5; color: #191919; }
+.story .bub p { padding: 9px 11px; white-space: pre-line; }
+.story .bub span { display: block; background: #fff; text-align: center; font-weight: 700; padding: 8px; }
+.story .last .fold { margin-top: 28px; color: var(--ink); }
+.story .last .foot { color: rgba(255, 255, 255, .7); padding: 0; }
+.story .brand { position: absolute; top: 26px; left: 22px; z-index: 6; color: var(--hero-ink); font-size: 13px; }
+.story .segs, .story .tap { display: none; }
+.story-cta { position: sticky; bottom: 0; z-index: 5; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+             background: linear-gradient(to top, var(--bg) 60%, transparent); display: grid; gap: 9px; }
+.story-cta small { text-align: center; font-size: 12px; color: var(--faint); }
+.story-cta small a { color: var(--ink-2); }
+
+.story.js { height: 100vh; height: 100svh; overflow: hidden; }
+.story.js .scene { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: safe center;
+                   padding: 72px 24px 150px; overflow-y: auto; opacity: 0; transform: translateX(40px); pointer-events: none;
+                   transition: opacity .45s, transform .55s cubic-bezier(.2, .8, .2, 1); }
+@media (max-height: 700px) { .story.js .scene { padding-top: 58px; padding-bottom: 136px; } .story .kroom { margin-top: 12px; } }
+.story.js .scene.cur { opacity: 1; transform: none; pointer-events: auto; }
+.story.js .scene.prev { transform: translateX(-40px); }
+.story.js .brand { color: var(--ink); transition: color .3s; }
+.story.js .segs { display: flex; gap: 4px; position: absolute; top: 4px; left: 14px; right: 14px; z-index: 7; }
+.story.js .seg { flex: 1; border: 0; background: none; padding: 10px 0; cursor: pointer; }
+.story.js .seg i { display: block; height: 3px; border-radius: 2px; background: rgba(25, 31, 40, .15); overflow: hidden; transition: height .15s; }
+.story.js .seg:hover i { height: 5px; }
+.story.js .seg b { display: block; height: 100%; width: 0; background: var(--brand); }
+.story.js .tap { display: block; position: absolute; inset: 56px 0 150px; z-index: 4; border: 0; background: none; cursor: pointer; }
+.story.js.at-end .tap { display: none; }
+.story.js .story-cta { position: absolute; left: 0; right: 0; background: none; }
+.story.lt .brand { color: var(--hero-ink); }
+.story.lt .seg i { background: rgba(255, 255, 255, .35); }
+.story.lt .seg b { background: #fff; }
+.story.lt .story-cta small { color: rgba(255, 255, 255, .75); }
+.story.lt .story-cta small a { color: #fff; }
+/* 장면이 .cur가 될 때마다 다시 재생 */
+.story.js .cur > * { animation: rise .6s cubic-bezier(.2, .8, .2, 1) both; }
+.story.js .cur > :nth-child(2) { animation-delay: .1s; } .story.js .cur > :nth-child(3) { animation-delay: .2s; }
+.story.js .cur > :nth-child(4) { animation-delay: .3s; } .story.js .cur > :nth-child(5) { animation-delay: .4s; }
+.story.js .cur .bar i { animation: fill-up 1.2s .4s cubic-bezier(.2, .8, .2, 1) both; }
+.story.js .cur .cal i { animation: cal-on .3s calc(var(--d) * 45ms + .4s) both; }
+.story.js .cur .msg { animation: rise .5s calc(.6s + var(--k) * .9s) cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } }
+@keyframes cal-on { from { background: var(--track); color: var(--faint); } }
 
 @media (prefers-reduced-motion: reduce) {
   @view-transition { navigation: none; }

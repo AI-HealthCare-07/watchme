@@ -584,6 +584,26 @@ def test_check_screen_is_compact(client):
     assert "<details" in page and "참고 위험도" in page
 
 
+def test_landing_story_works_without_js(client):
+    page = client.get("/").text
+    assert page.count('<section class="scene') == 4  # 테스트 기본은 카카오 꺼짐
+    assert 'class="story"' in page and '<script src="/static/story.js?v=' in page
+    assert "지금 내 위험도부터" in page and 'href="/start"' in page
+    assert " hidden" not in page.split('class="story"', 1)[1].split("</main>", 1)[0]  # 숨김은 JS가 붙이는 .js 클래스로만
+
+
+def test_landing_without_kakao_has_four_scenes(client):
+    page = client.get("/").text
+    assert "나와의 채팅" not in page and "카카오로 이어서 하기" not in page
+    assert page.count('class="seg"') == 4
+
+
+def test_landing_preparing_keeps_simple_card(client):
+    app.dependency_overrides[get_stats] = lambda: None
+    page = client.get("/").text
+    assert "준비 중" in page and 'class="story"' not in page and 'href="/start"' not in page
+
+
 def test_landing_and_result_are_compact(client):
     page = client.get("/").text
     assert '<details class="card fold"><summary>🔒 이름·연락처는 받지 않아요</summary>' in page and PRIVACY in page

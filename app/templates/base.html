@@ -20,6 +20,7 @@
 {% block head %}{% endblock %}
 </head>
 <body>
+{% block page %}
 {% block topbar %}{% endblock %}
 <header class="hero"><div class="hero-in">
   <a class="brand" href="/"><span class="brand-name"><img class="brand-icon" src="/static/icons/favicon.svg" width="20" height="20" alt="">WATCHME</span> <small>{% block brand_note %}30일 생활습관 챌린지{% endblock %}</small></a>
@@ -31,6 +32,7 @@
   <p class="foot">{{ DISCLAIMER }}</p>
 </main>
 {% if cta_html|trim %}<div class="cta"><div class="cta-in">{{ cta_html }}</div></div>{% endif %}
+{% endblock %}
 <script src="/static/flow.js?v={{ ASSET_V }}" defer></script>
 </body>
 </html>

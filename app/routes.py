@@ -8,11 +8,13 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app import accounts, ai, kakao
+from app import accounts, ai, kakao, messages
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_week_pdf
-from app.plan import DAYS, LEVEL_NOTES, WEEKS, level_on, scenario, variant_label, week_days, week_of
+from app.plan import (
+    DAYS, LEVEL_NOTES, WEEKS, Profile, build_plan, choose_variant, level_on, scenario, variant_label, week_days, week_of,
+)
 from app.ratelimit import RateLimiter, client_ip
 from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
@@ -80,8 +82,14 @@ EXAMPLE = ("M", 45, 172, 82)  # 시작 화면 예시 인물
 
 @router.get("/")
 def landing(request: Request, stats: dict | None = Depends(get_stats)):
-    example = assess(*EXAMPLE, stats=stats) if stats else None
-    return _page(request, "landing.html", example=example, preparing=stats is None, kakao_on=kakao.enabled())
+    if stats is None:
+        return _page(request, "landing.html", preparing=True)
+    example = assess(*EXAMPLE, stats=stats)
+    # 카톡 장면은 실제 발송 문장으로 보여 준다: 예시 인물의 실제 계획 12일째
+    demo = build_plan(Profile(choose_variant(example), "mixed", "out", "light", 25, (5, 6)), today_kst(), "landing-demo")[11]
+    return _page(request, "landing.html", example=example, preparing=False, kakao_on=kakao.enabled(),
+                 demo_morning=messages.morning(demo, False), demo_evening=messages.evening(1, False, False),
+                 buttons=messages.BUTTON)
 
 
 @router.get("/start")

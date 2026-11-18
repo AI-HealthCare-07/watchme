@@ -277,3 +277,12 @@ def test_kakao_bar_sits_above_everything(client, kakao_env, monkeypatch):
     page = client.get(f"{loc}?day=1").text
     assert 'class="kbar on"' in page
     assert page.index("카카오톡 연결됨") < page.index('<header class="hero">') < page.index("지난 기록을 고치는 중")
+
+
+def test_landing_kakao_scene_matches_real_messages(client, kakao_env):
+    from app import messages
+    page = client.get("/").text
+    assert page.count('<section class="scene') == 5 and "나와의 채팅" in page
+    assert messages.BUTTON["morning"] in page and messages.BUTTON["evening"] in page
+    assert messages.evening(1, False, False) in page
+    assert page.index("내 위험도 확인하기") < page.index('href="/auth/kakao"')  # CTA 밑 작은 링크

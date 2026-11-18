@@ -1,24 +1,61 @@
 {% extends "base.html" %}
 {% from "_macros.html" import risk_rows, privacy %}
-{% block hero %}
-<h1>내 혈압·혈당 위험,<br>또래 평균과 비교해 보세요</h1>
-<p class="sub">국민건강영양조사 성인 1만 7천 명 기준</p>
-{% endblock %}
-{% block sheet %}
-{% if preparing %}
-<div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있어요.</p></div>
-{% else %}
-<div class="card">
-  <p class="muted" style="font-size:12.5px;margin-bottom:12px">예시 · 45세 남성</p>
-  {{ risk_rows(example) }}
-</div>
-<div class="feat">
-  <div><strong>1분</strong>간단 입력</div>
-  <div><strong>맞춤</strong>30일 계획</div>
-  <div><strong>0원</strong>무료 체험</div>
-</div>
-<details class="card fold"><summary>🔒 이름·연락처는 받지 않아요</summary>{{ privacy() }}</details>
-{% if kakao_on %}<a class="kresume" href="/auth/kakao">💬 카카오로 이어서 하기</a>{% endif %}
-{% endif %}
-{% endblock %}
-{% block cta %}{% if not preparing %}<a class="btn btn-dark" href="/start">내 위험도 확인하기</a>{% endif %}{% endblock %}
+{# 통계 준비 중: 예전처럼 초록 영역 + 안내 카드 (super()가 base의 레이아웃을 그린다) #}
+{% block hero %}<h1>내 혈압·혈당 위험,<br>또래 평균과 비교해 보세요</h1>{% endblock %}
+{% block sheet %}<div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있어요.</p></div>{% endblock %}
+{% block page %}{% if preparing %}{{ super() }}{% else %}
+{% set n = 5 if kakao_on else 4 %}
+<main class="story">
+  <div class="segs">{% for i in range(n) %}<button type="button" class="seg" aria-label="{{ i + 1 }}번째 장면"><i><b></b></i></button>{% endfor %}</div>
+  <a class="brand" href="/"><span class="brand-name"><img class="brand-icon" src="/static/icons/favicon.svg" width="22" height="22" alt="">WATCHME</span></a>
+
+  <section class="scene g">
+    <p class="kick">30일 생활습관 챌린지</p>
+    <h1>내 혈압·혈당 위험,<br>또래 평균과<br>비교해 보세요</h1>
+    <p class="sub">국민건강영양조사 성인 1만 7천 명 기준</p>
+  </section>
+
+  <section class="scene">
+    <p class="kick">1분 입력</p>
+    <h2>성별·나이·키·몸무게만<br>넣으면 내 위치가 보여요</h2>
+    <div class="card rk">
+      <p class="muted ex">예시 · 45세 남성</p>
+      {{ risk_rows(example) }}
+    </div>
+  </section>
+
+  <section class="scene">
+    <p class="kick">맞춤 30일</p>
+    <h2>내 생활에 맞춘<br>30일 식단·운동 계획</h2>
+    <div class="cal" aria-hidden="true">{% for d in range(1, 31) %}<i style="--d:{{ d }}"{% if d % 7 == 6 %} class="free"{% endif %}>{{ d }}</i>{% endfor %}</div>
+    <p class="sub small">🟨 자유 한 끼 날은 먹고 싶은 걸 즐겨요</p>
+  </section>
+
+  {% if kakao_on %}
+  <section class="scene">
+    <p class="kick">카톡으로 챙겨 드려요</p>
+    <h2>아침엔 오늘 계획,<br>저녁엔 기록 알림</h2>
+    <div class="kroom">
+      <p class="hd">나와의 채팅</p>
+      <div class="msg" style="--k:0"><time>오전 7:30</time><div class="bub"><p>{{ demo_morning }}</p><span>{{ buttons.morning }}</span></div></div>
+      <div class="msg" style="--k:1"><time>오후 9:00</time><div class="bub"><p>{{ demo_evening }}</p><span>{{ buttons.evening }}</span></div></div>
+    </div>
+    <p class="sub small">버튼을 누르면 내 기록 화면이 열려요</p>
+  </section>
+  {% endif %}
+
+  <section class="scene g last">
+    <p class="kick">무료 · 이름·연락처 받지 않아요</p>
+    <h1>지금 내 위험도부터<br>확인해 볼까요?</h1>
+    <details class="card fold"><summary>🔒 이름·연락처는 받지 않아요</summary>{{ privacy() }}</details>
+    <p class="foot">{{ DISCLAIMER }}</p>
+  </section>
+
+  <button type="button" class="tap" aria-label="다음 장면"></button>
+  <div class="story-cta">
+    <a class="btn btn-dark" href="/start">내 위험도 확인하기</a>
+    {% if kakao_on %}<small>이미 시작했나요? <a href="/auth/kakao">카카오로 이어서 하기</a></small>{% endif %}
+  </div>
+</main>
+<script src="/static/story.js?v={{ ASSET_V }}" defer></script>
+{% endif %}{% endblock %}
