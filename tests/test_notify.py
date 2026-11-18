@@ -149,3 +149,14 @@ def test_notify_off_and_setup_not_done_skipped(db, monkeypatch):  # noqa: F811
     linked_trial(db, 3, kakao_id=2, refresh="r2", setup=False)
     assert send_all(db, "morning", TODAY) == (0, 0)
     assert sent == []
+
+
+@pytest.mark.parametrize("n, path", [(8, "/week/1"), (15, "/week/2"), (29, "/week/4")])
+def test_morning_week_report_days(db, monkeypatch, n, path):  # noqa: F811
+    sent = kakao_ok(monkeypatch)
+    t = linked_trial(db, n)
+    send_all(db, "morning", TODAY)
+    assert len(sent) == 1 and "주차 리포트" in sent[0][1] and "오늘 계획" not in sent[0][1]
+    assert sent[0][2].endswith(f"/c/{t.token}{path}")
+    send_all(db, "morning", TODAY)
+    assert len(sent) == 1

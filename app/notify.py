@@ -9,19 +9,29 @@ from sqlalchemy.orm import Session
 from app import accounts, kakao, messages
 from app.models import DayLog, KakaoAccount
 from app.plan import DAYS
+from app.risk import get_stats
 from app.service import plan_for
+from app.weekly import build_week
 
 
 def _base() -> str:
     return os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
 
-def _message(db: Session, kind: str, trial, n: int, sunday: bool) -> tuple[str, str, str, str] | None:
+WEEK_REPORT_DAYS = (8, 15, 22, 29)  # 그날 아침은 계획 대신 지난주 리포트 하나만
+
+
+def _message(db: Session, kind: str, trial, n: int, today: date) -> tuple[str, str, str, str] | None:
     """(발송 종류, 문장, 링크, 버튼) 또는 보낼 게 없으면 None."""
     link = f"{_base()}/c/{trial.token}"
+    sunday = today.weekday() == 6
     if kind == "morning":
         if n == DAYS + 1:
             return "report", messages.REPORT, f"{link}/report", messages.BUTTON["report"]
+        if n in WEEK_REPORT_DAYS:
+            w = (n - 1) // 7
+            r = build_week(db, trial, w, today, get_stats())
+            return "week", messages.week(w, r.kept, r.peer), f"{link}/week/{w}", messages.BUTTON["week"]
         plan = plan_for(db, trial)
         return "morning", messages.morning(plan[n - 1], sunday), link, messages.BUTTON["morning"]
     if n > DAYS:
@@ -40,7 +50,7 @@ def send_all(db: Session, kind: Literal["morning", "evening"], today: date) -> t
         trial = accounts.active_trial(db, acc.kakao_id, today)
         if trial is None:
             continue
-        msg = _message(db, kind, trial, accounts.day_number(trial, today), today.weekday() == 6)
+        msg = _message(db, kind, trial, accounts.day_number(trial, today), today)
         if msg is None or not accounts.claim(db, acc.kakao_id, today, msg[0]):
             continue
         try:

@@ -1,5 +1,6 @@
 """카카오톡 '나에게 보내기' 메시지 문장. 텍스트 템플릿은 200자 제한."""
 from app.plan import PlanDay
+from app.weekly import Peer
 
 LIMIT = 200
 LINE = 32  # 폰 말풍선에서 한 줄로 읽히는 정도
@@ -7,7 +8,7 @@ SUMMARY_DAYS = (7, 14, 21, 28)
 
 WELCOME = "연결됐어요 ✅ 아침 7:30엔 오늘 계획, 저녁 9시엔 기록 확인을 보내 드릴게요. 폰 알림은 울리지 않으니 '나와의 채팅'을 직접 열어 확인해 주세요."
 REPORT = "30일 완주! 리포트가 나왔어요 🎉"
-BUTTON = {"morning": "오늘 계획 보기", "evening": "기록하기", "evening_logged": "기록 보기", "report": "리포트 보기"}
+BUTTON = {"morning": "오늘 계획 보기", "evening": "기록하기", "evening_logged": "기록 보기", "report": "리포트 보기", "week": "리포트 보기"}
 
 
 def fit(text: str) -> str:
@@ -37,3 +38,12 @@ def evening(n: int, logged: bool, sunday: bool) -> str:
     if n in SUMMARY_DAYS:
         text += "\n이번 주 요약이 나왔어요. 다음 주 강도도 골라 주세요."
     return text
+
+
+def week(n: int, kept: int, peer: Peer | None) -> str:
+    """8·15·22·29일째 아침: 지난주 리포트. 또래 비교는 리포트 화면과 같은 조건일 때만."""
+    lines = [f"🏅 {n}주차 리포트가 나왔어요!",
+             f"7일 중 {kept}일 지켰어요." if kept else "이번 주는 쉬어 갔어요. 다시 시작해 봐요."]
+    if peer:
+        lines += [f"주 {peer.days}일 이상 움직이는 {peer.label}은", f"{peer.ratio}이에요. 그 안에 드셨어요!"]
+    return fit("\n".join(lines))

@@ -35,3 +35,16 @@ def test_fit_caps_200():
     assert len(text) <= messages.LIMIT
     assert all(len(line) <= 32 for line in text.split("\n"))
     assert messages.fit("가" * 300) == "가" * 31 + "…"
+
+
+def test_week_message_lines_never_truncated():
+    from app.weekly import Peer
+    text = messages.week(4, 7, Peer(days=6, minutes=60, share=0.07, label="70대 이상 남성"))
+    assert "…" not in text
+    assert all(len(line) <= messages.LINE for line in text.split("\n"))
+    assert text.split("\n") == ["🏅 4주차 리포트가 나왔어요!", "7일 중 7일 지켰어요.",
+                                "주 6일 이상 움직이는 70대 이상 남성은", "100명 중 7명이에요. 그 안에 드셨어요!"]
+
+
+def test_week_message_without_peer():
+    assert messages.week(1, 0, None).split("\n") == ["🏅 1주차 리포트가 나왔어요!", "이번 주는 쉬어 갔어요. 다시 시작해 봐요."]
