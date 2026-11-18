@@ -305,3 +305,17 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
   @view-transition { navigation: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* 주간 리포트 */
+.wdots { display: flex; gap: 7px; margin-top: 14px; }
+.wdots i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; font-size: 14px;
+           background: rgba(255, 255, 255, .22); color: #fff; }
+.wdots i.on { background: #fff; color: var(--brand-ink); }
+.wdots i.off { background: rgba(0, 0, 0, .12); }
+.card.peer p { line-height: 1.6; word-break: keep-all; }
+.card.peer b { color: var(--brand-ink); }
+.card .src { color: var(--faint); font-size: 12px; margin-top: 6px; }
+.wchart-box svg { display: block; width: 100%; height: auto; margin-top: 8px; }
+.summary .more { display: inline-block; margin-top: 4px; font-size: 13.5px; font-weight: 700; color: var(--brand-ink); }
+.week-btns { display: flex; gap: 8px; margin: 4px 0 12px; }
+.week-btns .btn { flex: 1; }

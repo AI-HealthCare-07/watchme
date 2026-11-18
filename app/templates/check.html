@@ -32,6 +32,7 @@
 {% if summary %}
 <section class="card summary">
   <h2>📅 {{ summary.week }}주차 요약 <small>{{ summary.days }}일 중 {{ summary.kept }}일 지킴</small></h2>
+  <a class="more" href="/c/{{ token }}/week/{{ summary.week }}">주간 리포트 보기 →</a>
   {% if summary.weight_change is none %}
   <p class="muted">체중 기록 없음 · 다음 주엔 체중도 두 번 이상 적어 봐요.</p>
   {% else %}

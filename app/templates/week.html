@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Watchme · {{ r.week }}주차 리포트{% endblock %}
+{% block hero %}
+<p class="kicker">{{ r.week }}주차 리포트 · {{ r.first.month }}/{{ r.first.day }}~{{ r.last.month }}/{{ r.last.day }}</p>
+<h1>7일 중 {{ r.kept }}일 지켰어요{% if r.kept >= 5 %} 🎉{% endif %}</h1>
+<p class="wdots" aria-label="날마다 지킨 기록">{% for m in r.marks %}<i class="{{ 'on' if m else 'off' if m is false else '' }}">{{ "✓" if m else "✗" if m is false else "·" }}</i>{% endfor %}</p>
+{% endblock %}
+{% block sheet %}
+{% if r.peer %}{% set p = r.peer %}
+<section class="card peer">
+  <p><span class="badge" aria-hidden="true">🏅</span> 주 {{ p.days }}일 이상, 하루 {{ p.minutes }}분 이상 걷는 {{ p.label }}은 <b>{{ p.ratio }}</b>이에요. 이번 주 그 안에 드셨어요.</p>
+  <p class="src">국민건강영양조사 2022–2024 · 걷기 기준</p>
+</section>
+{% endif %}
+{% if r.rank %}<section class="card"><p>👥 이번 주를 기록한 Watchme 사용자 중 <b>상위 {{ r.rank }}%</b>예요.</p></section>{% endif %}
+<section class="card"><p>📈 {{ r.cheer }}</p></section>
+<section class="card">
+  <h2>⚖️ 체중</h2>
+  {% if chart %}<div class="wchart-box">{{ chart }}</div>{% else %}<p class="muted">체중을 적으면 그래프가 생겨요.</p>{% endif %}
+  {% set s = r.summary %}
+  {% if s.weight_change is not none %}
+  <p class="muted" style="margin-top:6px">고혈압 {{ s.before.hypertension_vs_avg|vs_text }} → {{ s.after.hypertension_vs_avg|vs_text }}<br>
+     당뇨 {{ s.before.diabetes_vs_avg|vs_text }} → {{ s.after.diabetes_vs_avg|vs_text }}</p>
+  {% endif %}
+</section>
+<div class="week-btns">
+  {% if r.peer %}<a class="btn btn-soft share" href="/c/{{ token }}/week/{{ r.week }}/card.png" data-text="{{ share_text }}">자랑하기</a>{% endif %}
+  <a class="btn" href="/c/{{ token }}">오늘 계획 보기</a>
+</div>
+{% endblock %}

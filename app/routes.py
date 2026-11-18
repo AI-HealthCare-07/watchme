@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app import accounts, ai, kakao, messages
+from app.chart import weight_svg
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_week_pdf
@@ -24,6 +25,7 @@ from app.service import (
     next_trial, plan_for, save_day, save_setup, start_trial,
 )
 from app.models import NextTrial
+from app.weekly import REPORT_WEEKS, build_week, week_ready
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
 
@@ -276,8 +278,10 @@ def report_page(request: Request, token: str, db: Session = Depends(get_db), sta
     report = build_report(trial, get_logs(db, token), today, stats=stats)
     nxt = db.get(NextTrial, token)
     linked = kakao.enabled() and accounts.owner_of(db, token) is not None
+    logs = get_logs(db, token)
+    chart = weight_svg([(0, trial.weight_kg)] + [(log.day, log.weight_kg) for log in logs if log.weight_kg is not None], DAYS)
     return _page(request, "report.html", token=token, report=report, left=days_left(trial, today),
-                 next_token=nxt.next_token if nxt else None, linked=linked)
+                 next_token=nxt.next_token if nxt else None, linked=linked, chart=chart)
 
 
 @router.post("/c/{token}/next")
@@ -293,6 +297,30 @@ def next_challenge(request: Request, token: str, db: Session = Depends(get_db), 
         return _error(request, 400, "30일을 마친 뒤에 시작할 수 있어요.")
     new = next_trial(db, trial, today_kst(), stats=stats)
     return RedirectResponse(f"/c/{new.token}/ready", status_code=303)
+
+
+def _week_trial(request: Request, db: Session, token: str, w: int):
+    """(체험, None) 또는 (None, 오류·이동 응답). 주간 리포트와 자랑 카드가 같이 쓴다."""
+    trial = get_trial(db, token)
+    if trial is None:
+        return None, _error(request, 404, "체험을 찾을 수 없어요.")
+    if w not in REPORT_WEEKS:
+        return None, _error(request, 404, "없는 주차예요.")
+    if not trial.setup_done:
+        return None, _to_setup(token)
+    if not week_ready(current_day(trial, today_kst()), get_logs(db, token), w):
+        return None, _error(request, 400, f"{w}주차 리포트는 {7 * w}일째 기록 후에 열려요.")
+    return trial, None
+
+
+@router.get("/c/{token}/week/{w:int}")
+def week_report(request: Request, token: str, w: int, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    trial, err = _week_trial(request, db, token, w)
+    if err:
+        return err
+    r = build_week(db, trial, w, today_kst(), stats)
+    return _page(request, "week.html", token=token, r=r, chart=weight_svg(r.weights, 7 * w),
+                 share_text=f"Watchme 30일 생활습관 챌린지 {PUBLIC_BASE_URL}")
 
 
 @router.get("/c/{token}/plan.pdf")

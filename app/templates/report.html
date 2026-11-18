@@ -36,6 +36,7 @@
   {% else %}
   <p class="muted">체중 기록이 없어요. 처음 몸무게 {{ "%.1f"|format(r.start_weight) }}kg 기준으로만 보여 드려요.</p>
   {% endif %}
+  {% if chart %}<div class="wchart-box">{{ chart }}</div>{% endif %}
   {% if not r.enough_data %}<p class="muted" style="margin-top:8px;font-size:13px">기록이 적어서(체중 2번 이상·10일 이상 필요) 변화는 참고만 해 주세요.</p>{% endif %}
 </div>
 
