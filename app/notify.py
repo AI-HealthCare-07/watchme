@@ -50,7 +50,13 @@ def send_all(db: Session, kind: Literal["morning", "evening"], today: date) -> t
         trial = accounts.active_trial(db, acc.kakao_id, today)
         if trial is None:
             continue
-        msg = _message(db, kind, trial, accounts.day_number(trial, today), today)
+        try:
+            msg = _message(db, kind, trial, accounts.day_number(trial, today), today)
+        except Exception as e:  # 한 사람의 문장 만들기 오류(리포트 계산 등)가 나머지 발송을 막지 않게
+            db.rollback()
+            print(f"kakao {acc.kakao_id} message error: {e!r}")
+            failed += 1
+            continue
         if msg is None or not accounts.claim(db, acc.kakao_id, today, msg[0]):
             continue
         try:

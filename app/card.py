@@ -80,7 +80,8 @@ def render_card(week: int, kept: int, marks: tuple[bool | None, ...], peer: Peer
     d.rounded_rectangle((PAD, 900, W - PAD, 1130), radius=36, fill=(255, 255, 255, 42))
     line1 = f"{peer.label} {peer.ratio}만"
     d.text((PAD + 48, 975), line1, font=_fit(d, line1, BOLD, 64, box_w - 96), fill=white, anchor="lm")
-    d.text((PAD + 48, 1062), "이만큼 꾸준히 움직여요", font=_font(REGULAR, 54), fill=white, anchor="lm")
+    line2 = f"주 {peer.days}일·하루 {peer.minutes}분 이상 걸어요"  # 비교 기준을 그대로 (쉬는 날 포함한 7일과 혼동 없게)
+    d.text((PAD + 48, 1062), line2, font=_fit(d, line2, REGULAR, 54, box_w - 96), fill=white, anchor="lm")
 
     host = urlparse(os.environ.get("PUBLIC_BASE_URL", "https://evrd.fyi")).netloc or "evrd.fyi"
     d.text((PAD, H - 90), "국민건강영양조사 · 걷기 기준", font=_font(REGULAR, 34), fill=soft, anchor="lm")

@@ -45,5 +45,5 @@ def week(n: int, kept: int, peer: Peer | None) -> str:
     lines = [f"🏅 {n}주차 리포트가 나왔어요!",
              f"7일 중 {kept}일 지켰어요." if kept else "이번 주는 쉬어 갔어요. 다시 시작해 봐요."]
     if peer:
-        lines += [f"주 {peer.days}일 이상 움직이는 {peer.label}은", f"{peer.ratio}이에요. 그 안에 드셨어요!"]
+        lines += [f"주 {peer.days}일·하루 {peer.minutes}분 이상 걷는 {peer.label}은", f"{peer.ratio}이에요. 그 안에 드셨어요!"]
     return fit("\n".join(lines))

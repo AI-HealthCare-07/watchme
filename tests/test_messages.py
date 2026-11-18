@@ -43,7 +43,7 @@ def test_week_message_lines_never_truncated():
     assert "…" not in text
     assert all(len(line) <= messages.LINE for line in text.split("\n"))
     assert text.split("\n") == ["🏅 4주차 리포트가 나왔어요!", "7일 중 7일 지켰어요.",
-                                "주 6일 이상 움직이는 70대 이상 남성은", "100명 중 7명이에요. 그 안에 드셨어요!"]
+                                "주 6일·하루 60분 이상 걷는 70대 이상 남성은", "100명 중 7명이에요. 그 안에 드셨어요!"]
 
 
 def test_week_message_without_peer():

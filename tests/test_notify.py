@@ -160,3 +160,20 @@ def test_morning_week_report_days(db, monkeypatch, n, path):  # noqa: F811
     assert sent[0][2].endswith(f"/c/{t.token}{path}")
     send_all(db, "morning", TODAY)
     assert len(sent) == 1
+
+
+def test_one_broken_message_does_not_stop_the_run(db, monkeypatch):  # noqa: F811
+    from app import notify
+    sent = kakao_ok(monkeypatch)
+    bad = linked_trial(db, 8, kakao_id=1, refresh="r1")
+    linked_trial(db, 8, kakao_id=2, refresh="r2")
+    real = notify.build_week
+
+    def boom(db_, trial, *a):
+        if trial.token == bad.token:
+            raise RuntimeError("broken")
+        return real(db_, trial, *a)
+
+    monkeypatch.setattr(notify, "build_week", boom)
+    assert send_all(db, "morning", TODAY) == (1, 1)
+    assert len(sent) == 1 and "r2" in sent[0][0]
