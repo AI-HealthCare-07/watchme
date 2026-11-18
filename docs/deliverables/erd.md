@@ -50,7 +50,7 @@ erDiagram
 - 계획(식단·운동·팁)은 **표에 저장하지 않아요.** `build_plan(답변, 시작일, token 시드, 강도 결정)`으로 매번 같은 결과를 계산해요.
 - 보관: 시작 후 120일(체험 30일 + 90일)이 지난 체험과 기록을 매일 삭제(`scripts/purge.py`).
 
-## 2. 2단계 예정 표 (카카오 로그인 + 하루 두 번 카톡) — 아직 구현 전
+## 2. 2단계 표 (카카오 로그인 + 하루 두 번 카톡) — ✅ 구현, 2026-11-17 운영 반영
 
 출처: `docs/superpowers/specs/2026-11-16-watchme-phase2-design.md` 7장, `docs/superpowers/plans/2026-11-16-watchme-phase2.md` Task 3.
 
@@ -77,7 +77,7 @@ erDiagram
 
     sent_messages {
         bigint kakao_id PK "kakao_accounts 계정"
-        date date PK "KST 날짜"
+        date day PK "KST 날짜"
         string kind PK "morning | evening | report | welcome"
     }
 

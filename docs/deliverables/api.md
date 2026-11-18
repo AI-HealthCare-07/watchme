@@ -13,10 +13,10 @@
 
 | 이름 | 한도 | 적용 경로 |
 |---|---|---|
-| `START_PER_IP` | 10분 5회 | `POST /start` (2단계: `POST /c/{token}/next`도) |
+| `START_PER_IP` | 10분 5회 | `POST /start`, `POST /c/{token}/next` |
 | `START_GLOBAL` | 하루 500회(전체) | `POST /start` |
-| `DAY_PER_IP` | 1분 30회 | `POST /c/{token}/day/{n}`, `POST /c/{token}/week/{w}/level` (2단계: 알림 끄기) |
-| `AUTH_PER_IP` 🔜 | 10분 10회 | 2단계 카카오 로그인 시작 |
+| `DAY_PER_IP` | 1분 30회 | `POST /c/{token}/day/{n}`, `POST /c/{token}/week/{w}/level`, `POST /c/{token}/kakao/notify`·`/unlink` |
+| `AUTH_PER_IP` | 10분 10회 | 카카오 로그인 시작(`/c/{token}/kakao`, `/auth/kakao`) |
 
 초과 시 `429` "요청이 너무 많아요. 잠시 후 다시 시도해 주세요." IP는 프록시가 덮어쓴 `X-Forwarded-For` 첫 값.
 
@@ -120,9 +120,9 @@ Location: /c/Xb3k...Q9/result
 - 받는 시점: `w`주는 `7(w-1)`일째부터(다음 주는 이번 주 마지막 날부터 미리). 이르면 `400`.
 - 응답 헤더: `Content-Disposition: inline; filename="watchme-week{w}.pdf"`. 1주차는 "내 결과 요약" 페이지 포함. QR은 `PUBLIC_BASE_URL/c/{token}`.
 
-## 3. 2단계 엔드포인트 (🔜 예정, 아직 구현 전)
+## 3. 2단계 엔드포인트 (✅ 구현, 2026-11-17 운영 확인)
 
-출처: `docs/superpowers/plans/2026-11-16-watchme-phase2.md` Task 4·7·8. 카카오 키가 없으면 카카오 경로는 모두 `404`.
+기준: `app/kakao_routes.py`, `app/routes.py`. 카카오 키가 없으면 카카오 경로는 모두 `404`.
 
 | 메서드 | 경로 | 설명 | 응답 |
 |---|---|---|---|
@@ -141,15 +141,18 @@ Location: /c/Xb3k...Q9/result
 | `cancel` | 동의 화면에서 취소(`error=access_denied`) | 카카오 연결을 취소했어요 |
 | `nomsg` | 로그인은 했지만 `talk_message` 미동의 | 메시지 동의가 없어서 알림을 보낼 수 없어요 |
 | `taken` | 다른 카카오 계정에 이미 연결된 체험 | 이 체험은 다른 카카오 계정에 연결돼 있어요 |
-| `unlinked` | 연결 끊기 완료 | — |
+| `unlinked` | 연결 끊기 완료 | 카카오 연결을 끊었어요. 저장한 정보도 지웠어요. |
 
 | 오류 | 응답 |
 |---|---|
 | 쿠키 없음·서명 위조·`state` 불일치 | `400` "로그인 요청이 만료됐어요. 다시 시도해 주세요." (DB 변화 없음) |
+| `code` 없음 | `400` "로그인 요청이 올바르지 않아요. 다시 시도해 주세요." |
+| 이어서 하기인데 계정에 체험 없음 | `404` "카카오에 연결된 체험이 없어요. 새로 시작해 주세요." |
+| 연결 안 된 체험에서 알림 켜기·끄기 | `400` "카카오에 연결된 체험이 아니에요." |
 | 카카오 5xx·네트워크 오류 | `502` "카카오 연결 중 문제가 생겼어요…" |
 | `/next`를 30일 전에 | `400` "30일을 마친 뒤에 시작할 수 있어요." |
 
-### 서버 → 카카오 (외부 API, `app/kakao.py` 예정)
+### 서버 → 카카오 (외부 API, `app/kakao.py`)
 
 | 용도 | 호출 |
 |---|---|
@@ -164,3 +167,6 @@ Location: /c/Xb3k...Q9/result
 |---|---|---|
 | 매일 07:30 | `python -m scripts.send morning` | Day 1~30 오늘 계획, Day 31 리포트 안내 |
 | 매일 21:00 | `python -m scripts.send evening` | 기록 확인(기록 여부에 따라 문구 다름) |
+
+- 서버 crontab에 2026-11-17 등록. 결과는 `~/send.log`(`2026-11-17 evening sent=1 failed=0`처럼 보낸 게 있을 때만 한 줄).
+- "나에게 보내기"는 카톡 '나와의 채팅'으로 들어가 **폰 알림이 울리지 않아요**(2026-11-17 실험). 화면·환영 메시지에 직접 확인하라는 안내를 넣었어요.

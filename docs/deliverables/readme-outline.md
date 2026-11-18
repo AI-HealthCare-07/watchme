@@ -8,7 +8,7 @@
 4. **화면 흐름** → `wireframes.md` 1장 Mermaid 흐름도
 5. **기술 스택** → Python 3.12, FastAPI, Jinja2, SQLAlchemy 2, PostgreSQL 16, reportlab, 바닐라 JS·CSS(빌드 없음), Docker Compose, Caddy
 6. **아키텍처** → 폰 → 공유기(80/443) → Caddy(HTTPS) → app(127.0.0.1:8000) → db, 모듈 표(`routes`·`service`·`risk`·`plan`·`progress`·`report`·`pdf`)
-7. **데이터 모델** → `erd.md` Mermaid (1단계 + 2단계 예정)
+7. **데이터 모델** → `erd.md` Mermaid (1단계 + 2단계 카카오 표)
 8. **API** → `api.md` 엔드포인트 표
 9. **참고 위험도 계산** → 데이터 출처(KNHANES 2022–2024), 로지스틱 회귀식, 면책 문구, `scripts/knhanes_stats.py`
 10. **로컬 실행**
@@ -18,6 +18,6 @@
 11. **테스트** → `.venv/Scripts/python -m pytest -q` (152개), TDD로 개발
 12. **배포·운영** → 집 서버 구성 요약, `git push` 배포, 백업·삭제 cron, 자세한 건 `docs/server-runbook.md`
 13. **보안·개인정보** → 토큰 링크, 최소 수집, 90일 삭제, 요청 제한, 외부 스크립트 없음
-14. **로드맵** → 1단계 ✅ / 2단계 카카오 🔜(진행에 따라 갱신) / 3단계 후보(효도 구독, 결제)
+14. **로드맵** → 1단계 ✅ / 2단계 카카오 ✅ / 3단계 AI 한 줄 요청(Gemini 무료, 진행 중) / 나중: 주간 AI 코치 한마디, 효도 구독·결제(사업자 정리 후)
 15. **문서** → `docs/superpowers/specs/`, `plans/`, `docs/deliverables/`
 16. **라이선스·출처** → 글꼴(Pretendard, 나눔고딕 OFL), 통계 자료 출처

@@ -13,7 +13,8 @@
 | 설계(원래) | `docs/superpowers/specs/2026-11-13-watchme-design.md` |
 | 1단계 개편 설계 | `docs/superpowers/specs/2026-11-16-watchme-redesign-design.md` |
 | 2단계 설계 | `docs/superpowers/specs/2026-11-16-watchme-phase2-design.md` |
-| 구현 계획 | `docs/superpowers/plans/` (1단계·개편·2단계) |
+| 3단계 설계(AI 한 줄 요청) | `docs/superpowers/specs/2026-11-18-watchme-phase3-ai-design.md` |
+| 구현 계획 | `docs/superpowers/plans/` (1단계·개편·2단계·3단계) |
 | 서버 운영 기록 | `docs/server-runbook.md` |
 | 제출물 | `docs/deliverables/` (이 폴더) |
 
