@@ -27,7 +27,7 @@ from app.service import (
     InvalidSetup, apply_ai_request, current_day, decide_level, get_ai_pick, get_decisions, get_logs, get_trial,
     next_trial, plan_for, save_day, save_setup, start_trial,
 )
-from app.models import NextTrial
+from app.models import NextTrial, TestTrial
 from app.weekly import REPORT_WEEKS, build_week, week_ready
 
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL", "http://localhost:8000").rstrip("/")
@@ -133,6 +133,10 @@ def start(
         )
     except InvalidInput as e:
         return _page(request, "start.html", 400, form=form, error=str(e))
+    from app.admin import is_admin  # admin이 routes를 가져오므로 순환을 피해 여기서
+    if is_admin(request):
+        db.add(TestTrial(token=trial.token))  # 내 테스트 체험은 지표에서 뺀다
+        db.commit()
     return RedirectResponse(f"/c/{trial.token}/result", status_code=303)
 
 
