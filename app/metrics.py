@@ -120,7 +120,9 @@ def collect(db: Session, today: date, since: date | None) -> Metrics:
     trials = {t.token: t for t in db.scalars(select(Trial))
               if t.token not in tests and (since is None or kst_date(t.created_at) >= since)}
     owners = {o.token: o.kakao_id for o in db.scalars(select(TrialOwner)) if o.token in trials}
-    accs = [a for a in db.scalars(select(KakaoAccount)) if a.kakao_id in set(owners.values())]
+    linked = set(owners.values())
+    accs = [a for a in db.scalars(select(KakaoAccount))
+            if a.kakao_id in linked and (since is None or kst_date(a.created_at) >= since)]
     dead = [a for a in accs if a.refresh_token_enc is None or not a.can_message]
     kakao = KakaoStats(
         receiving=sum(a.can_message and a.notify and a.refresh_token_enc is not None for a in accs),

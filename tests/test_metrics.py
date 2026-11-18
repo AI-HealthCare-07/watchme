@@ -143,3 +143,11 @@ def test_sends_last_7_days(db):
     s = collect(db, D, None).sends
     assert [(x.day, x.kind, x.sent, x.failed) for x in s] == [
         (D, "morning", 5, 2), (D - timedelta(days=6), "evening", 1, 0)]
+
+
+def test_since_excludes_old_accounts(db, token_key):
+    t = _trial(db, created=datetime(2026, 11, 17, 12, 0))
+    _account(db, 1, t)
+    db.get(accounts.KakaoAccount, 1).created_at = datetime(2026, 11, 10, 12, 0)
+    db.commit()
+    assert collect(db, D, date(2026, 11, 17)).kakao.total == 0

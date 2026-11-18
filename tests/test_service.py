@@ -318,3 +318,14 @@ def test_purge_removes_test_marks(db):
     db.commit()
     purge_expired(db, TODAY)
     assert db.get(TestTrial, old_t) is None and db.get(TestTrial, alive_t) is not None
+
+
+def test_next_trial_of_test_trial_stays_test(db):
+    from app.models import TestTrial
+    from app.service import next_trial
+    old = _start(db, today=TODAY - timedelta(days=31))
+    save_setup(db, old.token, **GOOD_SETUP)
+    db.add(TestTrial(token=old.token))
+    db.commit()
+    new = next_trial(db, old, TODAY, stats=STATS)
+    assert db.get(TestTrial, new.token) is not None

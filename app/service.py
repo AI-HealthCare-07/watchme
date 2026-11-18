@@ -170,6 +170,8 @@ def next_trial(db: Session, trial: Trial, today: date, stats: dict | None = None
     if pick:  # AI는 다시 부르지 않고 같은 결과를 이어 쓴다
         db.add(AiPick(token=new.token, request=pick.request, excluded=pick.excluded, reason=pick.reason,
                       status=pick.status))
+    if db.get(TestTrial, trial.token):  # 테스트 체험의 다음 도전도 테스트 (NextTrial보다 먼저: autoflush가 경합 처리 앞에서 터지지 않게)
+        db.add(TestTrial(token=new.token))
     db.add(NextTrial(token=trial.token, next_token=new.token))
     try:
         db.commit()

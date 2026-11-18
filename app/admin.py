@@ -29,7 +29,7 @@ def _digest(key: str) -> str:
 
 def is_admin(request: Request) -> bool:
     key = admin_key()
-    return bool(key) and hmac.compare_digest(request.cookies.get(COOKIE, ""), _digest(key))
+    return bool(key) and hmac.compare_digest(request.cookies.get(COOKIE, "").encode(), _digest(key).encode())
 
 
 def _headers(resp):

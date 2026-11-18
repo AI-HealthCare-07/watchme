@@ -111,3 +111,10 @@ def test_admin_page_shows_send_failures(client, monkeypatch):
     html = client.get("/admin").text
     sends = html[html.index("카톡 발송"):]
     assert ">5<" in sends and 'class="bad"' in sends
+
+
+def test_admin_junk_cookie_is_not_500(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_KEY", KEY)
+    junk = {"cookie": b"wm_admin=" + bytes([0xFF]) * 64}  # Starlette는 쿠키를 latin-1로 풀어 비ASCII 문자열이 된다
+    assert client.get("/admin", headers=junk).status_code == 404
+    assert client.post("/start", data=FORM, headers=junk).status_code == 303
