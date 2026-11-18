@@ -126,3 +126,16 @@
   - `0 21 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send evening >> $HOME/send.log 2>&1`
   - 보낼 게 없으면 아무것도 안 찍음 → `send.log`가 비어 있어도 정상. 첫 발송 결과: `2026-11-17 evening sent=1 failed=0`, `2026-11-18 morning sent=1 failed=0`, 폰 도착 확인 ✅.
 - 사용자 피드백 반영(2026-11-18, 6087ce5): 지난 날 기록 화면을 노란 띠·"오늘로 돌아가기"로 표시, 카드·연결 줄·환영 메시지에 "폰 알림은 울리지 않으니 직접 확인" 안내, 다크 모드 끔(`color-scheme: only light`).
+
+## 13. AI 한 줄 요청 (3단계)
+- 설계: `docs/superpowers/specs/2026-11-18-watchme-phase3-ai-design.md`. `GEMINI_API_KEY`가 없으면 AI 기능 전체가 꺼지고(설정 6단계 숨김) 1·2단계 흐름 그대로.
+- 키 발급 (사용자가 직접):
+  1. `aistudio.google.com` → API 키 만들기. **이 앱 전용 키**로 만든다(다른 프로젝트 키 공유 비권장).
+  2. 무료 한도는 키가 아니라 구글 프로젝트 단위 → 한도까지 나누려면 구글 프로젝트도 따로. 한도 확인: AI Studio의 rate-limit 화면.
+  3. 기본 모델은 `app/ai.py`의 `DEFAULT_MODEL`(`gemini-3.5-flash-lite`, 2026-11-18 모델 문서 기준 안정판 경량 모델). 무료 요금제에서 안 되거나 이름이 바뀌면 `.env`에 `GEMINI_MODEL=모델이름`만 넣고 재시작(코드 수정 불필요).
+- 서버 `.env` (값은 사용자가 직접 입력, 출력 금지): `GEMINI_API_KEY` [+ 필요하면 `GEMINI_MODEL`]. 넣은 뒤 `cd ~/watchme && docker compose up -d`(app 재생성).
+- 확인(값 출력 없이): `docker compose exec -T app python -c "from app import ai; print(ai.enabled())"` → `True`.
+- DB: 새 표 `ai_picks` — 배포 시 `init_db`(`create_all`)가 생성. 기존 표 변경 없음. 보관 삭제(`scripts/purge.py`)가 체험과 함께 지움.
+- 실패 확인: `docker compose logs app | grep "ai pick failed"` → 종류만 찍힘(`timeout`·`http`·`invalid`·`floor`). 요청 문장은 로그에 안 남김. `http`가 계속 나오면 키·모델 이름·무료 한도(429) 확인.
+- 상태 보기: `docker compose exec -T db psql -U watchme -c "select status, count(*) from ai_picks group by status"`.
+- 첫 실험 결과: (배포 후 기록)
