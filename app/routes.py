@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app import accounts, ai, kakao, messages
+from app.card import render_card
 from app.chart import weight_svg
 from app.clock import today_kst
 from app.db import get_db
@@ -321,6 +322,18 @@ def week_report(request: Request, token: str, w: int, db: Session = Depends(get_
     r = build_week(db, trial, w, today_kst(), stats)
     return _page(request, "week.html", token=token, r=r, chart=weight_svg(r.weights, 7 * w),
                  share_text=f"Watchme 30일 생활습관 챌린지 {PUBLIC_BASE_URL}")
+
+
+@router.get("/c/{token}/week/{w:int}/card.png")
+def week_card(request: Request, token: str, w: int, db: Session = Depends(get_db), stats: dict = Depends(get_stats)):
+    trial, err = _week_trial(request, db, token, w)
+    if err:
+        return err
+    r = build_week(db, trial, w, today_kst(), stats)
+    if r.peer is None:
+        return _error(request, 404, "이번 주는 자랑 카드가 없어요.")
+    return Response(render_card(w, r.kept, r.marks, r.peer), media_type="image/png",
+                    headers={"Cache-Control": "private, no-store", "X-Robots-Tag": "noindex"})
 
 
 @router.get("/c/{token}/plan.pdf")

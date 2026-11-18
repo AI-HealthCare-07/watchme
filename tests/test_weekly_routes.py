@@ -78,3 +78,28 @@ def test_final_report_has_weight_chart(client):  # noqa: F811
     _set_day(client, loc, 31)
     _log(client, loc, [5], weight="79.0")
     assert "<svg" in client.get(f"{loc}/report").text
+
+
+def test_card_route_png_and_headers(client):  # noqa: F811
+    app.dependency_overrides[get_stats] = lambda: WALK
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 8)
+    _log(client, loc, range(1, 8))
+    r = client.get(f"{loc}/week/1/card.png")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert "no-store" in r.headers["cache-control"] and r.headers["x-robots-tag"] == "noindex"
+
+
+def test_card_404_without_peer(client):  # noqa: F811
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 8)
+    _log(client, loc, range(1, 8))
+    r = client.get(f"{loc}/week/1/card.png")
+    assert r.status_code == 404 and "이번 주는 자랑 카드가 없어요." in r.text
+    assert client.get(f"{loc}/week/2/card.png").status_code == 400
+
+
+def test_week_page_loads_share_js(client):  # noqa: F811
+    loc = _start_and_setup(client)
+    _set_day(client, loc, 8)
+    assert "/static/share.js?v=" in client.get(f"{loc}/week/1").text

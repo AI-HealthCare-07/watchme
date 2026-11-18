@@ -5,6 +5,7 @@
 <h1>7일 중 {{ r.kept }}일 지켰어요{% if r.kept >= 5 %} 🎉{% endif %}</h1>
 <p class="wdots" aria-label="날마다 지킨 기록">{% for m in r.marks %}<i class="{{ 'on' if m else 'off' if m is false else '' }}">{{ "✓" if m else "✗" if m is false else "·" }}</i>{% endfor %}</p>
 {% endblock %}
+{% block head %}<script src="/static/share.js?v={{ ASSET_V }}" defer></script>{% endblock %}
 {% block sheet %}
 {% if r.peer %}{% set p = r.peer %}
 <section class="card peer">
@@ -27,4 +28,8 @@
   {% if r.peer %}<a class="btn btn-soft share" href="/c/{{ token }}/week/{{ r.week }}/card.png" data-text="{{ share_text }}">자랑하기</a>{% endif %}
   <a class="btn" href="/c/{{ token }}">오늘 계획 보기</a>
 </div>
+{% if r.peer %}<figure class="card share-fallback" hidden>
+  <img src="/c/{{ token }}/week/{{ r.week }}/card.png" alt="{{ r.week }}주차 자랑 카드" width="1080" height="1350">
+  <figcaption class="muted">이미지를 길게 눌러 저장한 뒤 보내 주세요.</figcaption>
+</figure>{% endif %}
 {% endblock %}

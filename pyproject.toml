@@ -13,6 +13,7 @@ dependencies = [
     "tzdata",
     "httpx",
     "cryptography",
+    "pillow",  # 자랑 카드 PNG (reportlab도 이미 씀)
 ]
 
 [project.optional-dependencies]
