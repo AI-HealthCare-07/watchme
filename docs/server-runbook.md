@@ -124,4 +124,5 @@
 - 발송 cron(2026-11-17 등록, KST, 8장 파일 방식으로 기존 3줄 유지):
   - `30 7 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send morning >> $HOME/send.log 2>&1`
   - `0 21 * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send evening >> $HOME/send.log 2>&1`
-  - 보낼 게 없으면 아무것도 안 찍음 → `send.log`가 비어 있어도 정상. 첫 발송(11-17 21:00, 11-18 07:30) 결과: (확인 후 기록)
+  - 보낼 게 없으면 아무것도 안 찍음 → `send.log`가 비어 있어도 정상. 첫 발송 결과: `2026-11-17 evening sent=1 failed=0`, `2026-11-18 morning sent=1 failed=0`, 폰 도착 확인 ✅.
+- 사용자 피드백 반영(2026-11-18, 6087ce5): 지난 날 기록 화면을 노란 띠·"오늘로 돌아가기"로 표시, 카드·연결 줄·환영 메시지에 "폰 알림은 울리지 않으니 직접 확인" 안내, 다크 모드 끔(`color-scheme: only light`).
