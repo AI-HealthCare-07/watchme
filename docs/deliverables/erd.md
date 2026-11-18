@@ -100,3 +100,33 @@ erDiagram
 
 - 연결 끊기: 카카오 unlink 호출(실패해도 진행) → `trial_owners`·`sent_messages`·`kakao_accounts` 행 삭제. 체험과 기록은 그대로.
 - 보관 삭제 확장: 체험이 지워지면 연결도 지워지고, 남은 체험이 없는 계정은 계정 행과 발송 기록까지 삭제.
+
+## 3. 3단계 표 (AI 한 줄 요청) — 구현 중
+
+출처: `docs/superpowers/specs/2026-11-18-watchme-phase3-ai-design.md` 4.3장, `app/models.py` `AiPick`.
+
+```mermaid
+erDiagram
+    trials ||--o| ai_picks : "체험당 한 번"
+
+    ai_picks {
+        string token PK, FK "trials.token, ON DELETE CASCADE"
+        text request "사용자가 쓴 한 줄 (100자까지)"
+        text excluded "AI가 뺀 후보의 원문 문장, JSON 배열"
+        text reason "AI가 쓴 이유 한 줄 (80자까지)"
+        string status "ok | empty | failed"
+        datetime created_at
+    }
+
+    trials {
+        string token PK "1단계 표 그대로"
+    }
+```
+
+| 표 | 역할 | 핵심 규칙 |
+|---|---|---|
+| `ai_picks` | 설정 때 받은 한 줄 요청과 AI 결과 | `status = ok`일 때만 계획에서 `excluded` 문장을 빼요. 번호가 아니라 **원문 문장**으로 저장 → 메뉴 파일 순서가 바뀌어도 안전 |
+
+- 계획은 여전히 저장하지 않아요. `plan_for(db, trial)` = `build_plan(답변, 시작일, token 시드, 강도 결정, AI 제외 문장)`. 기록 화면·주간 PDF·아침 카톡이 모두 이 함수 하나를 거쳐요.
+- 실패(`failed`)도 남겨요(화면 안내용). 실패 이유는 서버 로그에 종류만(timeout / http / invalid).
+- 보관 삭제: 체험과 함께 `ai_picks`도 지워요. 다음 30일 도전은 이 행을 그대로 복사(AI 재호출 없음).
