@@ -158,3 +158,10 @@
 - 또래 비교 자료: `app/data/korea_stats.json`의 `walk`(국민건강영양조사 걷기 문항). 다시 만들 때는 로컬에서
   `python -m scripts.knhanes_stats data/raw` → JSON만 커밋. **`data/raw/` 원본은 커밋하지 않는다.**
 - 새 DB 표 없음 → 운영 DB 변경 없이 배포만 하면 된다. Pillow는 reportlab이 이미 설치하던 것(의존성에 이름만 적음).
+
+## 16. 운영 지표 페이지 `/admin` (2026-11-18)
+- **키 넣기 (사용자가 직접)**: 서버 `.env`에 `ADMIN_KEY=`(길고 무작위인 값, 예: `python -c "import secrets; print(secrets.token_urlsafe(32))"`)를 넣고 `docker compose up -d`로 다시 띄운다. 비어 있으면 `/admin`은 404(기능 꺼짐).
+- **즐겨찾기**: 휴대폰·PC에서 `https://evrd.fyi/admin?key=…`로 한 번 들어가면 쿠키(키의 해시, 180일)가 구워지고 `/admin`으로 넘어간다. 그 `/admin`을 즐겨찾기한다. 키를 바꾸면 모든 브라우저에서 다시 들어가야 한다.
+- **테스트 제외**: 로그인한 브라우저로 시작한 체험은 `test_trials`에 적혀 지표에서 빠진다. `METRICS_SINCE=YYYY-MM-DD`(선택, KST)를 넣으면 그보다 먼저 만든 체험도 뺀다.
+- **새 표 3개** `landing_views`(날짜별 랜딩 조회 수), `send_runs`(cron 발송 보냄·실패 합계), `test_trials`는 서버가 켜질 때 자동으로 생긴다. 기존 표는 바꾸지 않는다.
+- `send_runs`는 `scripts.send` 실행마다 쌓인다(카카오가 꺼져 있으면 기록 없음). 랜딩 조회는 봇·링크 미리보기를 빼고 세며 IP·쿠키·브라우저 정보는 저장하지 않는다.
