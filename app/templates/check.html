@@ -11,7 +11,6 @@
 {% block sheet %}
 {% set d = plan[selected - 1] %}
 {% set log = logs.get(selected) %}
-{% if selected != today %}<p class="past">📝 지난 기록을 고치는 중이에요 · Day {{ selected }} ({{ d.date.month }}/{{ d.date.day }} {{ "월화수목금토일"[d.date.weekday()] }})<a href="/c/{{ token }}">오늘(Day {{ today }})로 돌아가기 →</a></p>{% endif %}
 
 {% if kakao %}
 {{ kakao_flash(kakao.flash) }}
@@ -19,7 +18,7 @@
   {% if not kakao.account %}{{ kakao_card(token) }}
   {% elif not kakao.account.can_message %}<p class="kline">{{ "카톡 연결이 끊겼어요" if kakao.account.refresh_token_enc is none else "카톡 메시지 동의가 없어서 알림을 보낼 수 없어요" }} · <a href="/c/{{ token }}/kakao">다시 연결</a></p>
   {% else %}
-  <div class="kline">
+  <div class="kline{{ ' on' if kakao.account.notify }}">
     {% set on = kakao.account.notify %}
     <span>{{ "💬 카톡 메시지 받는 중" if on else "🔕 카톡 메시지 꺼짐" }}</span>
     <form method="post" action="/c/{{ token }}/kakao/notify"><input type="hidden" name="on" value="{{ '0' if on else '1' }}"><button class="linkish">{{ "끄기" if on else "켜기" }}</button></form>
@@ -29,6 +28,8 @@
   {% endif %}
 {% endif %}
 {% endif %}
+
+{% if selected != today %}<p class="past">📝 지난 기록을 고치는 중이에요 · Day {{ selected }} ({{ d.date.month }}/{{ d.date.day }} {{ "월화수목금토일"[d.date.weekday()] }})<a href="/c/{{ token }}">오늘(Day {{ today }})로 돌아가기 →</a></p>{% endif %}
 
 {% if summary %}
 <section class="card summary">

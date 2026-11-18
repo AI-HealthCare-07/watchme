@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app import accounts
 from app.models import KakaoAccount
 from tests.test_kakao import fake_kakao, form_of, kakao_env  # noqa: F401  (fixture)
-from tests.test_routes import _start_and_setup, client  # noqa: F401  (fixture)
+from tests.test_routes import _set_day, _start_and_setup, client  # noqa: F401  (fixture)
 
 
 def kakao_api(monkeypatch, kakao_id=42, scope="talk_message", token_status=200):
@@ -265,3 +265,13 @@ def test_self_check_notice_on_card_welcome_and_linked_line(client, kakao_env, mo
     login(client, f"{loc}/kakao")
     assert SELF_CHECK in memos(seen)[0]
     assert SELF_CHECK in client.get(loc).text
+
+
+def test_linked_line_sits_above_past_day_band(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    _set_day(client, loc, 2)
+    page = client.get(f"{loc}?day=1").text
+    assert 'class="kline on"' in page
+    assert page.index("카톡 메시지 받는 중") < page.index("지난 기록을 고치는 중")
