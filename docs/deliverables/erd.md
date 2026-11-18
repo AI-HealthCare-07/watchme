@@ -130,3 +130,34 @@ erDiagram
 - 계획은 여전히 저장하지 않아요. `plan_for(db, trial)` = `build_plan(답변, 시작일, token 시드, 강도 결정, AI 제외 문장)`. 기록 화면·주간 PDF·아침 카톡이 모두 이 함수 하나를 거쳐요.
 - 실패(`failed`)도 남겨요(화면 안내용). 실패 이유는 서버 로그에 종류만(timeout / http / invalid).
 - 보관 삭제: 체험과 함께 `ai_picks`도 지워요. 다음 30일 도전은 이 행을 그대로 복사(AI 재호출 없음).
+
+
+## 4. 운영 지표 표 — ✅ 구현, 2026-11-18 운영 반영
+
+출처: `docs/superpowers/specs/2026-11-18-watchme-admin-metrics-design.md`, `app/models.py`.
+
+```mermaid
+erDiagram
+    landing_views {
+        date day PK "KST 날짜"
+        int count "랜딩 조회 수 (봇 제외, 중복 포함)"
+    }
+    send_runs {
+        date day PK "KST 날짜"
+        string kind PK "morning | evening"
+        int sent "보냄 합계"
+        int failed "실패 합계"
+    }
+    test_trials {
+        string token PK "관리자 브라우저로 시작한 체험 (FK 없음)"
+    }
+```
+
+| 표 | 역할 | 핵심 규칙 |
+|---|---|---|
+| `landing_views` | 날짜별 랜딩 조회 수 | 누가 봤는지(IP·쿠키·브라우저 정보)는 저장하지 않아요 |
+| `send_runs` | 카톡 cron 발송 결과 | 계정 정보 없이 합계만 |
+| `test_trials` | 내 테스트 체험 표시 | 지표에서 빼요. 다음 30일 도전에도 이어지고, 체험이 보관 기간 끝에 지워질 때 함께 지워요 |
+
+- 세 표 모두 서버가 켜질 때 자동으로 만들어져요. 기존 표는 바꾸지 않았어요.
+- 집계는 `/admin`을 열 때마다 `app/metrics.py` `collect()`가 해요(캐시 없음).

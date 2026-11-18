@@ -202,3 +202,15 @@ Location: /c/Xb3k...Q9/result
 | 실패 | 타임아웃(8초) · HTTP 오류(429 한도 초과 등) · JSON 이상 · 목록 밖 번호 · 너무 많이 뺌 | `failed` → 기본 계획 |
 
 - `reason`은 공백 정리 후 80자까지, 비면 "요청에 맞춰 일부 메뉴를 뺐어요". 서버 로그엔 실패 종류만(`ai pick failed: timeout|http|invalid|floor`), 요청 문장은 안 남겨요.
+
+
+## 6. 운영 지표 (✅ 구현, 2026-11-18)
+
+| # | 메서드 | 경로 | 설명 | 응답 |
+|---|---|---|---|---|
+| 22 | GET | `/admin` | 운영 지표 화면 (관리자 쿠키 필요) | 200 HTML · `ADMIN_KEY` 없음/쿠키 없음 404 · 모두 `Cache-Control: no-store`, `X-Robots-Tag: noindex` |
+| 22a | GET | `/admin?key=…` | 관리자 들어가기 | 맞으면 303 → `/admin` + 쿠키 `wm_admin`(키의 SHA-256, HttpOnly, 180일) · 틀리면 404 · IP당 10분 10번 넘으면 429 |
+
+- 랜딩 `GET /`은 열릴 때마다 `landing_views` 그날 행에 +1(봇 제외). 저장이 실패해도 랜딩은 그대로 200.
+- 관리자 쿠키가 있는 브라우저로 `POST /start` 하면 그 체험을 `test_trials`에 적어 지표에서 뺌.
+- cron `python -m scripts.send morning|evening`은 실행마다 `send_runs`에 보냄·실패 수를 더함.
