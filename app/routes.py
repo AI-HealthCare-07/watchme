@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app import accounts, kakao
+from app import accounts, ai, kakao
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_week_pdf
@@ -17,8 +17,8 @@ from app.progress import can_level_up, plateau, streak, summary_week, week_summa
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
-    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, plan_for, save_day,
-    save_setup, start_trial,
+    InvalidSetup, apply_ai_request, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, plan_for,
+    save_day, save_setup, start_trial,
 )
 from app.models import NextTrial
 
@@ -125,7 +125,8 @@ def setup_form(request: Request, token: str, db: Session = Depends(get_db)):
         return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
     if trial.setup_done:
         return RedirectResponse(f"/c/{token}", status_code=303)
-    return _page(request, "setup.html", token=token, form={"free_days": []}, error=None)
+    return _page(request, "setup.html", token=token, form={"free_days": [], "ai_request": ""}, error=None,
+                 ai_on=ai.enabled())
 
 
 @router.post("/c/{token}/setup")
@@ -137,6 +138,7 @@ def setup(
     breakfast: str = Form(""),
     exercise_min: str = Form(""),
     free_days: list[str] = Form([]),
+    ai_request: str = Form(""),
     db: Session = Depends(get_db),
 ):
     trial = get_trial(db, token)
@@ -145,7 +147,7 @@ def setup(
     if trial.setup_done:
         return RedirectResponse(f"/c/{token}", status_code=303)
     form = {"diet_style": diet_style, "lunch_place": lunch_place, "breakfast": breakfast,
-            "exercise_min": exercise_min, "free_days": free_days}
+            "exercise_min": exercise_min, "free_days": free_days, "ai_request": ai_request}
     try:
         try:
             minutes, days = int(exercise_min), [int(d) for d in free_days]
@@ -153,7 +155,9 @@ def setup(
             raise InvalidSetup("선택지 중에서 골라 주세요") from None
         save_setup(db, token, diet_style, lunch_place, breakfast, minutes, days)
     except InvalidSetup as e:
-        return _page(request, "setup.html", 400, token=token, form=form, error=str(e))
+        return _page(request, "setup.html", 400, token=token, form=form, error=str(e), ai_on=ai.enabled())
+    if ai.enabled():  # 동기 호출(최대 8초). 실패해도 기본 계획으로 진행
+        apply_ai_request(db, trial, ai_request)
     return RedirectResponse(f"/c/{token}/ready", status_code=303)
 
 

@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 from datetime import date, timedelta
 
@@ -6,11 +7,14 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app import accounts
+from app import accounts, ai
 from app.models import AiPick, DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
-from app.plan import DAYS, MAX_LEVEL, PlanDay, Profile, build_plan, choose_variant
+from app.plan import DAYS, MAX_LEVEL, PlanDay, Profile, build_plan, candidates, choose_variant, floor_ok
 from app.risk import LIMITS, assess
 
+log = logging.getLogger("watchme.ai")
+AI_REQUEST_MAX = 100
+AI_REASON_DEFAULT = "요청에 맞춰 일부 메뉴를 뺐어요"
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
 SENT_KEEP_DAYS = 40  # 중복 발송 방지 기록은 이만큼만 (체험 30일 + 여유)
 SETUP_CHOICES = {
@@ -91,6 +95,38 @@ def plan_for(db: Session, trial: Trial) -> list[PlanDay]:
     """계획을 만드는 곳은 모두 여기를 거친다(강도 결정 + AI 제외 목록)."""
     return build_plan(profile_of(trial), trial.start_date, trial.token,
                       get_decisions(db, trial.token), excluded_of(db, trial.token))
+
+
+def apply_ai_request(db: Session, trial: Trial, text: str) -> AiPick | None:
+    """설정 직후 한 줄 요청을 AI에 보내 뺄 후보를 고른다. 실패해도 설정은 그대로(기본 계획)."""
+    text = text.strip()[:AI_REQUEST_MAX]
+    if not text:
+        return None
+    existing = db.get(AiPick, trial.token)
+    if existing:
+        return existing
+    profile = profile_of(trial)
+    cands = candidates(profile)
+    gone, reason = frozenset(), ""
+    try:
+        pick = ai.choose(text, {k: v.replace("{m}", "N") for k, v in cands.items()})
+    except ai.AiError as e:  # 요청 문장은 로그에 남기지 않는다
+        log.warning("ai pick failed: %s", e.kind)
+        status = "failed"
+    else:
+        gone = frozenset(cands[k] for k in pick.exclude)
+        if not floor_ok(profile, gone):
+            log.warning("ai pick failed: floor")
+            status, gone = "failed", frozenset()
+        elif gone:
+            status, reason = "ok", pick.reason or AI_REASON_DEFAULT
+        else:
+            status = "empty"
+    row = AiPick(token=trial.token, request=text, status=status,
+                 excluded=json.dumps(sorted(gone), ensure_ascii=False), reason=reason)
+    db.add(row)
+    db.commit()
+    return row
 
 
 def decide_level(db: Session, token: str, week: int, up: bool) -> int:

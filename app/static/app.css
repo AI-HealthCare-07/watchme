@@ -204,6 +204,8 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 .num input::-webkit-outer-spin-button, .num input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .num em { font-style: normal; color: var(--faint); font-weight: 600; font-size: 17px; }
 .hint { font-size: 13px; color: var(--faint); margin-top: 12px; }
+.ask-line { width: 100%; border: 1.5px solid var(--line); border-radius: 14px; background: var(--fill); color: var(--ink); font: inherit; font-size: 16px; padding: 12px 14px; resize: none; }
+.ask-line:focus { outline: none; border-color: var(--brand); background: var(--card); }
 .step.invalid:has(.num) .hint { color: var(--risk); font-weight: 600; }
 .step.invalid .pick label { border-color: var(--risk); }
 .step.invalid .num { border-color: var(--risk); }

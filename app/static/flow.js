@@ -28,6 +28,8 @@
     return [...s.querySelectorAll("input")].every((i) => i.checkValidity());
   };
   const answer = (s) => {
+    const text = s.querySelector("textarea");
+    if (text) return text.value.trim() || "없음";
     const checked = [...s.querySelectorAll("input:checked")].map((i) => i.closest("label").textContent.trim());
     if (checked.length) return checked.join(", ");
     const num = s.querySelector(".num input");

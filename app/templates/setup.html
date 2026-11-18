@@ -50,6 +50,14 @@
     </div>
     <p class="hint">고른 요일 저녁엔 먹고 싶은 걸 즐겨요 🎉 정확히 2개를 골라 주세요.</p>
   </fieldset>
+  {% if ai_on %}
+  <fieldset class="step" data-name="한 줄 요청">
+    <legend class="q">식단·운동에서<br>빼고 싶은 게 있나요?</legend>
+    <textarea class="ask-line" name="ai_request" maxlength="100" rows="3" placeholder="예: 매운 거 못 먹어요, 무릎이 안 좋아요">{{ form.ai_request }}</textarea>
+    <p class="hint">적은 내용은 AI(구글 Gemini)로 보내져요. 이름·연락처는 적지 마세요.</p>
+    <p class="hint">없으면 비워 두고 버튼을 눌러 주세요.</p>
+  </fieldset>
+  {% endif %}
 </form>
 {% endblock %}
 {% block cta %}<button class="btn" type="submit" form="steps">내 계획 만들기</button>{% endblock %}
