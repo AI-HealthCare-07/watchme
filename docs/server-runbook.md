@@ -139,4 +139,6 @@
 - 실패 확인: `docker compose logs app | grep "ai pick failed"` → 종류만 찍힘(`timeout`·`http`·`invalid`·`floor`). 요청 문장은 로그에 안 남김. `http`가 계속 나오면 키·모델 이름·무료 한도(429) 확인.
 - 상태 보기: `docker compose exec -T db psql -U watchme -c "select status, count(*) from ai_picks group by status"`.
 - 배포(2026-11-18, `0c88242`): main merge 후 `git push evrd main` → healthz OK, 새 표 `ai_picks` 생성(0건), 기존 `trials` 7건 유지, 시작 화면 개인정보 문장 반영 확인. 키 입력 전이라 `ai.enabled()` = False(설정 6단계 숨김).
-- 첫 실험 결과: (키 입력 후 기록)
+- 키 입력 후(2026-11-18): `docker compose up -d` → `ai.enabled()` = True. 기본 모델로 가짜 후보 2개 시험 호출 → 매운 메뉴만 골라 정상.
+- 첫 실험 결과(2026-11-18, 폰): 설정 6단계에 매운 음식 요청 → `ai_picks` `ok` 1건(매운 메뉴 1개 제외), 실패 로그 없음. 기록 화면 칩은 서버 HTML에 있음 확인(사용자는 카톡 연결된 11/17 체험을 보고 있었던 것으로 보임).
+- 피드백 반영(2026-11-18, `b7688e9`): 준비 화면 AI 안내를 "🤖 이 계획은 AI가 내 요청에 맞춰 골라 줬어요" 한 줄로(뺀 항목 안 보여 줌, 자동 이동 다시 켬), 카톡 카드 "카카오로 연결" 밑에 "바로 시작" 버튼.
