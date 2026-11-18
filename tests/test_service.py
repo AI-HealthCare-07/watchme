@@ -256,6 +256,24 @@ def test_plan_for_without_pick_is_plain(db):
     assert plan_for(db, t) == build_plan(profile_of(t), t.start_date, t.token, {1: 1})
 
 
+def test_next_trial_copies_pick(db, monkeypatch):
+    from app import ai
+    from app.service import get_ai_pick, next_trial
+    monkeypatch.setattr(ai, "choose", lambda *a: pytest.fail("AI를 다시 부르면 안 돼요"))
+    old = _finished_trial(db, {5: 80.0})
+    _pick(db, old.token, "ok", ["매운 닭볶음탕"])
+    new = next_trial(db, old, TODAY + timedelta(days=31), stats=STATS)
+    a, b = get_ai_pick(db, old.token), get_ai_pick(db, new.token)
+    assert (b.request, b.excluded, b.reason, b.status) == (a.request, a.excluded, a.reason, a.status)
+
+
+def test_next_trial_without_pick_has_none(db):
+    from app.service import get_ai_pick, next_trial
+    old = _finished_trial(db, {5: 80.0})
+    new = next_trial(db, old, TODAY + timedelta(days=31), stats=STATS)
+    assert get_ai_pick(db, new.token) is None
+
+
 def test_purge_removes_ai_picks(db):
     from app.models import AiPick
     old = _start(db, today=TODAY - timedelta(days=121))

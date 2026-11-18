@@ -134,6 +134,49 @@ def test_empty_pick(client, gemini_env, monkeypatch):  # noqa: F811
     assert _picks(client)[0].status == "empty"
 
 
+OK_NOTE = "🤖 AI가 요청을 반영했어요"
+EMPTY_NOTE = "요청을 확인했어요. 지금 계획에서 뺄 게 없었어요."
+FAILED_NOTE = "지금은 AI 요청을 반영하지 못했어요. 기본 계획으로 시작해요."
+CHIP = '<span class="chip">🤖 AI 맞춤</span>'
+
+
+def _with_pick(client, status, reason="매운 메뉴를 뺐어요"):
+    loc = _setup(client, "")
+    with Session(client.engine) as s:
+        s.add(AiPick(token=loc.removeprefix("/c/"), request="r", excluded="[]", reason=reason, status=status))
+        s.commit()
+    return loc
+
+
+def test_ready_shows_ok_reason(client):  # noqa: F811
+    html = client.get(f"{_with_pick(client, 'ok')}/ready").text
+    assert OK_NOTE in html and "매운 메뉴를 뺐어요" in html and "AI가 쓴 문장이에요" in html
+    assert 'http-equiv="refresh"' not in html
+
+
+@pytest.mark.parametrize("status, note", [("empty", EMPTY_NOTE), ("failed", FAILED_NOTE)])
+def test_ready_shows_empty_and_failed(client, status, note):  # noqa: F811
+    html = client.get(f"{_with_pick(client, status, reason='')}/ready").text
+    assert note in html and OK_NOTE not in html and 'http-equiv="refresh"' not in html
+
+
+def test_ready_without_pick_unchanged(client, monkeypatch):  # noqa: F811
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    html = client.get(f"{_setup(client, '')}/ready").text
+    assert not any(n in html for n in (OK_NOTE, EMPTY_NOTE, FAILED_NOTE))
+    assert 'http-equiv="refresh"' in html
+
+
+@pytest.mark.parametrize("status, shown", [("ok", True), ("failed", False), ("empty", False)])
+def test_check_chip_only_when_ok(client, status, shown):  # noqa: F811
+    assert (CHIP in client.get(_with_pick(client, status)).text) is shown
+
+
+def test_reason_is_escaped(client):  # noqa: F811
+    html = client.get(f"{_with_pick(client, 'ok', reason='<script>x</script>')}/ready").text
+    assert "<script>x" not in html and "&lt;script&gt;x" in html
+
+
 def test_prompt_injection_request(client, gemini_env, monkeypatch):  # noqa: F811
     def everything(r):
         ids = re.findall(r"^([blde]\d+): ", _prompt(r), re.M)

@@ -17,8 +17,8 @@ from app.progress import can_level_up, plateau, streak, summary_week, week_summa
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
-    InvalidSetup, apply_ai_request, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, plan_for,
-    save_day, save_setup, start_trial,
+    InvalidSetup, apply_ai_request, current_day, decide_level, get_ai_pick, get_decisions, get_logs, get_trial,
+    next_trial, plan_for, save_day, save_setup, start_trial,
 )
 from app.models import NextTrial
 
@@ -169,7 +169,7 @@ def ready_page(request: Request, token: str, db: Session = Depends(get_db)):
         return _error(request, 404, "체험을 찾을 수 없어요. 링크를 다시 확인해 주세요.")
     if not trial.setup_done:
         return _to_setup(token)
-    return _page(request, "ready.html", token=token, kakao=_kakao(request, db, token))
+    return _page(request, "ready.html", token=token, kakao=_kakao(request, db, token), pick=get_ai_pick(db, token))
 
 
 # 의심 카드 원인: 날마다 하나씩 돌아가며
@@ -207,6 +207,7 @@ def check_page(request: Request, token: str, day: int | None = None,
         summary=summary, can_up=can_up, decided=decisions.get(w) if w else None,
         next_level=next_level, next_notes=() if trial.plan_variant == "high_risk" else LEVEL_NOTES[next_level],
         week=week_of(today), finished=not days_left(trial, today_kst()), kakao=_kakao(request, db, token),
+        ai_ok=getattr(get_ai_pick(db, token), "status", None) == "ok",
     )
 
 

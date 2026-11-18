@@ -19,7 +19,7 @@
 <div class="ring" style="--p: {{ (today / days * 100)|round(1) }}%" aria-label="{{ days }}일 중 {{ today }}일째"><div>{{ today }}/{{ days }}</div></div>
 <h1 class="day">Day {{ selected }}</h1>
 {% if selected != today %}<p class="sub">지난 날 기록 · 오늘은 Day {{ today }}</p>{% endif %}
-<p class="chips"><span class="chip">{{ label }}</span>{% if level %}<span class="chip">💪 강도 {{ level }}단계</span>{% endif %}{% if streak >= 2 %}<span class="chip">🔥 {{ streak }}일 연속</span>{% endif %}</p>
+<p class="chips"><span class="chip">{{ label }}</span>{% if level %}<span class="chip">💪 강도 {{ level }}단계</span>{% endif %}{% if streak >= 2 %}<span class="chip">🔥 {{ streak }}일 연속</span>{% endif %}{% if ai_ok %}<span class="chip">🤖 AI 맞춤</span>{% endif %}</p>
 {% endblock %}
 {% block sheet %}
 {% set d = plan[selected - 1] %}

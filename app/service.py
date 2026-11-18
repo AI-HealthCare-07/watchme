@@ -86,8 +86,12 @@ def get_decisions(db: Session, token: str) -> dict[int, int]:
     return {r.week: r.level for r in rows}
 
 
+def get_ai_pick(db: Session, token: str) -> AiPick | None:
+    return db.get(AiPick, token)
+
+
 def excluded_of(db: Session, token: str) -> frozenset[str]:
-    pick = db.get(AiPick, token)
+    pick = get_ai_pick(db, token)
     return frozenset(json.loads(pick.excluded)) if pick and pick.status == "ok" else frozenset()
 
 
@@ -158,6 +162,10 @@ def next_trial(db: Session, trial: Trial, today: date, stats: dict | None = None
                       today=today, stats=stats)
     p = profile_of(trial)
     save_setup(db, new.token, p.diet_style, p.lunch_place, p.breakfast, p.exercise_min, list(p.free_days))
+    pick = get_ai_pick(db, trial.token)
+    if pick:  # AI는 다시 부르지 않고 같은 결과를 이어 쓴다
+        db.add(AiPick(token=new.token, request=pick.request, excluded=pick.excluded, reason=pick.reason,
+                      status=pick.status))
     db.add(NextTrial(token=trial.token, next_token=new.token))
     try:
         db.commit()
