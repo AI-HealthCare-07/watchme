@@ -39,4 +39,5 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 | 5 준비·기록 화면 안내·개인정보 문구·다음 도전 복사 | ✅ | wireframes, requirements |
 | 6 runbook·배포·첫 실험 | ✅ | links, demo-script, ppt-outline |
 
-- 마지막 갱신: 2026-11-18 (기준 커밋 `b7688e9`, main 배포, 테스트 273개 통과)
+- 랜딩 스토리형 개편·대표 아이콘(2026-11-18): wireframes ①, requirements FR-01·FR-01a 반영.
+- 마지막 갱신: 2026-11-18 (기준 커밋 `4484318`, landing 브랜치, 테스트 281개 통과, 배포 전)
