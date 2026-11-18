@@ -158,6 +158,8 @@ def test_ready_shows_card_and_no_refresh_when_not_linked(client, kakao_env):
     loc = _start_and_setup(client)
     page = client.get(f"{loc}/ready").text
     assert "카카오로 연결" in page and 'http-equiv="refresh"' not in page
+    # 카카오 버튼 바로 밑에 카카오 없이 시작하는 선택지
+    assert page.index("카카오로 연결</a>") < page.index(f'<a class="btn btn-skip" href="{loc}">바로 시작</a>')
     assert "카카오로 이어서 하기" in client.get("/").text
 
 

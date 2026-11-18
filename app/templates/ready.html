@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% from "_macros.html" import kakao_card %}
 {% block title %}Watchme · 준비 완료{% endblock %}
-{# 카톡 연결 카드나 AI 안내가 보이면 읽기 전에 넘어가지 않게 자동 이동을 끈다 #}
-{% block head %}{% if not (kakao and not kakao.account) and not pick %}<meta http-equiv="refresh" content="6;url=/c/{{ token }}">{% endif %}{% endblock %}
+{# 카톡 연결 카드가 보이면 읽기 전에 넘어가지 않게 자동 이동을 끈다 #}
+{% block head %}{% if not (kakao and not kakao.account) %}<meta http-equiv="refresh" content="6;url=/c/{{ token }}">{% endif %}{% endblock %}
 {% block hero %}
 <p class="kicker">계획 준비 완료</p>
 <h1>우리 30일 챌린지,<br>같이 힘내 봐요! 💪</h1>
@@ -12,7 +12,7 @@
 </div>
 {% endblock %}
 {% block sheet %}
-{% if pick %}<p class="note ainote">{% if pick.status == "ok" %}<b>🤖 AI가 요청을 반영했어요</b><br>{{ pick.reason }}<small>AI가 쓴 문장이에요</small>
+{% if pick %}<p class="note ainote">{% if pick.status == "ok" %}<b>🤖 이 계획은 AI가 내 요청에 맞춰 골라 줬어요</b>
 {%- elif pick.status == "empty" %}요청을 확인했어요. 지금 계획에서 뺄 게 없었어요.
 {%- else %}지금은 AI 요청을 반영하지 못했어요. 기본 계획으로 시작해요.{% endif %}</p>{% endif %}
 {% if kakao and not kakao.account %}{{ kakao_card(token) }}{% endif %}
