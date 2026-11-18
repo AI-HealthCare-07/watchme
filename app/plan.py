@@ -94,17 +94,34 @@ def _exercise(profile: Profile, day: int, level: int, activities: list[str], res
     return text.format(m=min(minutes, 70))
 
 
-def build_plan(profile: Profile, start_date: date, seed: str, decisions: dict[int, int] | None = None) -> list[PlanDay]:
-    decisions = decisions or {}
-    meals, ex = _content("meals.json"), _content("exercises.json")[profile.variant]
+def _pools(profile: Profile) -> dict[str, list[str]]:
+    """프로필로 거른 원문 풀(섞기 전, 파일 순서). 운동 문장은 {m} 그대로."""
+    meals = _content("meals.json")
     style = profile.diet_style
-    pools = {
+    return {
         "breakfast": [i["text"] for i in meals["breakfast"] if i["habit"] == profile.breakfast and style in i["styles"]],
         "lunch": [i["text"] for i in meals["lunch"] if i["place"] == profile.lunch_place and style in i["styles"]],
         "dinner": [i["text"] for i in meals["dinner"] if style in i["styles"]],
+        "exercise": list(_content("exercises.json")[profile.variant]["activities"]),
     }
-    pools = {k: _shuffled(v, seed, k) for k, v in pools.items()}
-    activities = _shuffled(ex["activities"], seed, "exercise")
+
+
+def candidates(profile: Profile) -> dict[str, str]:
+    """AI에 보여 줄 번호 → 원문. 번호는 b1.. l1.. d1.. e1.."""
+    return {f"{kind[0]}{i}": text for kind, pool in _pools(profile).items() for i, text in enumerate(pool, 1)}
+
+
+def floor_ok(profile: Profile, exclude: frozenset[str]) -> bool:
+    """종류별로 원래 개수의 절반(올림) 이상 남아야 한다."""
+    return all(len([t for t in pool if t not in exclude]) >= ceil(len(pool) / 2) for pool in _pools(profile).values())
+
+
+def build_plan(profile: Profile, start_date: date, seed: str, decisions: dict[int, int] | None = None,
+               exclude: frozenset[str] = frozenset()) -> list[PlanDay]:
+    decisions = decisions or {}
+    ex = _content("exercises.json")[profile.variant]
+    pools = {k: _shuffled([t for t in v if t not in exclude], seed, k) for k, v in _pools(profile).items()}
+    activities = pools.pop("exercise")
     tips = _content("tips.json")
     relevant = {"skip_breakfast"} if profile.breakfast == "skip" else set()
     relevant |= {profile.lunch_place} & {"store", "out"}

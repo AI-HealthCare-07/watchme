@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app import accounts, kakao, messages
 from app.models import DayLog, KakaoAccount
-from app.plan import DAYS, build_plan
-from app.service import get_decisions, profile_of
+from app.plan import DAYS
+from app.service import plan_for
 
 
 def _base() -> str:
@@ -22,7 +22,7 @@ def _message(db: Session, kind: str, trial, n: int, sunday: bool) -> tuple[str, 
     if kind == "morning":
         if n == DAYS + 1:
             return "report", messages.REPORT, f"{link}/report", messages.BUTTON["report"]
-        plan = build_plan(profile_of(trial), trial.start_date, trial.token, get_decisions(db, trial.token))
+        plan = plan_for(db, trial)
         return "morning", messages.morning(plan[n - 1], sunday), link, messages.BUTTON["morning"]
     if n > DAYS:
         return None

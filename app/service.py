@@ -1,3 +1,4 @@
+import json
 import secrets
 from datetime import date, timedelta
 
@@ -6,8 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import accounts
-from app.models import DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
-from app.plan import DAYS, MAX_LEVEL, Profile, choose_variant
+from app.models import AiPick, DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
+from app.plan import DAYS, MAX_LEVEL, PlanDay, Profile, build_plan, choose_variant
 from app.risk import LIMITS, assess
 
 RETENTION_DAYS = 90  # 체험 종료 후 보관 기간 (시작 화면 안내와 같게)
@@ -81,6 +82,17 @@ def get_decisions(db: Session, token: str) -> dict[int, int]:
     return {r.week: r.level for r in rows}
 
 
+def excluded_of(db: Session, token: str) -> frozenset[str]:
+    pick = db.get(AiPick, token)
+    return frozenset(json.loads(pick.excluded)) if pick and pick.status == "ok" else frozenset()
+
+
+def plan_for(db: Session, trial: Trial) -> list[PlanDay]:
+    """계획을 만드는 곳은 모두 여기를 거친다(강도 결정 + AI 제외 목록)."""
+    return build_plan(profile_of(trial), trial.start_date, trial.token,
+                      get_decisions(db, trial.token), excluded_of(db, trial.token))
+
+
 def decide_level(db: Session, token: str, week: int, up: bool) -> int:
     decisions = get_decisions(db, token)
     if not 1 <= week <= 4 or week in decisions:
@@ -131,6 +143,7 @@ def purge_expired(db: Session, today: date) -> int:
     # SQLite는 FK cascade가 기본으로 꺼져 있어 기록부터 직접 지움
     db.execute(delete(WeekDecision).where(WeekDecision.token.in_(expired)))
     db.execute(delete(DayLog).where(DayLog.token.in_(expired)))
+    db.execute(delete(AiPick).where(AiPick.token.in_(expired)))
     db.execute(delete(TrialOwner).where(TrialOwner.token.in_(expired)))
     db.execute(delete(NextTrial).where(NextTrial.token.in_(expired) | NextTrial.next_token.in_(expired)))
     n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount

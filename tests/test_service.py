@@ -224,6 +224,46 @@ def test_purge_old_sent_messages(db, monkeypatch):
     assert [m.day for m in db.scalars(select(SentMessage))] == [TODAY - timedelta(days=39)]
 
 
+def _pick(db, token, status, texts):
+    import json
+    from app.models import AiPick
+    db.add(AiPick(token=token, request="r", excluded=json.dumps(texts, ensure_ascii=False), reason="x", status=status))
+    db.commit()
+
+
+def test_plan_for_uses_only_ok_picks(db):
+    from app.plan import build_plan
+    from app.service import plan_for, profile_of
+    for status in ("ok", "failed", "empty"):
+        t = _start(db)
+        save_setup(db, t.token, **GOOD_SETUP)
+        plain = build_plan(profile_of(t), t.start_date, t.token, {})
+        gone = next(d.meals["dinner"] for d in plain if not d.free_meal)
+        _pick(db, t.token, status, [gone])
+        got = plan_for(db, t)
+        if status == "ok":
+            assert all(d.meals["dinner"] != gone for d in got)
+        else:
+            assert got == plain
+
+
+def test_plan_for_without_pick_is_plain(db):
+    from app.plan import build_plan
+    from app.service import plan_for, profile_of
+    t = _start(db)
+    save_setup(db, t.token, **GOOD_SETUP)
+    decide_level(db, t.token, 1, True)
+    assert plan_for(db, t) == build_plan(profile_of(t), t.start_date, t.token, {1: 1})
+
+
+def test_purge_removes_ai_picks(db):
+    from app.models import AiPick
+    old = _start(db, today=TODAY - timedelta(days=121))
+    _pick(db, old.token, "ok", [])
+    purge_expired(db, TODAY)
+    assert db.scalars(select(AiPick)).all() == []
+
+
 def test_purge_removes_next_trial_rows(db):
     from app.models import NextTrial
     from app.service import next_trial

@@ -54,6 +54,25 @@ def _start_and_setup(client):
     return loc
 
 
+def _ok_pick_on_today_breakfast(client, loc):
+    """오늘(Day 1) 아침을 AI가 뺀 것으로 저장하고 그 문장을 돌려준다."""
+    import json
+    from app.models import AiPick
+    from app.service import get_trial, plan_for
+    with Session(client.engine) as s:
+        t = get_trial(s, loc.removeprefix("/c/"))
+        gone = plan_for(s, t)[0].meals["breakfast"]
+        s.add(AiPick(token=t.token, request="r", excluded=json.dumps([gone]), reason="x", status="ok"))
+        s.commit()
+    return gone
+
+
+def test_check_page_applies_ai_exclusion(client):
+    loc = _start_and_setup(client)
+    gone = _ok_pick_on_today_breakfast(client, loc)
+    assert gone not in client.get(loc).text
+
+
 def test_start_form_has_notice(client):
     for path in ("/", "/start"):
         r = client.get(path)

@@ -58,6 +58,18 @@ def test_morning_day1_and_report_day31(db, monkeypatch, n, expect):  # noqa: F81
         assert sent[0][2].endswith(f"/c/{t.token}/report" if n == 31 else f"/c/{t.token}")
 
 
+def test_morning_applies_ai_exclusion(db, monkeypatch):  # noqa: F811
+    from app.models import AiPick
+    from app.service import plan_for
+    sent = kakao_ok(monkeypatch)
+    t = linked_trial(db, 1)
+    gone = plan_for(db, t)[0].meals["breakfast"]
+    db.add(AiPick(token=t.token, request="r", excluded=json.dumps([gone]), reason="x", status="ok"))
+    db.commit()
+    send_all(db, "morning", TODAY)
+    assert gone[:20] not in sent[0][1]
+
+
 def test_evening_skips_day31_and_uses_logged_copy(db, monkeypatch):  # noqa: F811
     sent = kakao_ok(monkeypatch)
     linked_trial(db, 31, kakao_id=1, refresh="r1")

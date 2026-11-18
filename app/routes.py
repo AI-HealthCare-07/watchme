@@ -11,13 +11,13 @@ from app import accounts, kakao
 from app.clock import today_kst
 from app.db import get_db
 from app.pdf import DISCLAIMER, render_week_pdf
-from app.plan import DAYS, LEVEL_NOTES, WEEKS, build_plan, level_on, scenario, variant_label, week_days, week_of
+from app.plan import DAYS, LEVEL_NOTES, WEEKS, level_on, scenario, variant_label, week_days, week_of
 from app.ratelimit import RateLimiter, client_ip
 from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
 from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
-    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, profile_of, save_day,
+    InvalidSetup, current_day, decide_level, get_decisions, get_logs, get_trial, next_trial, plan_for, save_day,
     save_setup, start_trial,
 )
 from app.models import NextTrial
@@ -188,7 +188,7 @@ def check_page(request: Request, token: str, day: int | None = None,
     today = current_day(trial, today_kst())
     log_list = get_logs(db, token)
     decisions = get_decisions(db, token)
-    plan = build_plan(profile_of(trial), trial.start_date, token, decisions)
+    plan = plan_for(db, trial)
     w = summary_week(today, log_list)
     summary = week_summary(trial, log_list, w, stats=stats) if w else None
     can_up = bool(w) and can_level_up(log_list, w, decisions)
@@ -294,7 +294,7 @@ def week_pdf(request: Request, token: str, w: str, db: Session = Depends(get_db)
     if week > 1 and current_day(trial, today_kst()) < 7 * (week - 1):
         return _error(request, 400, f"{week}주차 계획표는 {7 * (week - 1)}일째부터 받을 수 있어요.")
     decisions = get_decisions(db, token)
-    plan = build_plan(profile_of(trial), trial.start_date, token, decisions)
+    plan = plan_for(db, trial)
     days = [plan[d - 1] for d in week_days(week)]
     a = assess(trial.sex, trial.age, trial.height_cm, trial.weight_kg, stats=stats)
     pdf = render_week_pdf(a, week, days, variant_label(trial.plan_variant), level_on(decisions, days[0].day),

@@ -80,3 +80,15 @@ class NextTrial(Base):
     # 한 체험에서 다음 30일 도전은 한 번만
     token: Mapped[str] = mapped_column(ForeignKey("trials.token", ondelete="CASCADE"), primary_key=True)
     next_token: Mapped[str] = mapped_column(ForeignKey("trials.token"))
+
+
+class AiPick(Base):
+    __tablename__ = "ai_picks"
+
+    # 설정 때 한 줄 요청 → AI가 뺀 후보. 체험당 한 번
+    token: Mapped[str] = mapped_column(String(64), ForeignKey("trials.token", ondelete="CASCADE"), primary_key=True)
+    request: Mapped[str] = mapped_column(Text)  # 사용자가 쓴 한 줄
+    excluded: Mapped[str] = mapped_column(Text)  # 뺀 항목 원문 문장 JSON 배열 (인덱스 아님: 파일 순서가 바뀌어도 안전)
+    reason: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(8))  # ok | empty | failed
+    created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))

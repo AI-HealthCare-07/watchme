@@ -164,3 +164,43 @@ def test_week_helpers():
     assert (week_of(1), week_of(7), week_of(8), week_of(28), week_of(29)) == (1, 1, 2, 4, 5)
     assert list(week_days(1)) == list(range(1, 8))
     assert list(week_days(5)) == [29, 30]
+
+
+import re  # noqa: E402
+
+from app.plan import candidates, floor_ok  # noqa: E402
+
+PROFILE = _Profile("overweight", "mixed", "out", "light", 25, (2, 5))
+START = _date(2026, 11, 16)
+
+
+def test_candidates_ids_and_raw_text():
+    c = candidates(PROFILE)
+    assert {k[0] for k in c} == {"b", "l", "d", "e"} and all(k[1:].isdigit() for k in c)
+    assert "b1" in c and "e1" in c
+    assert any("{m}" in v for k, v in c.items() if k.startswith("e"))
+
+
+def test_build_plan_excludes_texts_everywhere():
+    c = candidates(PROFILE)
+    gone = frozenset({c["d1"], c["e1"]})
+    before = _build(PROFILE, START, "seed")
+    plan = _build(PROFILE, START, "seed", exclude=gone)
+    assert any(d.meals["dinner"] == c["d1"] for d in before)
+    assert all(d.meals["dinner"] != c["d1"] for d in plan)
+    e1 = re.compile(re.escape(c["e1"]).replace(re.escape("{m}"), r"\d+"))
+    assert any(e1.fullmatch(d.exercise) for d in before)
+    assert not any(e1.fullmatch(d.exercise) for d in plan)
+
+
+def test_build_plan_without_exclude_unchanged():
+    assert _build(PROFILE, START, "seed") == _build(PROFILE, START, "seed", exclude=frozenset())
+
+
+def test_floor_ok_half_rule():
+    c = candidates(PROFILE)
+    for kind in "blde":
+        items = [v for k, v in c.items() if k[0] == kind]
+        keep = -(-len(items) // 2)  # 올림
+        assert floor_ok(PROFILE, frozenset(items[: len(items) - keep]))
+        assert not floor_ok(PROFILE, frozenset(items[: len(items) - keep + 1]))
