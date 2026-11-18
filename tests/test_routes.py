@@ -276,6 +276,13 @@ def test_setup_form_has_five_steps(client):
         assert f'name="{name}"' in r.text
 
 
+def test_setup_choices_avoid_card_list_class(client):
+    # 기록 화면 카드용 .list(여백·첫 항목 위 테두리 제거)가 선택지에 걸리면 첫 상자 위가 잘려 보인다
+    loc = _start_only(client)
+    page = client.get(f"{loc}/setup").text
+    assert 'class="pick list"' not in page and 'class="pick stack"' in page
+
+
 def test_setup_saves_and_redirects(client):
     loc = _start_only(client)
     r = client.post(f"{loc}/setup", data=SETUP)

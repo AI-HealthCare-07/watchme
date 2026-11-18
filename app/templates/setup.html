@@ -7,7 +7,7 @@
   {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
   <fieldset class="step" data-name="식사 스타일">
     <legend class="q">평소 어떤 음식을<br>좋아하세요?</legend>
-    <div class="pick list">
+    <div class="pick stack">
       {{ choice("diet_style", "veg", "🥗 채식 위주") }}
       {{ choice("diet_style", "meat", "🍖 고기·생선 좋아함") }}
       {{ choice("diet_style", "mixed", "🍱 골고루") }}
@@ -16,7 +16,7 @@
   </fieldset>
   <fieldset class="step" data-name="점심">
     <legend class="q">점심은 주로<br>어디서 드세요?</legend>
-    <div class="pick list">
+    <div class="pick stack">
       {{ choice("lunch_place", "home", "🏠 집밥") }}
       {{ choice("lunch_place", "out", "🏢 회사·외식") }}
       {{ choice("lunch_place", "store", "🏪 편의점") }}
@@ -25,7 +25,7 @@
   </fieldset>
   <fieldset class="step" data-name="아침">
     <legend class="q">아침은<br>어떻게 드세요?</legend>
-    <div class="pick list">
+    <div class="pick stack">
       {{ choice("breakfast", "skip", "☕ 거의 안 먹음") }}
       {{ choice("breakfast", "light", "🍌 간단히") }}
       {{ choice("breakfast", "full", "🍚 챙겨 먹음") }}
