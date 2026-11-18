@@ -22,7 +22,7 @@ import pyreadstat
 from app.risk import STATS_PATH, age_band, bmi_band
 
 YEARS = ("22", "23", "24")
-COLS = ["sex", "age", "HE_ht", "HE_wt", "HE_BMI", "HE_HP", "HE_DM_HbA1c", "wt_itvex"]
+COLS = ["sex", "age", "HE_ht", "HE_wt", "HE_BMI", "HE_HP", "HE_DM_HbA1c", "wt_itvex", "BE3_31", "BE3_32", "BE3_33"]
 # 질환: (변수, 유병 코드)
 DISEASES = {"hypertension": ("HE_HP", 4), "diabetes": ("HE_DM_HbA1c", 3)}
 DEFINITIONS = {
@@ -30,6 +30,7 @@ DEFINITIONS = {
     "diabetes": "HE_DM_HbA1c=3: 공복혈당 126mg/dL 이상, 의사 진단, 혈당강하제·인슐린, 또는 당화혈색소 6.5% 이상",
 }
 AGE_BANDS = ("20", "30", "40", "50", "60", "70")
+WALK_MINUTES = (10, 20, 30, 40, 50, 60)
 
 
 def fit_logistic(x: np.ndarray, y: np.ndarray, w: np.ndarray, iters: int = 50) -> tuple[float, float]:
@@ -53,6 +54,31 @@ def load(raw_dir: Path) -> pd.DataFrame:
     df = df[(df["age"] >= 19) & df["HE_BMI"].notna() & df["w"].notna()].copy()
     df["age_band"] = df["age"].astype(int).map(age_band)
     return df
+
+
+def walk_table(df: pd.DataFrame) -> dict:
+    """성별×연령대별 "주 k일 이상 걷고 하루 m분 이상" 가중 비율. share[str(m)][k-1].
+
+    BE3_31: 1주일간 걷기 일수(1=0일 … 8=7일, 99=모름). BE3_32·BE3_33: 하루 걷기 시간(시·분, 88 이상=무응답·비해당).
+    """
+    d = df[df["BE3_31"].between(1, 8)].copy()
+    d["days"] = d["BE3_31"] - 1
+    timed = (d["BE3_32"] < 88) & (d["BE3_33"] < 88)
+    d["mins"] = (d["BE3_32"] * 60 + d["BE3_33"]).where(timed)
+    d.loc[d["days"] == 0, "mins"] = 0
+    d = d[d["mins"].notna()]
+    groups: dict = {"M": {}, "F": {}}
+    for code, sex in ((1, "M"), (2, "F")):
+        for band in AGE_BANDS:
+            g = d[(d["sex"] == code) & (d["age_band"] == band)]
+            if g.empty:
+                continue
+            groups[sex][band] = {
+                "n": len(g),
+                "share": {str(m): [round(float(np.average((g["days"] >= k) & (g["mins"] >= m), weights=g["w"])), 4)
+                                   for k in range(1, 8)] for m in WALK_MINUTES},
+            }
+    return groups
 
 
 def build(df: pd.DataFrame) -> dict:
@@ -82,6 +108,10 @@ def build(df: pd.DataFrame) -> dict:
         "method": "성별×연령대(10세)별 가중 로지스틱 회귀: 유병 ~ BMI",
         "definitions": DEFINITIONS,
         "groups": groups,
+        "walk": {
+            "source": "국민건강영양조사 2022–2024 BE3_31·BE3_32·BE3_33(걷기 일수·하루 걷기 시간), 19세 이상, 가중치 wt_itvex",
+            "groups": walk_table(df),
+        },
     }
 
 
