@@ -149,3 +149,4 @@
 - CSS·JS 주소에 `?v=내용해시`가 붙어 배포 후 폰에 예전 파일이 남지 않음(`ASSET_V`, 서버 시작 때 계산).
 - 사용자 몫: 카카오 개발자 콘솔 → 앱 → 앱 아이콘에 `app/static/icons/icon-512.png` 올리기(로그인 동의 화면에 보임).
 - 카톡 링크 미리보기가 예전 모습(그림 없음)으로 남으면: 카카오 개발자 사이트 "공유 디버거"(developers.kakao.com → 도구 → 공유 디버거)에 `https://evrd.fyi/` 입력 → 캐시 초기화. 카카오는 한 번 읽은 미리보기를 한동안 저장해 두기 때문.
+- 배포(2026-11-18, `40c6d9c`): landing 브랜치 main merge 후 `git push evrd main` → healthz OK. 운영 랜딩 장면 5개(카카오 켜짐), `og:image` = `https://evrd.fyi/static/icons/og.png`, 아이콘·manifest·story.js 200 확인.
