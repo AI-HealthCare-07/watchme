@@ -525,3 +525,11 @@ def test_pages_are_light_only(client):
     css = client.get("/static/app.css").text
     assert "prefers-color-scheme" not in css and "color-scheme: only light" in css
     assert '<meta name="color-scheme" content="only light">' in client.get("/").text
+
+
+def test_check_screen_is_compact(client):
+    loc = _start_and_setup(client)
+    page = client.get(loc).text
+    assert "<b>아침</b>" not in page and "지난 날짜를 누르면" not in page and "오늘의 팁" not in page
+    assert '<span class="chip">' in page.split('<main', 1)[0]  # 계획 이름은 제목 밑 칩
+    assert "<details" in page and "참고 위험도" in page

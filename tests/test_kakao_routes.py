@@ -172,7 +172,7 @@ def test_check_shows_linked_line(client, kakao_env, monkeypatch):
     assert "카카오로 연결" in client.get(loc).text
     login(client, f"{loc}/kakao")
     page = client.get(loc).text
-    assert "카톡 메시지 받는 중" in page and "카카오로 연결" not in page
+    assert "카카오톡 연결됨" in page and "카카오로 연결" not in page
 
 
 def test_notify_toggle(client, kakao_env, monkeypatch):
@@ -261,17 +261,17 @@ def test_self_check_notice_on_card_welcome_and_linked_line(client, kakao_env, mo
     seen = kakao_api(monkeypatch)
     loc = _start_and_setup(client)
     assert SELF_CHECK in client.get(f"{loc}/ready").text
-    assert SELF_CHECK in client.get(loc).text
     login(client, f"{loc}/kakao")
     assert SELF_CHECK in memos(seen)[0]
     assert SELF_CHECK in client.get(loc).text
 
 
-def test_linked_line_sits_above_past_day_band(client, kakao_env, monkeypatch):
+def test_kakao_bar_sits_above_everything(client, kakao_env, monkeypatch):
     kakao_api(monkeypatch)
     loc = _start_and_setup(client)
+    assert client.get(loc).text.index("카카오로 연결") < client.get(loc).text.index('<h1 class="day">')
     login(client, f"{loc}/kakao")
     _set_day(client, loc, 2)
     page = client.get(f"{loc}?day=1").text
-    assert 'class="kline on"' in page
-    assert page.index("카톡 메시지 받는 중") < page.index("지난 기록을 고치는 중")
+    assert 'class="kbar on"' in page
+    assert page.index("카카오톡 연결됨") < page.index('<header class="hero">') < page.index("지난 기록을 고치는 중")
