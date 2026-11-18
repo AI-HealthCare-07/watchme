@@ -1,3 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Watchme · 운영 지표{% endblock %}
-{% block hero %}<p class="kicker">운영 지표</p>{% endblock %}
+{% block brand_note %}운영 지표{% endblock %}
+{% block hero %}{% set k = m.kakao %}
+<p class="kicker">💬 지금 카톡 알림 받는 사람</p>
+<h1>{{ k.receiving }}명</h1>
+<p class="sub">연결 {{ k.total }} · 끊김 {{ k.dead }} · 알림 끔 {{ k.off }} · 오늘 새 연결 {{ k.new_today }}</p>
+{% endblock %}
+{% block sheet %}
+<section class="card">
+  <h2>단계별 전환</h2>
+  <ul class="mlist">{% for s in m.funnel %}
+    <li><span>{{ s.name }}{% if loop.first %} <small class="muted">중복 포함</small>{% endif %}</span>
+      <b>{{ s.count }}</b>{% if s.pct is not none %} <small class="muted">{{ s.pct }}%</small>{% endif %}</li>
+  {% endfor %}</ul>
+</section>
+<section class="card">
+  <h2>최근 30일</h2>
+  {% set cols = [("views", "조회"), ("starts", "시작"), ("setups", "완료"), ("links", "연결"), ("checkers", "체크")] %}
+  {% set mx = {} %}{% for c, _ in cols %}{% set _ = mx.update({c: m.daily|map(attribute=c)|max}) %}{% endfor %}
+  <div class="scroll-x"><table class="mtable daily">
+    <tr><th>날짜</th>{% for _, label in cols %}<th>{{ label }}</th>{% endfor %}</tr>
+    {% for r in m.daily %}<tr><td>{{ r.day.month }}/{{ r.day.day }}</td>
+      {% for c, _ in cols %}{% set v = r[c] %}<td>{{ v }}<i style="width:{{ (v * 100 / mx[c])|round|int if mx[c] else 0 }}%"></i></td>{% endfor %}
+    </tr>{% endfor %}
+  </table></div>
+</section>
+<section class="card">
+  <h2>체크 지속률</h2>
+  <ul class="mlist">{% for r in m.retention %}
+    <li><span>{{ r.day }}일째</span>{% if r.eligible %}<b>{{ r.kept }}/{{ r.eligible }}명</b> <small class="muted">{{ (r.kept * 100 / r.eligible)|round|int }}%</small>{% else %}<span class="muted">아직 없음</span>{% endif %}</li>
+  {% endfor %}</ul>
+  <p class="muted">30일 완주 후 다음 도전: {{ m.next_count }}명</p>
+</section>
+<section class="card">
+  <h2>AI 한 줄 요청</h2>
+  <p>반영 {{ m.ai.ok }} · 뺄 것 없음 {{ m.ai.empty }} · 실패 {{ m.ai.failed }}</p>
+</section>
+<section class="card">
+  <h2>카톡 발송 <small>최근 7일</small></h2>
+  {% if m.sends %}<div class="scroll-x"><table class="mtable">
+    <tr><th>날짜</th><th>때</th><th>보냄</th><th>실패</th></tr>
+    {% for s in m.sends %}<tr><td>{{ s.day.month }}/{{ s.day.day }}</td><td>{{ "아침" if s.kind == "morning" else "저녁" }}</td>
+      <td>{{ s.sent }}</td><td{% if s.failed %} class="bad"{% endif %}>{{ s.failed }}</td></tr>{% endfor %}
+  </table></div>{% else %}<p class="muted">기록 없음</p>{% endif %}
+</section>
+<p class="muted">집계 기준: {{ m.since.isoformat() ~ "부터" if m.since else "처음부터" }} · 관리자 브라우저로 시작한 체험은 제외 · 조회수는 중복 포함 · 끝나고 90일 지난 체험은 자동 삭제되어 빠져요.</p>
+{% endblock %}

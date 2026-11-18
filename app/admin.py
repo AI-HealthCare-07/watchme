@@ -8,7 +8,9 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.clock import today_kst
 from app.db import get_db
+from app.metrics import collect, since_from_env
 from app.ratelimit import client_ip
 from app.routes import AUTH_PER_IP, PUBLIC_BASE_URL, _error, _page, _too_many
 
@@ -57,4 +59,4 @@ def admin(request: Request, db: Session = Depends(get_db)):
         return _headers(resp)
     if not is_admin(request):
         return _not_found(request)
-    return _headers(_page(request, "admin.html"))
+    return _headers(_page(request, "admin.html", m=collect(db, today_kst(), since_from_env())))

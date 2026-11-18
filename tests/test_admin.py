@@ -63,3 +63,51 @@ def test_admin_started_trial_marked_test(client, monkeypatch):
     real = client.post("/start", data=FORM).headers["location"].split("/")[2]
     assert _marks(client) == {mine}
     assert real != mine
+
+
+def _seed_receiving(client, n, monkeypatch):
+    from cryptography.fernet import Fernet
+
+    from app import accounts
+    from app.clock import today_kst
+    from app.service import start_trial
+    from tests.test_risk import STATS
+    monkeypatch.setenv("TOKEN_KEY", Fernet.generate_key().decode())
+    with Session(client.engine) as s:
+        for kid in range(1, n + 1):
+            t = start_trial(s, "M", 40, 170, 80, today=today_kst(), stats=STATS)
+            accounts.save_account(s, kid, "r", True)
+            accounts.link(s, t.token, kid)
+
+
+def test_admin_page_shows_kakao_count_first(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_KEY", KEY)
+    _seed_receiving(client, 2, monkeypatch)
+    _login(client)
+    html = client.get("/admin").text
+    assert html.index("지금 카톡 알림 받는 사람") < html.index("단계별 전환")
+    h1 = html[html.index("<h1"):html.index("</h1>")]
+    assert ">2<" in h1 or ">2 " in h1 or "2명" in h1
+
+
+def test_admin_page_empty_db_renders(client, monkeypatch):
+    monkeypatch.setenv("ADMIN_KEY", KEY)
+    _login(client)
+    r = client.get("/admin")
+    assert r.status_code == 200
+    assert "아직 없음" in r.text and "기록 없음" in r.text
+    table = r.text[r.text.index('class="mtable daily"'):]
+    table = table[:table.index("</table>")]
+    assert table.count("<tr") - 1 == 30
+
+
+def test_admin_page_shows_send_failures(client, monkeypatch):
+    from app.clock import today_kst
+    from app.metrics import record_run
+    monkeypatch.setenv("ADMIN_KEY", KEY)
+    with Session(client.engine) as s:
+        record_run(s, today_kst(), "morning", 5, 2)
+    _login(client)
+    html = client.get("/admin").text
+    sends = html[html.index("카톡 발송"):]
+    assert ">5<" in sends and 'class="bad"' in sends

@@ -322,3 +322,17 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 .share-fallback { text-align: center; }
 .share-fallback img { width: 100%; height: auto; border-radius: 14px; }
 .share-fallback figcaption { margin-top: 8px; }
+
+/* 운영 지표 /admin */
+.mlist { list-style: none; padding: 0; margin: 0 0 6px; }
+.mlist li { display: flex; align-items: baseline; gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.mlist li > span:first-child { flex: 1; }
+.mlist li:last-child { border-bottom: 0; }
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mtable { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.mtable th { color: var(--faint); font-weight: 600; text-align: right; padding: 4px 6px; white-space: nowrap; }
+.mtable td { text-align: right; padding: 4px 6px; position: relative; white-space: nowrap; }
+.mtable th:first-child, .mtable td:first-child { text-align: left; }
+.mtable tr + tr td { border-top: 1px solid var(--fill); }
+.mtable i { position: absolute; right: 0; bottom: 2px; height: 3px; border-radius: 2px; background: var(--brand); opacity: .35; }
+.mtable .bad { color: var(--risk); font-weight: 700; }
