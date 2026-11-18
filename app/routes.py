@@ -86,10 +86,12 @@ def landing(request: Request, stats: dict | None = Depends(get_stats)):
         return _page(request, "landing.html", preparing=True)
     example = assess(*EXAMPLE, stats=stats)
     # 카톡 장면은 실제 발송 문장으로 보여 준다: 예시 인물의 실제 계획 12일째
-    demo = build_plan(Profile(choose_variant(example), "mixed", "out", "light", 25, (5, 6)), today_kst(), "landing-demo")[11]
+    plan = build_plan(Profile(choose_variant(example), "mixed", "out", "light", 25, (5, 6)), today_kst(), "landing-demo")
+    demo = plan[11]
     return _page(request, "landing.html", example=example, preparing=False, kakao_on=kakao.enabled(),
-                 demo_morning=messages.morning(demo, False), demo_evening=messages.evening(1, False, False),
-                 buttons=messages.BUTTON)
+                 free_days={d.day for d in plan if d.free_meal},
+                 demo_morning=messages.morning(demo, demo.date.weekday() == 6),
+                 demo_evening=messages.evening(1, False, False), buttons=messages.BUTTON)
 
 
 @router.get("/start")

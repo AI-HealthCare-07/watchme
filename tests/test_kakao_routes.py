@@ -286,3 +286,14 @@ def test_landing_kakao_scene_matches_real_messages(client, kakao_env):
     assert messages.BUTTON["morning"] in page and messages.BUTTON["evening"] in page
     assert messages.evening(1, False, False) in page
     assert page.index("내 위험도 확인하기") < page.index('href="/auth/kakao"')  # CTA 밑 작은 링크
+
+
+def test_landing_kakao_morning_is_the_real_day12_message(client, kakao_env):
+    from app import messages, routes
+    from app.clock import today_kst
+    from app.plan import Profile, build_plan, choose_variant
+    from app.risk import assess
+    from tests.test_risk import STATS
+    day = build_plan(Profile(choose_variant(assess(*routes.EXAMPLE, stats=STATS)), "mixed", "out", "light", 25, (5, 6)),
+                     today_kst(), "landing-demo")[11]
+    assert messages.morning(day, day.date.weekday() == 6) in client.get("/").text

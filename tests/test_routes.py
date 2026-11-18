@@ -598,6 +598,29 @@ def test_landing_without_kakao_has_four_scenes(client):
     assert page.count('class="seg"') == 4
 
 
+def test_landing_has_no_tap_overlay(client):
+    # 화면 전체를 덮는 버튼이 있으면 작은 폰에서 넘친 장면을 스크롤할 수 없다
+    assert 'class="tap"' not in client.get("/").text
+
+
+def test_landing_calendar_matches_demo_plan(client):
+    from app.clock import today_kst
+    from app.plan import Profile, build_plan, choose_variant
+    from app.risk import assess
+    plan = build_plan(Profile(choose_variant(assess(*routes.EXAMPLE, stats=STATS)), "mixed", "out", "light", 25, (5, 6)),
+                      today_kst(), "landing-demo")
+    page = client.get("/").text
+    cal = page.split('<div class="cal"', 1)[1].split("</div>", 1)[0]
+    free = [int(m) for m in re.findall(r'class="free">(\d+)<', cal)]
+    assert free == [d.day for d in plan if d.free_meal] and len(free) == 8
+
+
+def test_manifest_keeps_users_on_their_own_page(client):
+    import json
+    m = json.loads(client.get("/static/manifest.webmanifest").text)
+    assert "start_url" not in m and "display" not in m  # 개인 링크(/c/토큰)에서 홈 화면에 추가하면 그 링크로 열려야 한다
+
+
 def test_landing_preparing_keeps_simple_card(client):
     app.dependency_overrides[get_stats] = lambda: None
     page = client.get("/").text
