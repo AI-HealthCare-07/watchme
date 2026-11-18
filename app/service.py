@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import accounts, ai
-from app.models import AiPick, DayLog, KakaoAccount, NextTrial, SentMessage, Trial, TrialOwner, WeekDecision
+from app.models import AiPick, DayLog, KakaoAccount, NextTrial, SentMessage, TestTrial, Trial, TrialOwner, WeekDecision
 from app.plan import DAYS, MAX_LEVEL, PlanDay, Profile, build_plan, candidates, choose_variant, floor_ok
 from app.risk import LIMITS, assess
 
@@ -194,6 +194,7 @@ def purge_expired(db: Session, today: date) -> int:
     db.execute(delete(AiPick).where(AiPick.token.in_(expired)))
     db.execute(delete(TrialOwner).where(TrialOwner.token.in_(expired)))
     db.execute(delete(NextTrial).where(NextTrial.token.in_(expired) | NextTrial.next_token.in_(expired)))
+    db.execute(delete(TestTrial).where(TestTrial.token.in_(expired)))
     n = db.execute(delete(Trial).where(Trial.start_date <= cutoff)).rowcount
     # 남은 체험이 없는 카카오 계정은 토큰째 삭제
     orphans = select(KakaoAccount.kakao_id).where(~KakaoAccount.kakao_id.in_(select(TrialOwner.kakao_id)))

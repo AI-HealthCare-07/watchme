@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import time
 from pathlib import Path
@@ -13,6 +14,7 @@ from app.card import render_card
 from app.chart import weight_svg
 from app.clock import today_kst
 from app.db import get_db
+from app.metrics import count_landing
 from app.pdf import DISCLAIMER, render_week_pdf
 from app.plan import (
     DAYS, LEVEL_NOTES, WEEKS, Profile, build_plan, choose_variant, level_on, scenario, variant_label, week_days, week_of,
@@ -47,6 +49,7 @@ STATIC = Path(__file__).parent / "static"
 ASSET_V = hashlib.sha256(b"".join(p.read_bytes() for p in sorted(STATIC.glob("*.css")) + sorted(STATIC.glob("*.js")))).hexdigest()[:8]
 templates.env.globals["ASSET_V"] = ASSET_V
 router = APIRouter()
+log = logging.getLogger("watchme.metrics")
 
 
 def _page(request: Request, name: str, status: int = 200, **ctx):
@@ -84,7 +87,12 @@ EXAMPLE = ("M", 45, 172, 82)  # 시작 화면 예시 인물
 
 
 @router.get("/")
-def landing(request: Request, stats: dict | None = Depends(get_stats)):
+def landing(request: Request, db: Session = Depends(get_db), stats: dict | None = Depends(get_stats)):
+    try:
+        count_landing(db, request.headers.get("user-agent", ""), today_kst())
+    except Exception:
+        db.rollback()  # 카운터가 깨져도 랜딩은 열려야 한다
+        log.warning("landing count failed")
     if stats is None:
         return _page(request, "landing.html", preparing=True)
     example = assess(*EXAMPLE, stats=stats)

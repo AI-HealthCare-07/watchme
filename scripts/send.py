@@ -7,6 +7,7 @@ import sys
 from app import kakao
 from app.clock import today_kst
 from app.db import SessionLocal
+from app.metrics import record_run
 from app.notify import send_all
 
 if __name__ == "__main__":
@@ -18,5 +19,6 @@ if __name__ == "__main__":
     kind, today = sys.argv[1], today_kst()
     with SessionLocal() as db:
         sent, failed = send_all(db, kind, today)
+        record_run(db, today, kind, sent, failed)
     if sent or failed:
         print(f"{today} {kind} sent={sent} failed={failed}")

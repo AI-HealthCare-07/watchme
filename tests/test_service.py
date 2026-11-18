@@ -308,3 +308,13 @@ def test_ai_pick_concurrent_double_submit_returns_existing(db, monkeypatch):
     again = apply_ai_request(db, t, "매운 거")
     assert again.token == first.token and again.status == first.status
     assert len(db.scalars(select(AiPick)).all()) == 1
+
+
+def test_purge_removes_test_marks(db):
+    from app.models import TestTrial
+    old, alive = _start(db, today=TODAY - timedelta(days=120)), _start(db)
+    old_t, alive_t = old.token, alive.token
+    db.add_all([TestTrial(token=old_t), TestTrial(token=alive_t)])
+    db.commit()
+    purge_expired(db, TODAY)
+    assert db.get(TestTrial, old_t) is None and db.get(TestTrial, alive_t) is not None

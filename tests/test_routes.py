@@ -633,3 +633,25 @@ def test_landing_and_result_are_compact(client):
     loc = _start_only(client)
     page = client.get(f"{loc}/result").text
     assert "다음은 생활 질문 5개예요" not in page and "질문 5개로 맞춤 계획" in page
+
+
+def _views(client):
+    from app.clock import today_kst
+    from app.models import LandingView
+    with Session(client.engine) as s:
+        row = s.get(LandingView, today_kst())
+        return row.count if row else 0
+
+
+def test_landing_counts_view_but_not_bots(client):
+    assert client.get("/", headers={"user-agent": "Mozilla/5.0"}).status_code == 200
+    assert _views(client) == 1
+    assert client.get("/", headers={"user-agent": "kakaotalk-scrap/1.0"}).status_code == 200
+    assert _views(client) == 1
+
+
+def test_landing_survives_counter_error(client, monkeypatch):
+    def boom(*a):
+        raise RuntimeError("no table")
+    monkeypatch.setattr(routes, "count_landing", boom)
+    assert client.get("/", headers={"user-agent": "Mozilla/5.0"}).status_code == 200

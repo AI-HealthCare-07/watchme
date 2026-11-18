@@ -92,3 +92,29 @@ class AiPick(Base):
     reason: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(8))  # ok | empty | failed
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
+
+
+class LandingView(Base):
+    __tablename__ = "landing_views"
+
+    # KST 날짜별 랜딩 조회 수. 누가 봤는지는 남기지 않는다
+    day: Mapped[date] = mapped_column(primary_key=True)
+    count: Mapped[int]
+
+
+class SendRun(Base):
+    __tablename__ = "send_runs"
+
+    # cron 발송 결과 합계 (날짜 × 아침/저녁)
+    day: Mapped[date] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(8), primary_key=True)
+    sent: Mapped[int]
+    failed: Mapped[int]
+
+
+class TestTrial(Base):
+    __tablename__ = "test_trials"
+    __test__ = False  # pytest가 테스트 클래스로 오해하지 않게
+
+    # 관리자 브라우저로 시작한 체험 = 지표에서 뺀다. 지우기는 purge가 맡는다
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
