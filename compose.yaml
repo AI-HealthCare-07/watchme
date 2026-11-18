@@ -8,6 +8,9 @@ services:
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
       TOKEN_KEY: ${TOKEN_KEY:-}
+      # AI 한 줄 요청 (키가 비면 AI 기능 꺼짐, 모델은 비우면 app/ai.py 기본값)
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
     ports:
       # 127.0.0.1에만 바인딩: Docker는 ufw를 우회하므로 외부 노출은 Funnel/Caddy로만
       - "127.0.0.1:8000:8000"
