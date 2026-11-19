@@ -7,7 +7,7 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 | ERD | [erd.md](erd.md) | `app/models.py` |
 | 요구사항 정의서 | [requirements.md](requirements.md) | `docs/superpowers/specs/` |
 | API 명세서 | [api.md](api.md) | `app/routes.py`, `app/kakao_routes.py` |
-| 와이어프레임 | [wireframes.md](wireframes.md) | `app/templates/` |
+| 와이어프레임 | [wireframes.md](wireframes.md) | `app/templates/`, 화면 캡처 17장 `screenshots/` |
 | 링크 | [links.md](links.md) | 배포 주소, GitHub, 문서 |
 | PPT 구성안 | [ppt-outline.md](ppt-outline.md) | 15장, 실제 사용자 숫자부터 (2026-11-19 다시 씀) |
 | 시연영상 대본 | [demo-script.md](demo-script.md) | 약 4분 20초, AI 한 줄 요청·운영 지표 장면 포함 |
@@ -47,7 +47,8 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 
 ## 직접 해야 할 것 (발표 전)
 - [x] 제출용 공개 저장소 https://github.com/AI-HealthCare-07/watchme (2026-11-19, 가린 사본)
-- [ ] 화면 캡처: 시작·결과·기록·리포트·주간 리포트·자랑 카드·카톡 메시지·`/admin`
+- [x] 화면 캡처 17장(2026-11-19, 로컬 예시 데이터) → `screenshots/`, 와이어프레임·README에 넣음
+- [ ] 카톡 '나와의 채팅' 실제 메시지 캡처(폰에서 직접)
 - [ ] 시연 영상 녹화 후 `links.md`에 주소 추가
 - [ ] 발표 전날 `/admin` 숫자 캡처 → PPT 2·14장
 - [ ] PPT 파일 만들기(`ppt-outline.md` 기준)
