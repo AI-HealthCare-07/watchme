@@ -4,7 +4,7 @@
 
 **https://evrd.fyi** · 로그인 없이 바로 시작할 수 있어요.
 
-<!-- 대표 화면 캡처 3장(시작·기록·리포트) 자리 -->
+<p><img src="docs/deliverables/screenshots/01-landing-2.png" width="240" alt="시작 화면: 예시 위험도"> <img src="docs/deliverables/screenshots/06-check-week.png" width="240" alt="매일 기록"> <img src="docs/deliverables/screenshots/08-week1.png" width="240" alt="주간 리포트"></p>
 
 ## 왜 만들었나
 - 체중계 숫자는 동기가 약하고, 건강검진 결과는 1년에 한 번이에요. 생활습관 앱은 로그인·개인정보부터 요구하고 며칠 지나면 잊혀요.
