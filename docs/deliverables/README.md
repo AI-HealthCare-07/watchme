@@ -9,9 +9,9 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 | API 명세서 | [api.md](api.md) | `app/routes.py`, `app/kakao_routes.py` |
 | 와이어프레임 | [wireframes.md](wireframes.md) | `app/templates/` |
 | 링크 | [links.md](links.md) | 배포 주소, GitHub, 문서 |
-| PPT 구성안 | [ppt-outline.md](ppt-outline.md) | — |
-| 시연영상 대본 | [demo-script.md](demo-script.md) | — |
-| README 목차 | [readme-outline.md](readme-outline.md) | — |
+| PPT 구성안 | [ppt-outline.md](ppt-outline.md) | 15장, 실제 사용자 숫자부터 (2026-11-19 다시 씀) |
+| 시연영상 대본 | [demo-script.md](demo-script.md) | 약 4분 20초, AI 한 줄 요청·운영 지표 장면 포함 |
+| README 목차 | [readme-outline.md](readme-outline.md) | 저장소 루트 `README.md`로 만듦 |
 
 ## 2단계 진행 상황 (✅ 완료, 2026-11-17 운영 반영)
 
@@ -43,4 +43,13 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 - 보완(2026-11-18): "내 계획 만들기"·시작 버튼 한 번만 제출, 동시에 두 번 보내도 오류 없음, AI 대기 전체 8초 제한.
 - 주간 리포트·또래 비교(국민건강영양조사 걷기)·체중 그래프·자랑 카드·주간 카톡(2026-11-18): requirements FR-35~40, api #20·21, wireframes ⑧-2, demo-script 3:00.
 - 운영 지표 `/admin`·랜딩 조회 카운터·카톡 발송 기록(2026-11-18): requirements FR-41~44, api #22, erd 4장, wireframes ⑧-3.
-- 마지막 갱신: 2026-11-18 (기준 커밋 `67d54c1`, main 배포, 테스트 349개 통과)
+- 발표 준비 점검(2026-11-19): 오래된 문구 정리(erd 제목·표 11개, requirements 근거 문서·테스트 수, links 문서 목록·데이터 출처), PPT 구성안·시연 대본 다시 씀, 저장소 README 만듦.
+
+## 직접 해야 할 것 (발표 전)
+- [ ] GitHub 저장소 공개 전환 또는 심사자 초대(지금 비공개)
+- [ ] 화면 캡처: 시작·결과·기록·리포트·주간 리포트·자랑 카드·카톡 메시지·`/admin`
+- [ ] 시연 영상 녹화 후 `links.md`에 주소 추가
+- [ ] 발표 전날 `/admin` 숫자 캡처 → PPT 2·14장
+- [ ] PPT 파일 만들기(`ppt-outline.md` 기준)
+
+- 마지막 갱신: 2026-11-19 (기준 커밋 `67d54c1`, main 배포, 테스트 349개 통과)

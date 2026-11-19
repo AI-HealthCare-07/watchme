@@ -1,8 +1,8 @@
 # 요구사항 정의서
 
 - 서비스: **Watchme** — 한국인 평균과 비교한 고혈압·당뇨 참고 위험도 + 30일 생활습관 챌린지
-- 근거 문서: `docs/superpowers/specs/2026-11-13-watchme-design.md`(원래 설계), `2026-11-16-watchme-redesign-design.md`(1단계 개편), `2026-11-16-watchme-phase2-design.md`(2단계), `2026-11-18-watchme-phase3-ai-design.md`(3단계)
-- 상태 표기: ✅ 구현·배포 완료 · 🔜 3단계 예정(설계·계획 완료, 구현 전) · ⛔ 범위 밖
+- 근거 문서: `docs/superpowers/specs/2026-11-13-watchme-design.md`(원래 설계), `2026-11-16-watchme-redesign-design.md`(1단계 개편), `2026-11-16-watchme-phase2-design.md`(2단계), `2026-11-18-watchme-phase3-ai-design.md`(3단계), `2026-11-18-watchme-weekly-report-design.md`(주간 리포트), `2026-11-18-watchme-admin-metrics-design.md`(운영 지표)
+- 상태 표기: ✅ 구현·배포 완료 · ⛔ 범위 밖
 
 ## 1. 개요
 
@@ -90,7 +90,7 @@
 
 | ID | 분류 | 요구사항 | 상태 |
 |---|---|---|---|
-| NFR-01 | 개인정보 | 이름·연락처·이메일 수집 없음. 수집 항목·보관 기간을 시작 화면에 안내. 체험 종료 후 90일 뒤 자동 삭제 한 줄 요청을 적으면 AI(구글 Gemini)로 보내고 체험과 함께 삭제한다고 안내(3단계). | ✅ |
+| NFR-01 | 개인정보 | 이름·연락처·이메일 수집 없음. 수집 항목·보관 기간을 시작 화면에 안내. 체험 종료 후 90일 뒤 자동 삭제. 한 줄 요청을 적으면 AI(구글 Gemini)로 보내고 체험과 함께 삭제한다고 안내(3단계). | ✅ |
 | NFR-02 | 접근 제어 | 추측 불가 토큰 링크(`/c/{token}`). `noindex`, `no-referrer` | ✅ |
 | NFR-03 | 남용 방지 | IP별 요청 제한: 체험 생성 10분 5회 + 전체 하루 500회, 기록·강도 저장 1분 30회 | ✅ |
 | NFR-04 | 의료 표현 | "참고 위험도", "시나리오"(예측 아님), 모든 화면·PDF에 면책 문구, 효과 장담 금지 | ✅ |
@@ -99,7 +99,7 @@
 | NFR-07 | 시간대 | 모든 날짜 KST(`today_kst`). 공개 주소는 `PUBLIC_BASE_URL`(프록시 헤더를 믿지 않음) | ✅ |
 | NFR-08 | 운영 | 집 서버, Docker Compose(app·db·caddy), `git push`로 배포, 매일 `pg_dump` 백업 + 서버 밖 사본, DDNS | ✅ |
 | NFR-09 | 보안(서버) | SSH는 Tailscale 내부망만, 인터넷엔 80/443만. 앱 포트는 127.0.0.1에만 바인딩 | ✅ |
-| NFR-10 | 테스트 | pytest 227개(TDD), 카카오는 실제 호출 없이 MockTransport | ✅ |
+| NFR-10 | 테스트 | pytest 349개(TDD), 카카오는 실제 호출 없이 MockTransport | ✅ |
 | NFR-11 | 토큰 보관 | 카카오 리프레시 토큰은 Fernet 암호화(키는 서버 `.env`만) → 백업만으론 못 풂 | ✅ |
 | NFR-12 | 발송 신뢰성 | 같은 (계정, 날짜, 종류)는 최대 한 번. 실패해도 재시도 없음(두 번 가는 것보다 한 번 빠지는 게 낫다) | ✅ |
 | NFR-13 | OAuth 보안 | `state`는 요청마다 랜덤, 체험 토큰은 서명한 HttpOnly 쿠키에만(카카오 URL에 안 넣음) | ✅ |

@@ -1,10 +1,10 @@
 # ERD
 
 - 기준: `app/models.py` (SQLAlchemy 2.0, 운영 PostgreSQL 16 / 로컬·테스트 SQLite)
-- 표 생성: 앱 시작 시 `Base.metadata.create_all` (마이그레이션 도구 없음 → 2단계는 **새 표만 추가**, 기존 표 변경 없음)
+- 표 생성: 앱 시작 시 `Base.metadata.create_all` (마이그레이션 도구 없음 → 2단계부터는 **새 표만 추가**, 기존 표 변경 없음). 지금 표 11개: 1단계 3 · 2단계 4 · 3단계 1 · 운영 지표 3
 - 개인 식별 정보(이름·연락처·이메일)는 어느 표에도 없어요. 체험은 추측 불가능한 토큰(`secrets.token_urlsafe(16)`, 22자)으로만 찾아요.
 
-## 1. 구현된 표 (1단계, 배포 중)
+## 1. 1단계 표 — ✅ 구현, 운영 중
 
 ```mermaid
 erDiagram
@@ -101,7 +101,7 @@ erDiagram
 - 연결 끊기: 카카오 unlink 호출(실패해도 진행) → `trial_owners`·`sent_messages`·`kakao_accounts` 행 삭제. 체험과 기록은 그대로.
 - 보관 삭제 확장: 체험이 지워지면 연결도 지워지고, 남은 체험이 없는 계정은 계정 행과 발송 기록까지 삭제.
 
-## 3. 3단계 표 (AI 한 줄 요청) — 구현 중
+## 3. 3단계 표 (AI 한 줄 요청) — ✅ 구현, 2026-11-18 운영 반영
 
 출처: `docs/superpowers/specs/2026-11-18-watchme-phase3-ai-design.md` 4.3장, `app/models.py` `AiPick`.
 
