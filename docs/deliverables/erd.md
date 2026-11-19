@@ -4,6 +4,98 @@
 - 표 생성: 앱 시작 시 `Base.metadata.create_all` (마이그레이션 도구 없음 → 2단계부터는 **새 표만 추가**, 기존 표 변경 없음). 지금 표 11개: 1단계 3 · 2단계 4 · 3단계 1 · 운영 지표 3
 - 개인 식별 정보(이름·연락처·이메일)는 어느 표에도 없어요. 체험은 추측 불가능한 토큰(`secrets.token_urlsafe(16)`, 22자)으로만 찾아요.
 
+## 0. 전체 한눈에 (표 11개)
+
+<p><img src="erd.png" alt="표 11개 전체 ERD"></p>
+
+- 가운데 `trials`(체험)가 중심이에요. 1단계 기록 2개·AI 1개·카카오 연결이 모두 `token`으로 이어져요.
+- 오른쪽 위 3개(`landing_views`·`send_runs`·`test_trials`)는 운영 지표용이라 다른 표와 FK가 없어요. `test_trials.token`은 체험 토큰을 적어 두기만 해요.
+- 이미지 원본은 아래 Mermaid예요(GitHub에서 바로 그려져요). 열 설명은 1~4장에 있어요.
+
+<details><summary>Mermaid 원본</summary>
+
+```mermaid
+erDiagram
+    trials ||--o{ day_logs : "하루 기록"
+    trials ||--o{ week_decisions : "주차 강도"
+    trials ||--o| ai_picks : "AI 한 줄 요청"
+    trials ||--o| trial_owners : "카톡 연결"
+    kakao_accounts ||--o{ trial_owners : "체험 여러 개"
+    kakao_accounts ||--o{ sent_messages : "발송 기록"
+    trials ||--o| next_trials : "이전 체험"
+    trials ||--o| next_trials : "다음 30일"
+
+    trials {
+        string token PK
+        datetime created_at
+        date start_date
+        string sex
+        int age
+        float height_cm
+        float weight_kg
+        string plan_variant
+        string diet_style
+        string lunch_place
+        string breakfast
+        int exercise_min
+        string free_days
+    }
+    day_logs {
+        string token PK, FK
+        int day PK
+        bool kept
+        float weight_kg
+    }
+    week_decisions {
+        string token PK, FK
+        int week PK
+        int level
+    }
+    ai_picks {
+        string token PK, FK
+        text request
+        text excluded
+        text reason
+        string status
+        datetime created_at
+    }
+    kakao_accounts {
+        bigint kakao_id PK
+        text refresh_token_enc
+        bool can_message
+        bool notify
+        datetime created_at
+    }
+    trial_owners {
+        string token PK, FK
+        bigint kakao_id FK
+    }
+    sent_messages {
+        bigint kakao_id PK
+        date day PK
+        string kind PK
+    }
+    next_trials {
+        string token PK, FK
+        string next_token FK
+    }
+    landing_views {
+        date day PK
+        int count
+    }
+    send_runs {
+        date day PK
+        string kind PK
+        int sent
+        int failed
+    }
+    test_trials {
+        string token PK
+    }
+```
+
+</details>
+
 ## 1. 1단계 표 — ✅ 구현, 운영 중
 
 ```mermaid

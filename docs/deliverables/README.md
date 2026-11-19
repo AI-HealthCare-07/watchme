@@ -4,7 +4,7 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 
 | 제출물 | 파일 | 기준 |
 |---|---|---|
-| ERD | [erd.md](erd.md) | `app/models.py` |
+| ERD | [erd.md](erd.md) · [erd.png](erd.png)(표 11개 한 장) | `app/models.py` |
 | 요구사항 정의서 | [requirements.md](requirements.md) | `docs/superpowers/specs/` |
 | API 명세서 | [api.md](api.md) | `app/routes.py`, `app/kakao_routes.py` |
 | 와이어프레임 | [wireframes.md](wireframes.md) | `app/templates/`, 화면 캡처 18장 `screenshots/`(카톡 실제 메시지 포함) |
@@ -43,7 +43,7 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 - 보완(2026-11-18): "내 계획 만들기"·시작 버튼 한 번만 제출, 동시에 두 번 보내도 오류 없음, AI 대기 전체 8초 제한.
 - 주간 리포트·또래 비교(국민건강영양조사 걷기)·체중 그래프·자랑 카드·주간 카톡(2026-11-18): requirements FR-35~40, api #20·21, wireframes ⑧-2, demo-script 3:00.
 - 운영 지표 `/admin`·랜딩 조회 카운터·카톡 발송 기록(2026-11-18): requirements FR-41~44, api #22, erd 4장, wireframes ⑧-3.
-- 발표 준비 점검(2026-11-19): 오래된 문구 정리(erd 제목·표 11개, requirements 근거 문서·테스트 수, links 문서 목록·데이터 출처), PPT 구성안·시연 대본 다시 씀, 저장소 README 만듦.
+- 발표 준비 점검(2026-11-19): 오래된 문구 정리(erd 제목·표 11개, requirements 근거 문서·테스트 수, links 문서 목록·데이터 출처), PPT 구성안·시연 대본 다시 씀, 저장소 README 만듦. 와이어프레임 실제 캡처·카톡 화면, ERD 표 11개 한 장 이미지(`erd.png`) 추가.
 
 ## 직접 해야 할 것 (발표 전)
 - [x] 제출용 공개 저장소 https://github.com/AI-HealthCare-07/watchme (2026-11-19, 가린 사본)
@@ -54,4 +54,4 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 - [ ] PPT 파일 만들기(`ppt-outline.md` 기준)
 
 - 데모 체험(`scripts/seed_demo.py`)도 운영 지표에서 빠지게 고침(2026-11-19).
-- 마지막 갱신: 2026-11-19 (기준 커밋 `c6720f9`, main 배포, 테스트 350개 통과)
+- 마지막 갱신: 2026-11-19 (기준 커밋 `799834c`, main 배포, 테스트 350개 통과)
