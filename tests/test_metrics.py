@@ -151,3 +151,11 @@ def test_since_excludes_old_accounts(db, token_key):
     db.get(accounts.KakaoAccount, 1).created_at = datetime(2026, 11, 10, 12, 0)
     db.commit()
     assert collect(db, D, date(2026, 11, 17)).kakao.total == 0
+
+
+def test_seed_demo_trial_is_test(db):
+    from scripts.seed_demo import seed
+    from tests.test_risk import STATS
+    token = seed(db, D, stats=STATS)
+    assert db.get(TestTrial, token) is not None
+    assert collect(db, D, None).funnel[1].count == 0
