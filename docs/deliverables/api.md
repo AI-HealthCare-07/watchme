@@ -53,18 +53,18 @@
 | 필드 | 형식 | 규칙 |
 |---|---|---|
 | `sex` | `M` \| `F` | 필수 |
-| `age` | 정수 | 18~100 |
+| `birth_year` | 정수 | 올해−100 ~ 올해−18 (2026년 기준 1926~2008). 서버가 나이 = 올해(KST) − 출생연도로 바꿔 저장 |
 | `height_cm` | 실수 | 120~220 |
 | `weight_kg` | 실수 | 30~250 |
 
-- 처리: `assess()`로 검증·위험도 계산 → 계획 종류(`plan_variant`) 결정 → `trials` 행 생성(`start_date` = 오늘 KST).
+- 처리: 출생연도 → 나이 변환 → `assess()`로 검증·위험도 계산 → 계획 종류(`plan_variant`) 결정 → `trials` 행 생성(`start_date` = 오늘 KST).
 - 오류: 통계 파일 없음 `503` / 요청 제한 `429` / 숫자 아님·범위 밖 `400`(입력 폼을 값과 함께 다시 보여 주고 `role="alert"` 메시지).
 
 ```http
 POST /start
 Content-Type: application/x-www-form-urlencoded
 
-sex=M&age=45&height_cm=172&weight_kg=82
+sex=M&birth_year=1981&height_cm=172&weight_kg=82
 ```
 ```http
 HTTP/1.1 303 See Other
