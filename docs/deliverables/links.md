@@ -31,8 +31,9 @@
 | Google Gemini API (무료 등급) | AI 한 줄 요청: 후보 메뉴·운동 중 뺄 것 고르기 |
 | Pretendard / 나눔고딕 (SIL OFL) | 웹 글꼴(자체 호스팅) / PDF 글꼴 |
 
-## 시연 영상
+## 발표 자료
 
-| 항목 | 주소 |
-|---|---|
-| 시연 영상 | (녹화 후 추가) |
+| 항목 | 주소 | 비고 |
+|---|---|---|
+| 발표 슬라이드 (15장) | https://claude.ai/artifact/3n1QbJyKHmS7mEK8EGiuSU | 비공개 원본. PPTX·PDF로 내려받아 제출. 구성은 [ppt-outline.md](ppt-outline.md) |
+| 시연 영상 | (녹화 후 추가) | 대본 [demo-script.md](demo-script.md) |

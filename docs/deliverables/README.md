@@ -8,7 +8,7 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 | 요구사항 정의서 | [requirements.md](requirements.md) | `docs/superpowers/specs/` |
 | API 명세서 | [api.md](api.md) | `app/routes.py`, `app/kakao_routes.py` |
 | 와이어프레임 | [wireframes.md](wireframes.md) | `app/templates/`, 화면 캡처 18장 `screenshots/`(카톡 실제 메시지 포함) |
-| 링크 | [links.md](links.md) | 배포 주소, GitHub, 문서 |
+| 링크 | [links.md](links.md) | 배포 주소, GitHub, 문서, 발표 자료 |
 | PPT 구성안 | [ppt-outline.md](ppt-outline.md) | 15장, 실제 사용자 숫자부터 (2026-11-19 다시 씀) |
 | 시연영상 대본 | [demo-script.md](demo-script.md) | 약 4분 20초, AI 한 줄 요청·운영 지표 장면 포함 |
 | README 목차 | [readme-outline.md](readme-outline.md) | 저장소 루트 `README.md`로 만듦 |
@@ -51,7 +51,8 @@ OZ코딩스쿨 최종 프로젝트 제출 자료 모음이에요. 코드·설계
 - [x] 카톡 '나와의 채팅' 실제 메시지 캡처(2026-11-19, 이름 잘라냄) → `screenshots/10-kakao-chat.png`
 - [ ] 시연 영상 녹화 후 `links.md`에 주소 추가
 - [ ] 발표 전날 `/admin` 숫자 캡처 → PPT 2·14장
-- [ ] PPT 파일 만들기(`ppt-outline.md` 기준)
+- [x] PPT 초안 15장(2026-11-19, `ppt-outline.md` 기준, 발표자 노트 포함) → `links.md` 발표 자료. PPTX·PDF 내려받기는 슬라이드 화면에서
+- [ ] PPT 빈칸 채우기: 2장 사용자 숫자·날짜, 8장 영상 링크, 14장 "숫자를 보고 고친 것"
 
 - 데모 체험(`scripts/seed_demo.py`)도 운영 지표에서 빠지게 고침(2026-11-19).
 - 마지막 갱신: 2026-11-19 (기준 커밋 `799834c`, main 배포, 테스트 350개 통과)
