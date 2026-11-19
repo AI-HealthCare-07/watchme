@@ -4,7 +4,8 @@
 |---|---|---|
 | 배포 사이트 | https://evrd.fyi | 집 노트북 서버(Ubuntu Server + Docker Compose), Caddy 자동 HTTPS, Porkbun DDNS |
 | 헬스 체크 | https://evrd.fyi/healthz | `{"ok": true}` |
-| GitHub 저장소 | https://github.com/ynofire/watchme | ⚠️ **비공개(PRIVATE)** — 제출 전에 공개로 바꾸거나 심사자를 협업자로 초대해야 해요 (사용자가 직접) |
+| GitHub 저장소 (제출용, 공개) | https://github.com/AI-HealthCare-07/watchme | 개발 저장소의 사본. 작성자 이메일·집 네트워크 정보만 가리고 커밋 이력은 그대로(커밋 번호는 원본과 달라요) |
+| GitHub 원본 (개발용, 비공개) | https://github.com/ynofire/watchme | 제출물에 적힌 커밋 번호는 이 저장소 기준 |
 | 운영 지표 | https://evrd.fyi/admin | 관리자만(`ADMIN_KEY` 쿠키). 발표 때 카톡 연결자 수 캡처용 |
 
 ## 문서
