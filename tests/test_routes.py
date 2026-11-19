@@ -10,10 +10,11 @@ from app import routes
 from app.db import Base, get_db
 from app.main import app
 from app.models import DayLog
+from app.clock import today_kst as _today
 from app.risk import get_stats
 from tests.test_risk import STATS
 
-FORM = {"sex": "M", "age": "45", "height_cm": "170", "weight_kg": "80"}
+FORM = {"sex": "M", "birth_year": str(_today().year - 45), "height_cm": "170", "weight_kg": "80"}
 
 
 @pytest.fixture
@@ -96,7 +97,7 @@ def test_start_form_works_without_js(client):
     r = client.get("/start")
     assert r.status_code == 200
     assert r.text.count("<form") == 1
-    for name in ("sex", "age", "height_cm", "weight_kg"):
+    for name in ("sex", "birth_year", "height_cm", "weight_kg"):
         assert f'name="{name}"' in r.text
     assert r.text.count('<fieldset class="step"') == 4
 
@@ -119,11 +120,22 @@ def test_result_page(client):
     assert "3개월" in r.text
 
 
+def test_birth_year_becomes_age(client):
+    r = client.get(f"{_start_only(client)}/result")
+    assert "45세" in r.text
+
+
+def test_birth_year_out_of_range_message(client):
+    r = client.post("/start", data=FORM | {"birth_year": "1800"})
+    assert r.status_code == 400
+    assert "출생연도는" in r.text
+
+
 def test_result_unknown_token_404(client):
     assert client.get("/c/nope/result").status_code == 404
 
 
-@pytest.mark.parametrize("field,value", [("age", "0"), ("age", "abc"), ("height_cm", ""), ("sex", "")])
+@pytest.mark.parametrize("field,value", [("birth_year", "0"), ("birth_year", "abc"), ("birth_year", str(_today().year)), ("height_cm", ""), ("sex", "")])
 def test_invalid_start_is_400_with_message(client, field, value):
     r = client.post("/start", data=FORM | {field: value})
     assert r.status_code == 400

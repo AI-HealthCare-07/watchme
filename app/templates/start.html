@@ -16,11 +16,11 @@
     </div>
     <p class="hint">통계는 성별·나이대별로 달라서 필요해요.</p>
   </fieldset>
-  <fieldset class="step" data-name="나이">
-    <legend class="q">나이가<br>어떻게 되세요?</legend>
-    <label class="field"><span class="lab">나이</span>
-      <span class="num"><input name="age" type="number" inputmode="numeric" min="18" max="100" value="{{ form.age or '' }}" required><em>세</em></span></label>
-    <p class="hint">18~100세 사이로 입력해 주세요.</p>
+  <fieldset class="step" data-name="출생연도">
+    <legend class="q">태어난 해를<br>알려주세요</legend>
+    <label class="field"><span class="lab">출생연도</span>
+      <span class="num"><input name="birth_year" type="number" inputmode="numeric" min="{{ this_year - 100 }}" max="{{ this_year - 18 }}" placeholder="1980" value="{{ form.birth_year or '' }}" required><em>년</em></span></label>
+    <p class="hint">{{ this_year - 100 }}~{{ this_year - 18 }}년 사이로 입력해 주세요.</p>
   </fieldset>
   <fieldset class="step" data-name="키">
     <legend class="q">키는<br>몇 cm인가요?</legend>

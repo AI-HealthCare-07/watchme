@@ -22,7 +22,7 @@ from app.plan import (
 from app.ratelimit import RateLimiter, client_ip
 from app.progress import can_level_up, plateau, streak, summary_week, week_summary
 from app.report import build_report, days_left
-from app.risk import InvalidInput, assess, get_stats, group_label, vs_text
+from app.risk import LIMITS, InvalidInput, assess, get_stats, group_label, vs_text
 from app.service import (
     InvalidSetup, apply_ai_request, current_day, decide_level, get_ai_pick, get_decisions, get_logs, get_trial,
     next_trial, plan_for, save_day, save_setup, start_trial,
@@ -83,6 +83,15 @@ def _num(raw: str, cast, label: str):
         raise InvalidInput(f"{label}를 숫자로 입력해 주세요.") from None
 
 
+def _age(birth_year: str, this_year: int) -> int:
+    """출생연도 → 나이(올해 - 출생연도). 통계는 10세 단위라 생일 전후 1살 차이는 무시한다."""
+    year = _num(birth_year, int, "출생연도")
+    lo, hi = this_year - LIMITS["age"][1], this_year - LIMITS["age"][0]
+    if not lo <= year <= hi:
+        raise InvalidInput(f"출생연도는 {lo}~{hi} 사이로 입력해 주세요.")
+    return this_year - year
+
+
 EXAMPLE = ("M", 45, 172, 82)  # 시작 화면 예시 인물
 
 
@@ -107,14 +116,14 @@ def landing(request: Request, db: Session = Depends(get_db), stats: dict | None 
 
 @router.get("/start")
 def start_form(request: Request, stats: dict | None = Depends(get_stats)):
-    return _page(request, "start.html", form={}, error=None, preparing=stats is None)
+    return _page(request, "start.html", form={}, error=None, preparing=stats is None, this_year=today_kst().year)
 
 
 @router.post("/start")
 def start(
     request: Request,
     sex: str = Form(""),
-    age: str = Form(""),
+    birth_year: str = Form(""),
     height_cm: str = Form(""),
     weight_kg: str = Form(""),
     db: Session = Depends(get_db),
@@ -125,14 +134,15 @@ def start(
     now = time.time()
     if not START_PER_IP.hit(client_ip(request), now) or not START_GLOBAL.hit("global", now):
         return _too_many(request)
-    form = {"sex": sex, "age": age, "height_cm": height_cm, "weight_kg": weight_kg}
+    form = {"sex": sex, "birth_year": birth_year, "height_cm": height_cm, "weight_kg": weight_kg}
+    today = today_kst()
     try:
         trial = start_trial(
-            db, sex, _num(age, int, "나이"), _num(height_cm, float, "키"), _num(weight_kg, float, "몸무게"),
-            today=today_kst(), stats=stats,
+            db, sex, _age(birth_year, today.year), _num(height_cm, float, "키"), _num(weight_kg, float, "몸무게"),
+            today=today, stats=stats,
         )
     except InvalidInput as e:
-        return _page(request, "start.html", 400, form=form, error=str(e))
+        return _page(request, "start.html", 400, form=form, error=str(e), this_year=today.year)
     from app.admin import is_admin  # admin이 routes를 가져오므로 순환을 피해 여기서
     if is_admin(request):
         db.add(TestTrial(token=trial.token))  # 내 테스트 체험은 지표에서 뺀다
