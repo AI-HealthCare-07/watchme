@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 
 import pytest
 from sqlalchemy import create_engine, func, select
@@ -87,3 +87,28 @@ def test_delete_account_removes_links_and_sent(db):
     assert accounts.owner_of(db, t.token) is None
     assert db.scalar(select(func.count()).select_from(SentMessage)) == 0
     assert db.get(Trial, t.token) is not None
+
+
+def test_times_are_30_minute_lists():
+    assert accounts.TIMES["morning"][0] == time(5, 0) and accounts.TIMES["morning"][-1] == time(10, 30)
+    assert accounts.TIMES["evening"][0] == time(18, 0) and accounts.TIMES["evening"][-1] == time(23, 30)
+    assert len(accounts.TIMES["morning"]) == len(accounts.TIMES["evening"]) == 12
+
+
+def test_new_account_default_times(db):
+    acc = accounts.save_account(db, 7, "r", True)
+    assert (acc.morning_at, acc.evening_at) == (time(7, 30), time(21, 0))
+
+
+def test_set_times(db):
+    accounts.save_account(db, 7, "r", True)
+    accounts.set_times(db, 7, time(6, 0), time(22, 30))
+    acc = db.get(KakaoAccount, 7)
+    assert (acc.morning_at, acc.evening_at) == (time(6, 0), time(22, 30))
+
+
+@pytest.mark.parametrize("m, e", [(time(6, 15), time(21, 0)), (time(21, 0), time(7, 30)), (time(4, 30), time(21, 0))])
+def test_set_times_rejects_outside_list(db, m, e):
+    accounts.save_account(db, 7, "r", True)
+    with pytest.raises(ValueError):
+        accounts.set_times(db, 7, m, e)

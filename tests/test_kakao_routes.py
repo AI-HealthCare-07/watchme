@@ -297,3 +297,39 @@ def test_landing_kakao_morning_is_the_real_day12_message(client, kakao_env):
     day = build_plan(Profile(choose_variant(assess(*routes.EXAMPLE, stats=STATS)), "mixed", "out", "light", 25, (5, 6)),
                      today_kst(), "landing-demo")[11]
     assert messages.morning(day, day.date.weekday() == 6) in client.get("/").text
+
+
+def test_times_saved_and_shown(client, kakao_env, monkeypatch):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    page = client.get(loc).text
+    assert "아침 7:30 / 저녁 9시" in page
+    assert 'name="morning"' in page and 'name="evening"' in page and 'value="07:30" selected' in page
+    r = client.post(f"{loc}/kakao/times", data={"morning": "06:00", "evening": "22:30"})
+    assert r.status_code == 303 and r.headers["location"] == loc
+    with db_of(client) as db:
+        acc = db.get(KakaoAccount, 42)
+        assert (acc.morning_at.strftime("%H:%M"), acc.evening_at.strftime("%H:%M")) == ("06:00", "22:30")
+    page = client.get(loc).text
+    assert "아침 6시 / 저녁 10:30" in page and 'value="06:00" selected' in page
+
+
+@pytest.mark.parametrize("m, e", [("06:15", "21:00"), ("abc", "21:00"), ("07:30", "")])
+def test_times_outside_list_400(client, kakao_env, monkeypatch, m, e):
+    kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    assert client.post(f"{loc}/kakao/times", data={"morning": m, "evening": e}).status_code == 400
+
+
+def test_times_without_link_400(client, kakao_env):
+    loc = _start_and_setup(client)
+    assert client.post(f"{loc}/kakao/times", data={"morning": "06:00", "evening": "21:00"}).status_code == 400
+
+
+def test_welcome_uses_account_times(client, kakao_env, monkeypatch):
+    seen = kakao_api(monkeypatch)
+    loc = _start_and_setup(client)
+    login(client, f"{loc}/kakao")
+    assert "아침 7:30엔" in memos(seen)[0] and "저녁 9시엔" in memos(seen)[0]

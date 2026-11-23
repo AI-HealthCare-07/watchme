@@ -1,4 +1,6 @@
 """카카오톡 '나에게 보내기' 메시지 문장. 텍스트 템플릿은 200자 제한."""
+from datetime import time
+
 from app.plan import PlanDay
 from app.weekly import Peer
 
@@ -6,9 +8,19 @@ LIMIT = 200
 LINE = 32  # 폰 말풍선에서 한 줄로 읽히는 정도
 SUMMARY_DAYS = (7, 14, 21, 28)
 
-WELCOME = "연결됐어요 ✅ 아침 7:30엔 오늘 계획, 저녁 9시엔 기록 확인을 보내 드릴게요. 폰 알림은 울리지 않으니 '나와의 채팅'을 직접 열어 확인해 주세요."
 REPORT = "30일 완주! 리포트가 나왔어요 🎉"
 BUTTON = {"morning": "오늘 계획 보기", "evening": "기록하기", "evening_logged": "기록 보기", "report": "리포트 보기", "week": "리포트 보기"}
+
+
+def time_label(kind: str, t: time) -> str:
+    """07:30 → "아침 7:30", 21:00 → "저녁 9시"."""
+    h = t.hour % 12 or 12
+    return f"{'아침' if kind == 'morning' else '저녁'} " + (f"{h}시" if t.minute == 0 else f"{h}:{t.minute:02}")
+
+
+def welcome(morning: time, evening: time) -> str:
+    return (f"연결됐어요 ✅ {time_label('morning', morning)}엔 오늘 계획, {time_label('evening', evening)}엔 기록 확인을 "
+            "보내 드릴게요. 폰 알림은 울리지 않으니 '나와의 채팅'을 직접 열어 확인해 주세요.")
 
 
 def fit(text: str) -> str:

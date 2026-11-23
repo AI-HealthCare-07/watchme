@@ -1,4 +1,6 @@
-from datetime import date
+from datetime import date, time
+
+import pytest
 
 from app import messages
 from app.plan import FREE_DINNER, PlanDay
@@ -48,3 +50,15 @@ def test_week_message_lines_never_truncated():
 
 def test_week_message_without_peer():
     assert messages.week(1, 0, None).split("\n") == ["🏅 1주차 리포트가 나왔어요!", "이번 주는 쉬어 갔어요. 다시 시작해 봐요."]
+
+
+@pytest.mark.parametrize("kind, t, label", [("morning", time(7, 30), "아침 7:30"), ("morning", time(5, 0), "아침 5시"),
+                                            ("evening", time(21, 0), "저녁 9시"), ("evening", time(18, 30), "저녁 6:30")])
+def test_time_label(kind, t, label):
+    assert messages.time_label(kind, t) == label
+
+
+def test_welcome_uses_chosen_times():
+    text = messages.welcome(time(6, 0), time(22, 30))
+    assert "아침 6시엔 오늘 계획" in text and "저녁 10:30엔 기록 확인" in text
+    assert len(text) <= messages.LIMIT

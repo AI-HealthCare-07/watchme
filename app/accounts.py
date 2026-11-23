@@ -1,5 +1,5 @@
 """카카오 계정·체험 연결·발송 기록 DB 조작."""
-from datetime import date
+from datetime import date, time
 
 from sqlalchemy import delete, exists, select
 from sqlalchemy.exc import IntegrityError
@@ -61,6 +61,20 @@ def active_trial(db: Session, kakao_id: int, today: date) -> Trial | None:
 
 def set_notify(db: Session, kakao_id: int, on: bool) -> None:
     db.get(KakaoAccount, kakao_id).notify = on
+    db.commit()
+
+
+TIMES = {  # 고를 수 있는 발송 시각(KST, 30분 칸)
+    "morning": [time(h, m) for h in range(5, 11) for m in (0, 30)],
+    "evening": [time(h, m) for h in range(18, 24) for m in (0, 30)],
+}
+
+
+def set_times(db: Session, kakao_id: int, morning: time, evening: time) -> None:
+    if morning not in TIMES["morning"] or evening not in TIMES["evening"]:
+        raise ValueError("목록에 없는 시각")
+    acc = db.get(KakaoAccount, kakao_id)
+    acc.morning_at, acc.evening_at = morning, evening
     db.commit()
 
 

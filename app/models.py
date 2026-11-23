@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time
 
 from sqlalchemy import BigInteger, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -55,6 +55,8 @@ class KakaoAccount(Base):
     refresh_token_enc: Mapped[str | None] = mapped_column(Text)  # Fernet 암호문 (키는 서버 .env에만)
     can_message: Mapped[bool]  # talk_message 동의 + 토큰 유효
     notify: Mapped[bool] = mapped_column(default=True)  # 사용자가 켠/끈 상태
+    morning_at: Mapped[time] = mapped_column(default=time(7, 30))  # 아침 메시지 시각(KST, 30분 칸)
+    evening_at: Mapped[time] = mapped_column(default=time(21, 0))  # 저녁 메시지 시각
     created_at: Mapped[datetime] = mapped_column(default=lambda: datetime.now(UTC))
 
 

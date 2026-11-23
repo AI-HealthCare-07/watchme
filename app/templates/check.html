@@ -6,8 +6,16 @@
 {% if not acc %}<div class="kbar"><span>💬 카톡으로 아침 계획·저녁 체크 받기</span><a class="kbtn" href="/c/{{ token }}/kakao">카카오로 연결</a></div>
 {% elif not acc.can_message %}<div class="kbar"><span>⚠️ {{ "카톡 연결이 끊겼어요" if acc.refresh_token_enc is none else "카톡 메시지 동의가 없어요" }}</span><a class="kbtn" href="/c/{{ token }}/kakao">다시 연결</a></div>
 {% else %}<details class="kbar{{ ' on' if acc.notify }}">
-  <summary><span>{{ "💬 카카오톡 연결됨 · 아침 7:30 / 저녁 9시" if acc.notify else "🔕 카톡 메시지 꺼짐" }}</span><b>설정</b></summary>
-  {% if acc.notify %}<p>폰 알림은 울리지 않아요. 카톡 '나와의 채팅'을 직접 열어 확인해 주세요.</p>{% endif %}
+  <summary><span>{% if acc.notify %}💬 카카오톡 연결됨 · {{ time_label("morning", acc.morning_at) }} / {{ time_label("evening", acc.evening_at) }}{% else %}🔕 카톡 메시지 꺼짐{% endif %}</span><b>설정</b></summary>
+  {% if acc.notify %}<p>폰 알림은 울리지 않아요. 카톡 '나와의 채팅'을 직접 열어 확인해 주세요.</p>
+  <form class="ktimes" method="post" action="/c/{{ token }}/kakao/times">
+    {% for kind, now in (("morning", acc.morning_at), ("evening", acc.evening_at)) %}
+    <label>{{ "아침" if kind == "morning" else "저녁" }}<select name="{{ kind }}">
+      {% for t in NOTIFY_TIMES[kind] %}<option value="{{ t.strftime('%H:%M') }}"{{ " selected" if t == now }}>{{ time_label(kind, t)[3:] }}</option>{% endfor %}
+    </select></label>
+    {% endfor %}
+    <button class="linkish">시간 저장</button>
+  </form>{% endif %}
   <div class="krow">
     <form method="post" action="/c/{{ token }}/kakao/notify"><input type="hidden" name="on" value="{{ '0' if acc.notify else '1' }}"><button class="linkish">메시지 {{ "끄기" if acc.notify else "켜기" }}</button></form>
     <form method="post" action="/c/{{ token }}/kakao/unlink"><button class="linkish">연결 끊기</button></form>

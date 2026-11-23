@@ -171,6 +171,8 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 .kbar p, .kbar .krow { max-width: 480px; margin: 0 auto; padding: 0 20px 10px; font-size: 13px; font-weight: 500; color: #3c3c3c; }
 .kbar .krow { display: flex; gap: 16px; padding-bottom: 14px; }
 .kbar form { display: inline; }
+.kbar .ktimes { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; max-width: 480px; margin: 0 auto; padding: 0 20px 12px; font-size: 13px; font-weight: 600; }
+.ktimes select { margin-left: 6px; font: inherit; padding: 5px 8px; border: 1px solid rgba(0, 0, 0, .2); border-radius: 8px; background: #fff; color: #191919; }
 .kbtn { flex: none; background: #191919; color: #fee500; border-radius: 999px; padding: 7px 14px; font-size: 13px; text-decoration: none; }
 .past { background: #e8590c; color: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px; font-weight: 600; }
 .past a { display: block; margin-top: 4px; font-weight: 800; }

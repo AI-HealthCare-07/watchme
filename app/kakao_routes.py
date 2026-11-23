@@ -1,6 +1,7 @@
 """카카오 로그인·연결 경로. 카카오 키가 없으면 모두 404."""
 import secrets
 import time
+from datetime import time as dtime
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import accounts, kakao
 from app.clock import today_kst
 from app.db import get_db
-from app.messages import WELCOME
+from app.messages import welcome
 from app.plan import DAYS
 from app.ratelimit import client_ip
 from app.routes import AUTH_PER_IP, DAY_PER_IP, PUBLIC_BASE_URL, _error, _too_many
@@ -80,14 +81,14 @@ def _link_trial(request: Request, db: Session, token: str, kakao_id: int, tokens
     if owner and owner.kakao_id != kakao_id:
         return RedirectResponse(f"/c/{token}?kakao=taken", status_code=303)
     can_message = "talk_message" in tokens.scope
-    accounts.save_account(db, kakao_id, tokens.refresh_token, can_message)
+    acc = accounts.save_account(db, kakao_id, tokens.refresh_token, can_message)
     accounts.link(db, token, kakao_id)
     if not can_message:
         return RedirectResponse(f"/c/{token}?kakao=nomsg", status_code=303)
     today = today_kst()
     if 1 <= accounts.day_number(trial, today) <= DAYS and accounts.claim(db, kakao_id, today, "welcome"):
         try:
-            kakao.send_memo(tokens.access_token, WELCOME, f"{PUBLIC_BASE_URL}/c/{token}", "기록 화면 열기")
+            kakao.send_memo(tokens.access_token, welcome(acc.morning_at, acc.evening_at), f"{PUBLIC_BASE_URL}/c/{token}", "기록 화면 열기")
         except kakao.KakaoError as e:
             print(f"kakao welcome failed: {e}")
     return RedirectResponse(f"/c/{token}?kakao=linked", status_code=303)
@@ -101,6 +102,21 @@ def kakao_notify(request: Request, token: str, on: str = Form(""), db: Session =
     if acc is None:
         return _error(request, 400, "카카오에 연결된 체험이 아니에요.")
     accounts.set_notify(db, acc.kakao_id, on == "1")
+    return RedirectResponse(f"/c/{token}", status_code=303)
+
+
+@router.post("/c/{token}/kakao/times", dependencies=[Depends(_require_enabled)])
+def kakao_times(request: Request, token: str, morning: str = Form(""), evening: str = Form(""),
+                db: Session = Depends(get_db)):
+    if not DAY_PER_IP.hit(client_ip(request), time.time()):
+        return _too_many(request)
+    acc = accounts.owner_of(db, token)
+    if acc is None:
+        return _error(request, 400, "카카오에 연결된 체험이 아니에요.")
+    try:
+        accounts.set_times(db, acc.kakao_id, dtime.fromisoformat(morning), dtime.fromisoformat(evening))
+    except ValueError:
+        return _error(request, 400, "목록에 있는 시간을 골라 주세요.")
     return RedirectResponse(f"/c/{token}", status_code=303)
 
 

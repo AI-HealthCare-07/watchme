@@ -1,6 +1,6 @@
-"""아침·저녁 카톡 발송. 서버 cron이 scripts/send.py로 하루 두 번 부른다."""
+"""아침·저녁 카톡 발송. 서버 cron이 scripts/send.py로 30분마다 부르고, 그 칸이 내 시각인 사람에게만 보낸다."""
 import os
-from datetime import date
+from datetime import date, time
 from typing import Literal
 
 from sqlalchemy import select
@@ -41,11 +41,12 @@ def _message(db: Session, kind: str, trial, n: int, today: date) -> tuple[str, s
     return "evening", messages.evening(n, logged, sunday), link, button
 
 
-def send_all(db: Session, kind: Literal["morning", "evening"], today: date) -> tuple[int, int]:
+def send_all(db: Session, kind: Literal["morning", "evening"], today: date, slot: time) -> tuple[int, int]:
     """(보냄, 실패). 같은 (계정, 날짜, 종류)는 최대 한 번: 먼저 기록하고 보내며, 실패해도 다시 보내지 않는다."""
     sent = failed = 0
     targets = db.scalars(select(KakaoAccount).where(
-        KakaoAccount.notify, KakaoAccount.can_message, KakaoAccount.refresh_token_enc.is_not(None)))
+        KakaoAccount.notify, KakaoAccount.can_message, KakaoAccount.refresh_token_enc.is_not(None),
+        (KakaoAccount.morning_at if kind == "morning" else KakaoAccount.evening_at) == slot))
     for acc in list(targets):
         trial = accounts.active_trial(db, acc.kakao_id, today)
         if trial is None:
