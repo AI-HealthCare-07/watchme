@@ -64,6 +64,8 @@ erDiagram
         text refresh_token_enc
         bool can_message
         bool notify
+        time morning_at
+        time evening_at
         datetime created_at
     }
     trial_owners {
@@ -159,6 +161,8 @@ erDiagram
         text refresh_token_enc "Fernet 암호문, NULL 가능"
         bool can_message "talk_message 동의 + 토큰 유효"
         bool notify "알림 켬/끔, 기본 켬"
+        time morning_at "아침 메시지 시각(KST), 기본 07:30, 05:00~10:30 30분 칸"
+        time evening_at "저녁 메시지 시각(KST), 기본 21:00, 18:00~23:30 30분 칸"
         datetime created_at
     }
 

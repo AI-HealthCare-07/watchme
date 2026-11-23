@@ -15,7 +15,7 @@
 |---|---|---|
 | `START_PER_IP` | 10분 5회 | `POST /start`, `POST /c/{token}/next` |
 | `START_GLOBAL` | 하루 500회(전체) | `POST /start` |
-| `DAY_PER_IP` | 1분 30회 | `POST /c/{token}/day/{n}`, `POST /c/{token}/week/{w}/level`, `POST /c/{token}/kakao/notify`·`/unlink` |
+| `DAY_PER_IP` | 1분 30회 | `POST /c/{token}/day/{n}`, `POST /c/{token}/week/{w}/level`, `POST /c/{token}/kakao/notify`·`/times`·`/unlink` |
 | `AUTH_PER_IP` | 10분 10회 | 카카오 로그인 시작(`/c/{token}/kakao`, `/auth/kakao`) |
 
 초과 시 `429` "요청이 너무 많아요. 잠시 후 다시 시도해 주세요." IP는 프록시가 덮어쓴 `X-Forwarded-For` 첫 값.
@@ -132,6 +132,7 @@ Location: /c/Xb3k...Q9/result
 | GET | `/auth/kakao` | 시작 화면에서 "카카오로 이어서 하기" | 303 → 카카오 인가 |
 | GET | `/auth/kakao/callback` | 쿼리 `code`, `state`, `error`. 토큰 교환 → 회원번호 → 연결 → 환영 메시지 | 303 → `/c/{token}?kakao=linked` 등 |
 | POST | `/c/{token}/kakao/notify` | `on=1\|0` 알림 켜기·끄기 | 303 → `/c/{token}` |
+| POST | `/c/{token}/kakao/times` | `morning=HH:MM`(05:00~10:30), `evening=HH:MM`(18:00~23:30), 30분 단위. 목록 밖·연결 안 된 체험 400 (2026-11-23) | 303 → `/c/{token}` |
 | POST | `/c/{token}/kakao/unlink` | 카카오 연결 끊기 + 저장 토큰 삭제 | 303 → `/c/{token}?kakao=unlinked` |
 | POST | `/c/{token}/next` | 다음 30일 도전(한 번만) | 303 → `/c/{새 token}/ready` |
 
@@ -167,10 +168,9 @@ Location: /c/Xb3k...Q9/result
 
 | 시각(KST) | 명령 | 내용 |
 |---|---|---|
-| 매일 07:30 | `python -m scripts.send morning` | Day 1~30 오늘 계획, Day 31 리포트 안내 |
-| 매일 21:00 | `python -m scripts.send evening` | 기록 확인(기록 여부에 따라 문구 다름) |
+| 매시 0·30분 | `python -m scripts.send` | 지금 30분 칸이 아침 시각(`morning_at`)인 사람: Day 1~30 오늘 계획, 8·15·22·29일째 주간 리포트, Day 31 완주 안내 / 저녁 시각(`evening_at`)인 사람: 기록 확인(기록 여부에 따라 문구 다름) |
 
-- 서버 crontab에 2026-11-17 등록. 결과는 `~/send.log`(`2026-11-17 evening sent=1 failed=0`처럼 보낸 게 있을 때만 한 줄).
+- 서버 crontab: 2026-11-17 하루 두 번(07:30·21:00)으로 등록, 2026-11-23 알림 시간 선택(FR-45)과 함께 30분마다로 바꿈. 결과는 `~/send.log`(`2026-11-23 07:30 morning sent=1 failed=0`처럼 보낸 게 있을 때만 한 줄).
 - "나에게 보내기"는 카톡 '나와의 채팅'으로 들어가 **폰 알림이 울리지 않아요**(2026-11-17 실험). 화면·환영 메시지에 직접 확인하라는 안내를 넣었어요.
 
 ## 4. 주간 리포트 (✅ 구현, 2026-11-18)
