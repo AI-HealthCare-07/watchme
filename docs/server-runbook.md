@@ -165,3 +165,14 @@
 - **테스트 제외**: 로그인한 브라우저로 시작한 체험은 `test_trials`에 적혀 지표에서 빠진다. `METRICS_SINCE=YYYY-MM-DD`(선택, KST)를 넣으면 그보다 먼저 만든 체험도 뺀다.
 - **새 표 3개** `landing_views`(날짜별 랜딩 조회 수), `send_runs`(cron 발송 보냄·실패 합계), `test_trials`는 서버가 켜질 때 자동으로 생긴다. 기존 표는 바꾸지 않는다.
 - `send_runs`는 `scripts.send` 실행마다 쌓인다(카카오가 꺼져 있으면 기록 없음). 랜딩 조회는 봇·링크 미리보기를 빼고 세며 IP·쿠키·브라우저 정보는 저장하지 않는다.
+
+## 17. 카톡 알림 시간 선택 (2026-11-23)
+- 기능: 카톡 바 설정에서 아침 05:00~10:30·저녁 18:00~23:30 중 30분 단위로 고름. `kakao_accounts`에 `morning_at`·`evening_at`(time) 두 칸.
+- **운영 DB 칸 추가 (배포 전에 먼저)**: 이 프로젝트는 `create_all`만 써서 기존 표에 칸이 자동으로 생기지 않는다. 기본값이 있어 기존 코드·데이터에 영향 없음.
+  ```
+  docker compose exec -T db psql -U watchme -d watchme -c "ALTER TABLE kakao_accounts ADD COLUMN IF NOT EXISTS morning_at time NOT NULL DEFAULT '07:30', ADD COLUMN IF NOT EXISTS evening_at time NOT NULL DEFAULT '21:00';"
+  ```
+  (칸 추가 없이 새 코드를 먼저 올리면 카톡 계정을 읽는 화면·발송이 오류가 난다.)
+- **발송 cron**: 7:30·21:00 두 줄을 30분마다 한 줄로 바꾼다(8장 파일 방식 `crontab /tmp/ct`).
+  - `0,30 * * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send >> $HOME/send.log 2>&1`
+  - 지금 KST 시각을 30분 칸으로 내림해 그 칸이 내 시각인 사람에게만 보냄. 서버가 그 칸에 꺼져 있었으면 그날은 놓침(따라잡지 않음). `send_runs`에는 0이라도 매번 더해져 cron이 도는지 `/admin`에서 보임.
