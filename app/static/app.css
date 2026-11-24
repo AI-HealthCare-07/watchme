@@ -241,7 +241,24 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 /* 랜딩 스토리: JS 없으면 장면이 세로로 쌓이고, story.js가 .js를 붙이면 한 장면씩 넘어간다 */
 .story { max-width: 480px; margin: 0 auto; position: relative; background: var(--bg); }
 .story .scene { padding: 72px 24px 40px; }
-.story .scene.g { background: linear-gradient(165deg, #20c997, #0ca678 55%, #099268); color: var(--hero-ink); }
+.story .scene.g { background: linear-gradient(165deg, #20c997, #0ca678 55%, #099268); color: var(--hero-ink); position: relative; overflow: hidden; }
+/* 초록 장면 배경에 천천히 떠다니는 빛 (transform만) */
+.story .scene.g::before, .story .scene.g::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+.story .scene.g::before { width: 380px; height: 380px; top: -130px; right: -150px; background: radial-gradient(circle, rgba(255, 255, 255, .3), transparent 65%);
+                          animation: drift 14s ease-in-out infinite alternate; }
+.story .scene.g::after { width: 320px; height: 320px; bottom: 80px; left: -160px; background: radial-gradient(circle, rgba(150, 242, 215, .4), transparent 65%);
+                         animation: drift 18s ease-in-out infinite alternate-reverse; }
+.story .scene.g > * { position: relative; }
+@keyframes drift { to { transform: translate(-70px, 90px) scale(1.2); } }
+/* 첫 장면 심박 선: 그려진 뒤 끝점이 박동 */
+.story .ecg { display: block; width: 100%; height: 64px; margin-bottom: 14px; overflow: visible; }
+.story .ecg path { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1;
+                   filter: drop-shadow(0 0 6px rgba(255, 255, 255, .7)); }
+.story .ecg circle { fill: #fff; transform-box: fill-box; transform-origin: center; }
+.story .ecg .ring { opacity: 0; }
+.story .big { font-size: 44px; font-weight: 900; line-height: 1.1; margin-top: 18px; letter-spacing: -1px; }
+.story .big b { font-variant-numeric: tabular-nums; }
+.story .g .big + .sub { margin-top: 4px; }
 .story .kick { font-size: 13px; font-weight: 700; color: var(--brand-ink); }
 .story .g .kick { color: rgba(255, 255, 255, .85); }
 .story h1 { font-size: 28px; line-height: 1.3; font-weight: 800; margin-top: 8px; word-break: keep-all; }
@@ -251,6 +268,20 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 .story .sub.small { font-size: 12.5px; text-align: center; }
 .story .rk { margin: 22px 0 0; box-shadow: 0 10px 30px rgba(25, 31, 40, .08); }
 .story .ex { font-size: 12.5px; margin-bottom: 12px; }
+/* ② 예시 위험도: 원형 게이지 (반 바퀴 = 같은 집단 평균, 한 바퀴 = 평균의 2배) */
+.story .gauges { display: flex; gap: 12px; justify-content: space-around; }
+.story .gauge { position: relative; width: min(136px, 40vw); aspect-ratio: 1; }
+.story .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.story .gauge circle { fill: none; stroke-width: 11; }
+.story .gauge .trk { stroke: var(--track); }
+.story .gauge .val { stroke: var(--risk); stroke-linecap: round; stroke-dasharray: var(--p) 1; }
+.story .gauge.lo .val { stroke: var(--good); }
+.story .gauge .avg { stroke: var(--ink); stroke-width: 3; }
+.story .gv { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; line-height: 1.15; }
+.story .gv b { font-size: 30px; font-weight: 900; color: var(--risk); font-variant-numeric: tabular-nums; }
+.story .gauge.lo .gv b { color: var(--good); }
+.story .gv small { font-size: 11px; color: var(--muted); }
+.story .gv .nm { font-size: 13px; font-weight: 700; margin-top: 3px; }
 .story .cal { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 22px auto 0; width: min(100%, 300px); }
 .story .cal i { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: center; font-style: normal; font-size: 12px;
                 font-weight: 700; background: var(--brand); color: #fff; }
@@ -298,8 +329,25 @@ div.kbar > span { padding: 0; margin: 0; flex: 1; }
 .story.js .cur > :nth-child(2) { animation-delay: .1s; } .story.js .cur > :nth-child(3) { animation-delay: .2s; }
 .story.js .cur > :nth-child(4) { animation-delay: .3s; } .story.js .cur > :nth-child(5) { animation-delay: .4s; }
 .story.js .cur .bar i { animation: fill-up 1.2s .4s cubic-bezier(.2, .8, .2, 1) both; }
+.story.js .cur .gauge .val { animation: ring-fill 1.2s .4s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ring-fill { from { stroke-dasharray: 0 1; } }
+.story.js .cur .ecg path { animation: draw 1.3s .15s cubic-bezier(.45, 0, .2, 1) both; }
+.story.js .cur .ecg .dot { animation: pop .35s 1.4s cubic-bezier(.2, .8, .2, 1.4) both; }
+.story.js .cur .ecg .ring { animation: ping 1.4s 1.6s ease-out infinite; }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes pop { from { opacity: 0; transform: scale(0); } }
+@keyframes ping { 0% { opacity: 0; transform: scale(1); } 10% { opacity: .8; } 100% { opacity: 0; transform: scale(3.6); } }
+/* 카톡 장면: "• • •" 입력 중이 잠깐 보였다가 말풍선으로 */
+.story .msg { position: relative; }
+.story .typing { position: absolute; right: 0; top: 0; display: flex; gap: 4px; padding: 11px 13px; background: #fee500; border-radius: 14px 4px 14px 14px; opacity: 0; }
+.story .typing b { width: 6px; height: 6px; border-radius: 50%; background: #191919; opacity: .5; }
+.story.js .cur .typing { animation: typing-on .9s calc(.5s + var(--k) * 1.5s) both; }
+.story.js .cur .typing b { animation: dot .9s infinite; }
+.story.js .cur .typing b:nth-child(2) { animation-delay: .15s; } .story.js .cur .typing b:nth-child(3) { animation-delay: .3s; }
+@keyframes typing-on { 0% { opacity: 0; transform: translateY(8px); } 15%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes dot { 0%, 60%, 100% { transform: none; opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
 .story.js .cur .cal i { animation: cal-on .3s calc(var(--d) * 45ms + .4s) both; }
-.story.js .cur .msg { animation: rise .5s calc(.6s + var(--k) * .9s) cubic-bezier(.2, .8, .2, 1) both; }
+.story.js .cur .msg > time, .story.js .cur .msg > .bub { animation: rise .5s calc(1.25s + var(--k) * 1.5s) cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } }
 @keyframes cal-on { from { background: var(--track); color: var(--faint); } }
 

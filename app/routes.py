@@ -43,6 +43,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 templates.env.globals["DISCLAIMER"] = DISCLAIMER
 templates.env.filters["vs_text"] = vs_text
 templates.env.globals["group_label"] = group_label
+templates.env.globals["vs_pct"] = lambda vs: abs(round((vs - 1) * 100))  # vs_text와 같은 반올림
 templates.env.globals["time_label"] = messages.time_label
 templates.env.globals["NOTIFY_TIMES"] = accounts.TIMES
 templates.env.globals["PUBLIC_BASE_URL"] = PUBLIC_BASE_URL
@@ -110,7 +111,8 @@ def landing(request: Request, db: Session = Depends(get_db), stats: dict | None 
     # 카톡 장면은 실제 발송 문장으로 보여 준다: 예시 인물의 실제 계획 12일째
     plan = build_plan(Profile(choose_variant(example), "mixed", "out", "light", 25, (5, 6)), today_kst(), "landing-demo")
     demo = plan[11]
-    return _page(request, "landing.html", example=example, preparing=False, kakao_on=kakao.enabled(),
+    sample_n = sum(g.get("n", 0) for sex in stats["groups"].values() for g in sex.values())
+    return _page(request, "landing.html", example=example, preparing=False, kakao_on=kakao.enabled(), sample_n=sample_n,
                  free_days={d.day for d in plan if d.free_meal},
                  demo_morning=messages.morning(demo, demo.date.weekday() == 6),
                  demo_evening=messages.evening(1, False, False), buttons=messages.BUTTON)

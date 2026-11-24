@@ -6,7 +6,7 @@
   const scenes = [...story.querySelectorAll(".scene")];
   const segs = [...story.querySelectorAll(".seg")];
   const fills = segs.map((s) => s.querySelector("b"));
-  const DUR = [3000, 3600, 3800, 4600]; // 마지막 장면은 멈춤
+  const DUR = [3600, 3600, 3800, 5000]; // 마지막 장면은 멈춤
   const auto = !matchMedia("(prefers-reduced-motion: reduce)").matches;
   const last = scenes.length - 1;
   let cur = 0, elapsed = 0, held = false;
@@ -22,6 +22,24 @@
     });
     fills.forEach((b, i) => { b.style.width = i < cur || cur === last ? "100%" : "0"; });
     story.classList.toggle("lt", scenes[cur].classList.contains("g"));
+    if (auto) counts(scenes[cur]);
+  }
+
+  // 숫자가 0부터 올라간다(게이지가 차오르는 것과 같이). 움직임 줄이기면 처음부터 최종 숫자.
+  function countUp(el, to, show, delay) {
+    const run = (el.run = (el.run || 0) + 1);
+    const t0 = performance.now() + delay;
+    const tick = (t) => {
+      if (el.run !== run) return; // 장면을 다시 열면 새로 시작
+      const p = Math.min(1, Math.max(0, (t - t0) / 1200));
+      el.textContent = show(Math.round(to * (1 - (1 - p) ** 3)));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function counts(scene) {
+    scene.querySelectorAll("[data-count]").forEach((el) =>
+      countUp(el, +el.dataset.count, (n) => n.toLocaleString("ko-KR"), el.closest(".gauge") ? 400 : 300));
   }
 
   segs.forEach((s, i) => { s.onclick = () => go(i); });

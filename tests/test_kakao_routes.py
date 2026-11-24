@@ -333,3 +333,8 @@ def test_welcome_uses_account_times(client, kakao_env, monkeypatch):
     loc = _start_and_setup(client)
     login(client, f"{loc}/kakao")
     assert "아침 7:30엔" in memos(seen)[0] and "저녁 9시엔" in memos(seen)[0]
+
+
+def test_landing_kakao_messages_have_typing_dots(client, kakao_env):
+    page = client.get("/").text
+    assert page.count('class="typing"') == 2

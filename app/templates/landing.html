@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import risk_rows, privacy %}
+{% from "_macros.html" import privacy %}
 {# 통계 준비 중: 예전처럼 초록 영역 + 안내 카드 (super()가 base의 레이아웃을 그린다) #}
 {% block hero %}<h1>내 혈압·혈당 위험,<br>또래 평균과 비교해 보세요</h1>{% endblock %}
 {% block sheet %}<div class="card"><h2>준비 중</h2><p class="muted">한국 평균 통계 데이터를 준비하고 있어요. 곧 시작할 수 있어요.</p></div>{% endblock %}
@@ -10,17 +10,25 @@
   <a class="brand" href="/"><span class="brand-name"><img class="brand-icon" src="/static/icons/favicon.svg" width="22" height="22" alt="">WATCHME</span></a>
 
   <section class="scene g">
+    <svg class="ecg" viewBox="0 0 320 64" aria-hidden="true"><path pathLength="1" d="M0 36 H92 L104 36 L113 16 L126 56 L139 4 L152 48 L161 36 H204 L213 27 L222 36 H312"/><circle class="ring" cx="312" cy="36" r="5"/><circle class="dot" cx="312" cy="36" r="5"/></svg>
     <p class="kick">30일 생활습관 챌린지</p>
     <h1>내 혈압·혈당 위험,<br>또래 평균과<br>비교해 보세요</h1>
-    <p class="sub">국민건강영양조사 성인 1만 7천 명 기준</p>
+    {% if sample_n %}<p class="big"><b data-count="{{ sample_n }}">{{ "{:,}".format(sample_n) }}</b>명</p>
+    <p class="sub">국민건강영양조사 성인 기준</p>{% else %}<p class="sub">국민건강영양조사 성인 1만 7천 명 기준</p>{% endif %}
   </section>
 
   <section class="scene">
     <p class="kick">1분 입력</p>
-    <h2>성별·나이·키·몸무게만<br>넣으면 내 위치가 보여요</h2>
+    <h2>성별·출생연도·키·몸무게만<br>넣으면 내 위치가 보여요</h2>
     <div class="card rk">
       <p class="muted ex">예시 · 45세 남성</p>
-      {{ risk_rows(example) }}
+      <div class="gauges">{% for name, vs in (("고혈압", example.hypertension_vs_avg), ("당뇨", example.diabetes_vs_avg)) %}
+        <div class="gauge{{ ' lo' if vs <= 1 }}" role="img" aria-label="{{ vs|vs_text }}" style="--p:{{ '%.3f'|format([vs / 2, 1]|min) }}">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" pathLength="1" cx="60" cy="60" r="50"/><line class="avg" x1="4" y1="60" x2="16" y2="60"/></svg>
+          <div class="gv" aria-hidden="true"><b><span data-count="{{ vs_pct(vs) }}">{{ vs_pct(vs) }}</span>%</b><small>{{ "평균 수준" if vs_pct(vs) == 0 else "평균보다 높음" if vs > 1 else "평균보다 낮음" }}</small><span class="nm">{{ name }}</span></div>
+        </div>{% endfor %}
+      </div>
+      <p class="bar-legend">반 바퀴(아래 눈금) = {{ group_label(example.sex, example.age) }} 평균</p>
     </div>
   </section>
 
@@ -37,8 +45,8 @@
     <h2>아침엔 오늘 계획,<br>저녁엔 기록 알림</h2>
     <div class="kroom">
       <p class="hd">나와의 채팅</p>
-      <div class="msg" style="--k:0"><time>오전 7:30</time><div class="bub"><p>{{ demo_morning }}</p><span>{{ buttons.morning }}</span></div></div>
-      <div class="msg" style="--k:1"><time>오후 9:00</time><div class="bub"><p>{{ demo_evening }}</p><span>{{ buttons.evening }}</span></div></div>
+      <div class="msg" style="--k:0"><time>오전 7:30</time><div class="bub"><p>{{ demo_morning }}</p><span>{{ buttons.morning }}</span></div><i class="typing" aria-hidden="true"><b></b><b></b><b></b></i></div>
+      <div class="msg" style="--k:1"><time>오후 9:00</time><div class="bub"><p>{{ demo_evening }}</p><span>{{ buttons.evening }}</span></div><i class="typing" aria-hidden="true"><b></b><b></b><b></b></i></div>
     </div>
     <p class="sub small">버튼을 누르면 내 기록 화면이 열려요</p>
   </section>

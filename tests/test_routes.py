@@ -667,3 +667,33 @@ def test_landing_survives_counter_error(client, monkeypatch):
         raise RuntimeError("no table")
     monkeypatch.setattr(routes, "count_landing", boom)
     assert client.get("/", headers={"user-agent": "Mozilla/5.0"}).status_code == 200
+
+
+def test_landing_hero_counts_up_real_sample_size(client):
+    import copy
+    stats = copy.deepcopy(STATS)
+    for sex in stats["groups"].values():
+        for g in sex.values():
+            g["n"] = 1234
+    app.dependency_overrides[get_stats] = lambda: stats
+    page = client.get("/").text
+    n = 1234 * sum(len(sex) for sex in stats["groups"].values())
+    assert '<svg class="ecg"' in page
+    assert f'data-count="{n}">{n:,}</b>명' in page  # JS가 없어도 최종 숫자
+    assert "국민건강영양조사 성인 기준" in page
+
+
+def test_landing_example_scene_says_birth_year(client):
+    assert "성별·출생연도·키·몸무게만" in client.get("/").text
+
+
+def test_landing_example_is_ring_gauges(client):
+    from app.risk import assess, vs_text
+
+    a = assess(*routes.EXAMPLE, stats=STATS)
+    page = client.get("/").text
+    assert len(re.findall(r'class="gauge( lo)?"', page)) == 2 and '<div class="bar"' not in page.split('<main', 1)[1]
+    for vs in (a.hypertension_vs_avg, a.diabetes_vs_avg):
+        pct = abs(round((vs - 1) * 100))
+        assert f'aria-label="{vs_text(vs)}"' in page
+        assert f'data-count="{pct}">{pct}</span>%' in page  # JS가 없어도 최종 숫자
