@@ -176,3 +176,11 @@
 - **발송 cron**: 7:30·21:00 두 줄을 30분마다 한 줄로 바꾼다(8장 파일 방식 `crontab /tmp/ct`).
   - `0,30 * * * * cd $HOME/watchme && docker compose exec -T app python -m scripts.send >> $HOME/send.log 2>&1`
   - 지금 KST 시각을 30분 칸으로 내림해 그 칸이 내 시각인 사람에게만 보냄. 서버가 그 칸에 꺼져 있었으면 그날은 놓침(따라잡지 않음). `send_runs`에는 0이라도 매번 더해져 cron이 도는지 `/admin`에서 보임.
+
+## 18. 재부팅 후 Caddy 자동 시작 (2026-11-25)
+- 커널 7.0.0-30 → 7.0.0-44 업그레이드 후 재부팅(사용자가 sudo로 직접). 재부팅 뒤 `watchme-caddy-1`만 `Exited (128)`로 멈춰 약 3분간 외부 접속 불가.
+  - 원인: 부팅 중 dockerd가 Caddy 컨테이너 네트워크 연결에 실패(`failed to set up container networking`). 시작 단계 실패는 `unless-stopped`로도 다시 시도하지 않는다.
+  - 조치: `docker compose up -d caddy`로 복구, healthz OK.
+- 재발 방지 cron(파일 방식, 8장 참고):
+  - `@reboot sleep 60 && cd $HOME/watchme && docker compose up -d caddy >> $HOME/reboot.log 2>&1`
+  - 이미 떠 있으면 아무 일도 하지 않는다. 재부팅 후에는 `docker ps`로 6개 컨테이너와 `https://evrd.fyi/healthz`를 확인.
